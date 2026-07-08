@@ -1,38 +1,38 @@
 # Getting Started — Bricks CDP Visual Generator
 
-Hệ thống render website thật bằng CDP/Playwright, chụp screenshot + trích xuất DOM/CSS/layout, merge thành **Page IR**, rồi sinh **Bricks Builder JSON** import được.
+本系統透過 CDP/Playwright 渲染真實網站、擷取螢幕截圖並提取 DOM/CSS/版面配置，合併為 **Page IR**，再生成可匯入的 **Bricks Builder JSON**。
 
-## Cài đặt
+## 安裝
 
 ```bash
 npm install
-npx playwright install chromium   # tải browser (1 lần)
-npm run build                     # build toàn bộ workspace (tsc -b + esbuild dashboard)
+npx playwright install chromium   # 下載瀏覽器（僅需 1 次）
+npm run build                     # 建置整個 workspace（tsc -b + esbuild dashboard）
 ```
 
-## Cách 1 — CLI (chạy pipeline trực tiếp)
+## 方式 1 — CLI（直接執行 pipeline）
 
 ```bash
 npm run generate -- --url https://example.com
-# hoặc test bằng fixture local:
+# 或使用本地 fixture 進行測試：
 npm run generate -- --url "file:///C:/Users/User/Desktop/CDP_AutoBricks/test-fixtures/landing.html"
 ```
 
-Options:
+選項：
 
 ```text
---url <url>              http(s):// hoặc file:// (bắt buộc khi capture)
---job <jobId>            phân tích lại 1 job đã capture (không mở browser lại)
---mode landing-page      (mặc định)
+--url <url>              http(s):// 或 file://（擷取時必填）
+--job <jobId>            重新分析 1 個已擷取的 job（不重新開啟 browser）
+--mode landing-page      （預設）
 --viewports desktop,tablet,mobile
---storage <dir>          (mặc định ./storage)
+--storage <dir>          （預設 ./storage）
 --id-style readable|bricks
---vision heuristic|ai    (mặc định heuristic)
---vision-model <model>   model cho AI vision (mặc định sonnet)
---vision-concurrency <n> số subagent vision chạy song song (mặc định 4)
+--vision heuristic|ai    （預設 heuristic）
+--vision-model <model>   AI vision 使用的 model（預設 sonnet）
+--vision-concurrency <n> 並行執行的 vision subagent 數量（預設 4）
 ```
 
-Output nằm trong `storage/`:
+輸出位於 `storage/`：
 
 ```text
 storage/
@@ -43,113 +43,111 @@ storage/
 └── reports/<jobId>/{analysis-report.json, validation-report.json, preview.html, preview.png, diff.png}
 ```
 
-## Chế độ AI Vision (pixel-fidelity)
+## AI Vision 模式（pixel-fidelity）
 
-Analyzer mặc định là heuristic thuần (rule engine + lấy mẫu pixel). Bật `--vision ai`
-để đạt độ trung thực cao hơn: analyzer **fan-out nhiều subagent `claude -p` chạy
-song song** — mỗi section một subagent + một subagent global — đọc ảnh crop của từng
-section rồi sửa lại **màu nền / gradient / typography / layout / màu nút** theo đúng
-pixel render thật (§8, §22: Color/Theme style lấy từ screenshot).
+Analyzer 預設為純 heuristic（rule engine + 像素取樣）。啟用 `--vision ai`
+可達到更高的還原度：analyzer 會 **fan-out 多個 `claude -p` subagent 並行
+執行** — 每個 section 一個 subagent，外加一個全域 subagent — 讀取各
+section 的裁切圖，再依照真實 pixel 渲染結果修正 **背景色 / gradient / typography / 版面配置 / 按鈕顏色**（§8、§22：Color/Theme 樣式取自螢幕截圖）。
 
 ```bash
-# capture + phân tích bằng AI vision:
+# 擷取並以 AI vision 分析：
 npm run generate -- --url https://example.com --vision ai
 
-# phân tích LẠI 1 job đã capture (không mở browser lại) bằng AI vision:
+# 以 AI vision 重新分析 1 個已擷取的 job（不重新開啟 browser）：
 npm run generate -- --job job_xxxxxxxx --vision ai
 ```
 
-Yêu cầu: Claude CLI đã đăng nhập trên máy (kiểm tra bằng `claude --version`). Mỗi
-subagent gọi ~5–15s, chạy song song (mặc định 4 luồng, chỉnh bằng `--vision-concurrency`).
-Kết quả vision lưu ở `storage/reports/<jobId>/vision-ai-report.json`, ảnh crop ở
-`storage/vision/<jobId>/`. Mọi lỗi của 1 subagent đều fallback êm về kết quả heuristic
-của section đó — pipeline không bao giờ hỏng vì vision.
+需求：機器上的 Claude CLI 已登入（以 `claude --version` 檢查）。每個
+subagent 呼叫約 5–15 秒，並行執行（預設 4 條執行緒，以 `--vision-concurrency` 調整）。
+vision 結果儲存於 `storage/reports/<jobId>/vision-ai-report.json`，裁切圖位於
+`storage/vision/<jobId>/`。任一 subagent 的所有錯誤都會平順地 fallback 回該 section 的 heuristic
+結果 — pipeline 絕不會因 vision 而失敗。
 
-API: thêm `"vision": "ai"` (và tùy chọn `"visionModel": "sonnet"`) vào body `POST /jobs`.
+API：在 `POST /jobs` 的 body 中加入 `"vision": "ai"`（並可選擇加入 `"visionModel": "sonnet"`）。
 
-## Design system + hiệu ứng động (NATIVE Bricks settings)
+## Design system + 動態效果（NATIVE Bricks settings）
 
-Design và motion được áp bằng **setting NATIVE của Bricks** (không phải blob `_cssCustom`),
-nên **chỉnh sửa được ngay trong builder UI** và đi kèm template khi import như mọi element khác.
-Pass `applyNativeDesign` trong `packages/bricks/src/generate-json.ts` (fragment ở
-`packages/bricks/src/design-native.ts`) duyệt content sau khi flatten và gắn:
+Design 與 motion 是以 **Bricks 的 NATIVE 設定** 套用（而非 `_cssCustom` blob），
+因此 **可直接在 builder UI 中編輯**，並像其他任何 element 一樣在匯入時隨 template 一併帶入。
+`packages/bricks/src/generate-json.ts` 中的 `applyNativeDesign` pass（fragment 位於
+`packages/bricks/src/design-native.ts`）會在 flatten 之後走訪 content 並掛上：
 
-- **Thẻ (card)**: mặt thẻ `_background` + `_border` (bo góc + hairline) + `_boxShadow` (đổ bóng
-  chiều sâu) + `_padding`; hover nhấc thẻ bằng `_transform:hover` / `_boxShadow:hover` /
-  `_border:hover` + `_cssTransition` (biến thể pseudo-class, sửa được trong UI).
-- **Nút (button)**: hover nhấc nhẹ + quầng sáng theo màu primary (`_boxShadow:hover` tint theo
-  `theme.primaryColor`).
-- **Ảnh sản phẩm (media)**: bo góc + đổ bóng; **logo** (ảnh trong logo-row hoặc trong thẻ chỉ-ảnh)
-  bị làm mờ `_opacity: 0.55` rồi sáng lên khi hover.
-- **Animation vào-màn-hình khi cuộn**: hệ thống **Interactions native** (`_interactions`:
-  trigger `enterView` + action `startAnimation` + animate.css `fadeInUp`, `runOnce`). Đây là
-  cách KHÔNG deprecated (control `_animation` entry-animation đã deprecated từ Bricks 1.6).
+- **卡片（card）**：卡面 `_background` + `_border`（圓角 + hairline）+ `_boxShadow`（深度
+  陰影）+ `_padding`；hover 時以 `_transform:hover` / `_boxShadow:hover` /
+  `_border:hover` + `_cssTransition` 抬升卡片（pseudo-class 變體，可在 UI 中編輯）。
+- **按鈕（button）**：hover 時輕微抬升 + 依 primary 色的光暈（`_boxShadow:hover` 依
+  `theme.primaryColor` 上色）。
+- **產品圖（media）**：圓角 + 陰影；**logo**（logo-row 中的圖片或純圖卡中的圖片）
+  以 `_opacity: 0.55` 淡化，並在 hover 時提亮。
+- **捲動時的進場動畫**：**Interactions native** 系統（`_interactions`：
+  trigger `enterView` + action `startAnimation` + animate.css `fadeInUp`、`runOnce`）。這是
+  未被 deprecated 的做法（`_animation` entry-animation 控制項自 Bricks 1.6 起已 deprecated）。
 
-Planner (`map-section.ts`) vẫn gắn class ngữ nghĩa `.cdp-*` (cdp-card, cdp-hero-title, cdp-btn,
-cdp-primary-cta, cdp-media, cdp-logo-row...) lên element — pass native dùng các class này để
-quyết định element nào nhận gì (thẻ nội dung ≠ logo tile ≠ cột footer).
+Planner（`map-section.ts`）仍會在 element 上掛語意 class `.cdp-*`（cdp-card、cdp-hero-title、cdp-btn、
+cdp-primary-cta、cdp-media、cdp-logo-row...）— native pass 會利用這些 class 來
+決定哪個 element 接收什麼（內容卡 ≠ logo tile ≠ footer 欄）。
 
-**Không cần bật code-execution**: Bricks xuất các setting này thành CSS scope theo id
-(`#brxe-xxx {...}`, `#brxe-xxx:hover {...}`) + `data-interactions`, và tự enqueue
-`animate.min.css` + `bricks.min.js` (engine interactions). Nếu tắt JS, element entrance vẫn
-hiển thị bình thường (Bricks chỉ ẩn tạm bằng attribute do JS thêm — degrade an toàn).
+**無需啟用 code-execution**：Bricks 會將這些設定輸出為依 id 作用的 CSS scope
+（`#brxe-xxx {...}`、`#brxe-xxx:hover {...}`）+ `data-interactions`，並自動 enqueue
+`animate.min.css` + `bricks.min.js`（interactions engine）。若關閉 JS，element 進場仍會
+正常顯示（Bricks 只是以 JS 加入的 attribute 暫時隱藏 — 安全 degrade）。
 
-**Dải logo = marquee chạy vô hạn (跑馬燈)** (`packages/bricks/src/logo-marquee.ts`): một
-container mà TẤT CẢ con đều là logo card (≥4) được dựng lại thành viewport `overflow:hidden`
-chứa một track `flex nowrap` với bộ logo **nhân đôi** → cuộn ngang liên tục bằng
-`@keyframes translateX(0 → -50%)` (2 bản khớp nhau nên loop liền mạch), fade 2 mép bằng
-`mask-image`, hover thì dừng, `prefers-reduced-motion` thì về lưới tĩnh. Đây là hiệu ứng DUY
-NHẤT phải dùng `@keyframes` (setting native của Bricks không biểu diễn được vòng lặp vô hạn),
-nên riêng khối này mang một đoạn CSS nhỏ trong `_cssCustom` của viewport — vẫn đi kèm template
-khi import, không cần gate.
+**Logo 帶狀 = 無限捲動 marquee（跑馬燈）**（`packages/bricks/src/logo-marquee.ts`）：一個
+所有子項皆為 logo card（≥4）的 container 會被重建為 `overflow:hidden` 的 viewport，
+其中包含一條帶有 **加倍** logo 組的 `flex nowrap` track → 以
+`@keyframes translateX(0 → -50%)` 連續橫向捲動（兩份彼此對齊，因此 loop 無縫接續），以
+`mask-image` 淡化兩端邊緣，hover 時暫停，`prefers-reduced-motion` 時回到靜態格線。這是唯一
+必須使用 `@keyframes` 的效果（Bricks 的 native 設定無法表達無限迴圈），
+因此僅此區塊會在 viewport 的 `_cssCustom` 中攜帶一小段 CSS — 仍會在匯入時隨 template 一併帶入，無需 gate。
 
-**Feature-card glow** (`packages/bricks/src/feature-card.ts`): khối split nổi bật (heading + media,
-KHÔNG phải hero) được dựng thành **card frosted có viền gradient phát sáng** giống các block
-"feature" của web hiện đại: nền trong mờ + `backdrop-blur`, viền hairline, bo góc, padding rộng
-(native, sửa được trong builder) + một `::before` mask gradient-border xoay bằng
-`@property`/`@keyframes` (glow luôn động, đậm hơn khi hover) trong `_cssCustom` scope theo id.
-Chỉ áp cho split ngoài hero để không "glow nhầm" các bố cục 2 cột thường.
+**Feature-card glow**（`packages/bricks/src/feature-card.ts`）：突出的 split 區塊（heading + media，
+而非 hero）會被建構為 **帶有發光 gradient 邊框的 frosted card**，如同現代網頁的
+「feature」區塊：半透明背景 + `backdrop-blur`、hairline 邊框、圓角、寬 padding
+（native，可在 builder 中編輯）+ 一個以 `@property`/`@keyframes` 旋轉的 `::before` gradient-border mask
+（glow 恆常動態，hover 時更濃），置於依 id 作用的 `_cssCustom` scope 中。
+僅套用於 hero 以外的 split，以免「glow 錯」一般的 2 欄版面配置。
 
-## Cách 2 — API Server + Dashboard
+## 方式 2 — API Server + Dashboard
 
 ```bash
 npm run api
 # → http://localhost:4000  (dashboard)
 ```
 
-Endpoints (theo ARCHITECTURE §4):
+Endpoints（依 ARCHITECTURE §4）：
 
 ```text
 POST /jobs                        { "url": "...", "mode": "landing-page", "viewports": [...], "output": "bricks-json" }
-GET  /jobs/:id                    trạng thái job + artifact paths
+GET  /jobs/:id                    job 狀態 + artifact paths
 GET  /jobs/:id/report             analysis report + validation report
 GET  /jobs/:id/download-json      template.json
 GET  /jobs/:id/download-zip       template-kit.zip
-GET  /jobs                        danh sách job (dashboard)
+GET  /jobs                        job 清單（dashboard）
 GET  /jobs/:id/ir                 Page IR
-POST /jobs/:id/regenerate         sửa IR → sinh lại Bricks JSON (chỉnh mapping)
+POST /jobs/:id/regenerate         修改 IR → 重新生成 Bricks JSON（調整 mapping）
 ```
 
-Dashboard cho phép: xem screenshot gốc, xem detected sections (overlay box), xem cây Bricks structure, sửa Page IR rồi regenerate, xem điểm validation, download JSON/ZIP.
+Dashboard 允許：檢視原始螢幕截圖、檢視 detected sections（overlay box）、檢視 Bricks structure 樹、修改 Page IR 後 regenerate、檢視 validation 分數、下載 JSON/ZIP。
 
-## Import vào Bricks Builder
+## 匯入 Bricks Builder
 
-1. WordPress → Bricks → Templates → **Import Templates** → chọn `template.json` (hoặc cả `template-kit.zip` — zip đã được thiết kế chỉ chứa đúng 1 file .json nên chỉ tạo **1 template**).
-2. Template xuất hiện trong **My Templates** với tên dạng `example.com (CDP generated)`.
-3. Import **không tự tạo trang**: tạo Page mới → **Edit with Bricks** → mở template library → insert template vừa import → Save.
+1. WordPress → Bricks → Templates → **Import Templates** → 選擇 `template.json`（或整個 `template-kit.zip` — 該 zip 已設計為僅包含恰好 1 個 .json 檔，因此只會建立 **1 個 template**）。
+2. Template 會以 `example.com (CDP generated)` 這類名稱出現在 **My Templates** 中。
+3. 匯入 **不會自動建立頁面**：建立新的 Page → **Edit with Bricks** → 開啟 template library → 插入剛匯入的 template → Save。
 
-> ⚠️ Bricks coi mỗi file `.json` trong zip là 1 template riêng. Vì vậy các file trung gian trong kit (`page-ir`, `analysis-report`, `validation-report`) được đổi đuôi thành `.json.txt` và nằm trong thư mục `meta/` — muốn dùng lại thì bỏ đuôi `.txt`.
+> ⚠️ Bricks 將 zip 中的每個 `.json` 檔都視為 1 個獨立 template。因此 kit 中的中間檔案（`page-ir`、`analysis-report`、`validation-report`）副檔名被改為 `.json.txt` 並置於 `meta/` 目錄中 — 若要重複使用，去掉 `.txt` 副檔名即可。
 
-## Ghi chú MVP so với kiến trúc production
+## MVP 相對於 production 架構的說明
 
-| Thành phần | MVP hiện tại | Production (theo ARCHITECTURE) |
+| 元件 | 目前 MVP | Production（依 ARCHITECTURE） |
 |---|---|---|
-| Queue | In-memory queue (concurrency qua `WORKER_CONCURRENCY`) | BullMQ + Redis |
-| Database | `storage/db.json` (đủ 5 bảng theo §18) | PostgreSQL |
-| Preview validation | Render HTML xấp xỉ từ Bricks JSON + screenshot diff | WordPress staging render (MVP 3) |
-| Assets | Giữ remote URL (status `remote`) | Upload WordPress Media Library (MVP 4) |
-| Vision analyzer | Heuristic (pixel sampling + box model + rule engine §21) | Có thể thay bằng vision model |
+| Queue | In-memory queue（透過 `WORKER_CONCURRENCY` 控制 concurrency） | BullMQ + Redis |
+| Database | `storage/db.json`（依 §18 具備完整 5 張表） | PostgreSQL |
+| Preview validation | 從 Bricks JSON 近似渲染 HTML + 螢幕截圖 diff | WordPress staging render（MVP 3） |
+| Assets | 保留 remote URL（狀態 `remote`） | 上傳 WordPress Media Library（MVP 4） |
+| Vision analyzer | Heuristic（像素取樣 + box model + rule engine §21） | 可替換為 vision model |
 
-## Lưu ý pháp lý
+## 法律注意事項
 
-Chỉ dùng cho website của bạn / khách hàng đã cho phép / rebuild nội bộ / mục đích học tập (xem ARCHITECTURE §25).
+僅供用於您自己的網站／已獲客戶授權的網站／內部 rebuild／學習目的（參見 ARCHITECTURE §25）。

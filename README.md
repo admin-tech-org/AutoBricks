@@ -1,49 +1,49 @@
 # Bricks CDP Visual Generator
 
-Render a real website with CDP/Playwright, capture **screenshot + DOM + computed
-CSS + layout boxes**, merge into a **Page IR**, and generate clean, importable
-**Bricks Builder JSON** (WordPress).
+以 CDP/Playwright 渲染真實網站，擷取**螢幕截圖 + DOM + 計算後的
+CSS + 版面配置框**，合併為 **Page IR**，再產生乾淨、可匯入的
+**Bricks Builder JSON**（WordPress）。
 
 ```text
 URL → CDP/Playwright capture → heuristic Analyzer → (optional AI Vision) → Page IR
     → Bricks Planner → flat Bricks JSON → Validator → Export (.json / kit .zip)
 ```
 
-> DOM = what exists · Screenshot = how it looks · Computed CSS + bounding boxes =
-> where and how big. The Page IR is the single source of truth before emitting
-> Bricks JSON.
+> DOM = 存在什麼 · 螢幕截圖 = 看起來如何 · 計算後的 CSS + 邊界框 =
+> 位置與大小。Page IR 是產生 Bricks JSON
+> 前的唯一真實來源。
 
-## Yêu cầu
+## 需求
 
-- **Node.js ≥ 18** (dự án Node/TypeScript, npm workspaces — **không dùng Python**)
-- Chromium cho Playwright (cài 1 lần bằng lệnh dưới)
+- **Node.js ≥ 18**（Node/TypeScript 專案，npm workspaces — **不使用 Python**）
+- 供 Playwright 使用的 Chromium（用下方指令安裝一次即可）
 
-## Cài đặt
+## 安裝
 
 ```bash
 npm install
-npm run browsers        # playwright install chromium (1 lần)
-npm run build           # tsc -b + build dashboard
+npm run browsers        # playwright 安裝 chromium（一次即可）
+npm run build           # tsc -b + 建置 dashboard
 ```
 
-## Dùng nhanh (CLI)
+## 快速使用（CLI）
 
 ```bash
-# capture + generate từ URL thật:
+# 從真實 URL 擷取 + 產生：
 npm run generate -- --url https://example.com
 
-# test bằng fixture local:
+# 使用本地 fixture 測試：
 npm run generate -- --url "file:///<path>/test-fixtures/landing.html"
 
-# chế độ AI Vision (pixel-fidelity, fan-out subagent claude -p song song):
+# AI Vision 模式（pixel-fidelity，平行 fan-out subagent claude -p）：
 npm run generate -- --url https://example.com --vision ai
 
-# phân tích lại 1 job đã capture (không mở browser lại):
+# 重新分析 1 個已擷取的 job（不重新開啟 browser）：
 npm run generate -- --job <jobId> --vision ai
 ```
 
-Output nằm trong `storage/` (đã gitignore): `screenshots/`, `snapshots/`, `ir/`,
-`templates/{template.json, template-kit.zip}`, `reports/`.
+輸出位於 `storage/`（已列入 gitignore）：`screenshots/`、`snapshots/`、`ir/`、
+`templates/{template.json, template-kit.zip}`、`reports/`。
 
 ## API + Dashboard
 
@@ -51,31 +51,31 @@ Output nằm trong `storage/` (đã gitignore): `screenshots/`, `snapshots/`, `i
 npm run api             # http://localhost:4000
 ```
 
-## Cấu trúc
+## 結構
 
 ```text
-packages/   ir · capture · analyzer · bricks · export · validation   (contract types ở packages/ir/src/types.ts)
+packages/   ir · capture · analyzer · bricks · export · validation   (契約型別位於 packages/ir/src/types.ts)
 apps/       api · dashboard
-workers/    job pipeline stages
+workers/    job 管線階段
 ```
 
-## Tài liệu
+## 文件
 
-- [GETTING-STARTED.md](./GETTING-STARTED.md) — hướng dẫn dùng chi tiết, options, chế độ vision, design/animation.
-- [ARCHITECTURE-bricks-cdp-visual-generator.md](./ARCHITECTURE-bricks-cdp-visual-generator.md) — kiến trúc đầy đủ.
-- [README-bricks-cdp-visual-generator.md](./README-bricks-cdp-visual-generator.md) — triết lý thiết kế (vì sao Page IR).
+- [GETTING-STARTED.md](./GETTING-STARTED.md) — 詳細使用指南、選項、vision 模式、design/animation。
+- [ARCHITECTURE-bricks-cdp-visual-generator.md](./ARCHITECTURE-bricks-cdp-visual-generator.md) — 完整架構。
+- [README-bricks-cdp-visual-generator.md](./README-bricks-cdp-visual-generator.md) — 設計理念（為何採用 Page IR）。
 
-## Import vào Bricks
+## 匯入 Bricks
 
-WordPress → Bricks → Templates → **Import Templates** → chọn `template.json`.
-Mỗi `.json` = 1 template; kit `.zip` được thiết kế chỉ chứa đúng 1 `.json`.
+WordPress → Bricks → Templates → **Import Templates** → 選擇 `template.json`。
+每個 `.json` = 1 個 template；kit `.zip` 刻意設計成只包含剛好 1 個 `.json`。
 
-## Cấu hình (tuỳ chọn)
+## 設定（選用）
 
-Sao chép `.env.example` → `.env`. Tất cả biến đều optional (`PORT`,
-`WORKER_CONCURRENCY`, `STORAGE_DIR`) — app chạy được với mặc định.
+複製 `.env.example` → `.env`。所有變數皆為選用（`PORT`、
+`WORKER_CONCURRENCY`、`STORAGE_DIR`）— app 以預設值即可執行。
 
-## Lưu ý pháp lý
+## 法律注意事項
 
-Chỉ dùng cho website của bạn / khách hàng đã cho phép / rebuild nội bộ / mục đích
-học tập.
+僅可用於你的網站 / 已授權的客戶 / 內部重建 /
+學習用途。

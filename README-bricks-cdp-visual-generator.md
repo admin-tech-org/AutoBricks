@@ -1,12 +1,12 @@
 # Bricks CDP Visual Generator
 
-## Mục tiêu
+## 目標
 
-Dự án này nhằm tạo một hệ thống có thể đọc một website đã render thực tế trong browser, chụp màn hình bằng CDP/Playwright, phân tích giao diện bằng hình ảnh, DOM, CSS và layout metrics, sau đó sinh ra file **Bricks Builder JSON** có thể import vào WordPress Bricks Builder.
+本專案旨在建立一套系統，能夠讀取在瀏覽器中實際渲染的網站，透過 CDP/Playwright 擷取螢幕截圖，並運用影像、DOM、CSS 與 layout metrics 分析介面，接著產生可匯入 WordPress Bricks Builder 的 **Bricks Builder JSON** 檔案。
 
-Điểm quan trọng: hệ thống **không chỉ đọc HTML** và cũng **không chỉ dùng AI nhìn ảnh để đoán toàn bộ**.
+重點在於：這套系統 **不只是讀取 HTML**，也 **不只是用 AI 看圖來猜測整個頁面**。
 
-Hướng đúng là:
+正確的方向是：
 
 ```text
 Screenshot + DOM + Computed CSS + Bounding Box
@@ -16,27 +16,27 @@ Page Intermediate Representation (Page IR)
 Bricks Builder JSON
 ```
 
-## Nguyên tắc thiết kế
+## 設計原則
 
 ```text
-DOM là source of truth cho content.
-Screenshot là source of truth cho visual structure.
-Computed CSS là source of truth cho style.
-Bounding box là source of truth cho position và spacing.
-Page IR là source of truth trước khi sinh Bricks JSON.
+DOM 是內容的真實來源。
+Screenshot 是視覺結構的真實來源。
+Computed CSS 是樣式的真實來源。
+Bounding box 是位置與間距的真實來源。
+Page IR 是產生 Bricks JSON 之前的真實來源。
 ```
 
-Nói cách khác:
+換句話說：
 
 ```text
-HTML tells WHAT exists.
-Screenshot tells HOW it looks.
-CSS/layout metrics tell WHERE and HOW BIG it is.
+HTML 說明「有什麼」。
+Screenshot 說明「看起來如何」。
+CSS/layout metrics 說明「在哪裡」以及「有多大」。
 ```
 
-## Vì sao không convert HTML trực tiếp sang Bricks JSON?
+## 為什麼不直接把 HTML 轉換成 Bricks JSON？
 
-HTML của website thật thường rất rối:
+真實網站的 HTML 通常非常雜亂：
 
 ```text
 div
@@ -46,9 +46,9 @@ div
             └── h1
 ```
 
-Nếu convert trực tiếp, output Bricks sẽ khó chỉnh sửa và không giống cách người dùng xây dựng layout trong Bricks.
+如果直接轉換，產生的 Bricks output 會難以編輯，也不符合使用者在 Bricks 中建構 layout 的方式。
 
-Mục tiêu của hệ thống là tạo cấu trúc Bricks sạch:
+這套系統的目標是產生乾淨的 Bricks 結構：
 
 ```text
 Section
@@ -56,44 +56,44 @@ Section
     └── Heading
 ```
 
-Hoặc với hero 2 cột:
+或是雙欄的 hero：
 
 ```text
 Section
 └── Container
-    └── Container: row
-        ├── Container: left column
+    └── Container：橫列
+        ├── Container：左欄
         │   ├── Heading
         │   ├── Text Basic
         │   └── Button
-        └── Container: right column
+        └── Container：右欄
             └── Image
 ```
 
-## Tổng quan pipeline
+## Pipeline 總覽
 
 ```text
-User nhập URL
+使用者輸入 URL
 ↓
-API Server tạo generate job
+API Server 建立 generate job
 ↓
-Browser Worker mở website bằng CDP/Playwright
+Browser Worker 使用 CDP/Playwright 開啟網站
 ↓
-Capture:
-  - Desktop screenshot
-  - Tablet screenshot
-  - Mobile screenshot
-  - Full-page screenshot
+擷取：
+  - Desktop 截圖
+  - Tablet 截圖
+  - Mobile 截圖
+  - 全頁截圖
   - DOM tree
   - Computed CSS
   - Bounding box
-  - Asset list
+  - Asset 清單
 ↓
-Vision Analyzer phân tích ảnh
+Vision Analyzer 分析影像
 ↓
-DOM Analyzer phân tích nội dung
+DOM Analyzer 分析內容
 ↓
-Layout Merger gộp screenshot + DOM + CSS + box model
+Layout Merger 合併 screenshot + DOM + CSS + box model
 ↓
 Page IR
 ↓
@@ -103,16 +103,16 @@ Bricks JSON Generator
 ↓
 Validator
 ↓
-Export .json / .zip
+匯出 .json / .zip
 ↓
-Preview + screenshot diff
+預覽 + 截圖差異比對
 ↓
-User tải file để import vào Bricks Builder
+使用者下載檔案以匯入 Bricks Builder
 ```
 
-## Input
+## 輸入
 
-Input cơ bản:
+基本輸入：
 
 ```json
 {
@@ -123,7 +123,7 @@ Input cơ bản:
 }
 ```
 
-Viewport đề xuất:
+建議的 Viewport：
 
 ```text
 desktop: 1440x900
@@ -131,9 +131,9 @@ tablet:  768x1024
 mobile:  390x844
 ```
 
-## Output
+## 輸出
 
-Output chính:
+主要輸出：
 
 ```text
 output/
@@ -162,9 +162,9 @@ output/
     └── analysis-report.json
 ```
 
-## Bricks JSON output
+## Bricks JSON 輸出
 
-Bricks Builder template JSON nên được sinh theo dạng flat array:
+Bricks Builder template JSON 應以 flat array 的形式產生：
 
 ```json
 {
@@ -197,21 +197,21 @@ Bricks Builder template JSON nên được sinh theo dạng flat array:
 }
 ```
 
-Generator phải đảm bảo:
+Generator 必須確保：
 
 ```text
-- ID unique
-- Parent tồn tại
-- Children tồn tại
-- Không có parent-child loop
-- Element name hợp lệ
-- Settings không chứa undefined/null lỗi
-- JSON có thể import được vào Bricks Builder
+- ID 唯一
+- Parent 存在
+- Children 存在
+- 沒有 parent-child 迴圈
+- Element name 合法
+- Settings 不包含錯誤的 undefined/null 值
+- JSON 可以匯入 Bricks Builder
 ```
 
-## Element hỗ trợ trong MVP
+## MVP 支援的 Element
 
-MVP nên bắt đầu với các element phổ biến nhất:
+MVP 應從最常見的 element 開始：
 
 ```text
 - section
@@ -226,35 +226,35 @@ MVP nên bắt đầu với các element phổ biến nhất:
 - divider
 ```
 
-Layout hỗ trợ trong MVP:
+MVP 支援的 Layout：
 
 ```text
-- one-column section
-- centered hero
-- two-column hero
-- three-card grid
-- simple feature section
-- simple CTA section
-- simple footer
+- 單欄 section
+- 置中 hero
+- 雙欄 hero
+- 三卡片 grid
+- 簡易 feature section
+- 簡易 CTA section
+- 簡易 footer
 ```
 
-Chưa nên hỗ trợ trong MVP:
+MVP 中尚不應支援：
 
 ```text
-- slider phức tạp
+- 複雜 slider
 - animation
 - query loop
 - WooCommerce
 - mega menu
-- form nâng cao
+- 進階 form
 - dynamic data
 ```
 
 ## Page IR
 
-Không nên sinh Bricks JSON trực tiếp từ HTML. Cần tạo một lớp trung gian gọi là **Page IR**.
+不應直接從 HTML 產生 Bricks JSON。需要建立一個稱為 **Page IR** 的中間層。
 
-Ví dụ:
+範例：
 
 ```json
 {
@@ -305,70 +305,70 @@ Ví dụ:
 }
 ```
 
-## Quy tắc ưu tiên dữ liệu
+## 資料優先順序規則
 
-| Dữ liệu cần quyết định | Nguồn ưu tiên |
+| 需要決定的資料 | 優先來源 |
 |---|---|
-| Text content | DOM |
-| Link URL | DOM |
-| Image source | DOM/CSS |
-| Section layout | Screenshot + bounding box |
-| Grid/card count | Screenshot + DOM |
-| Font size | Computed CSS |
-| Color | Computed CSS + screenshot |
-| Theme style | Screenshot |
-| Responsive behavior | Multi-viewport screenshot |
-| Spacing | Bounding box + screenshot |
-| Component semantic | Screenshot + DOM role/tag |
+| 文字內容 | DOM |
+| 連結 URL | DOM |
+| 圖片來源 | DOM/CSS |
+| Section 版面配置 | Screenshot + bounding box |
+| Grid/card 數量 | Screenshot + DOM |
+| 字型大小 | Computed CSS |
+| 顏色 | Computed CSS + screenshot |
+| 主題樣式 | Screenshot |
+| 響應式行為 | Multi-viewport screenshot |
+| 間距 | Bounding box + screenshot |
+| 元件語意 | Screenshot + DOM role/tag |
 
-## Validation
+## 驗證
 
-Có 2 lớp validation.
+共有兩層驗證。
 
-### 1. JSON validation
-
-```text
-- content phải là array
-- mỗi element có id
-- mỗi element có name
-- mỗi element có parent
-- mỗi element có children
-- mọi parent ID phải tồn tại, trừ parent = 0
-- mọi children ID phải tồn tại
-- không có duplicate ID
-- không có vòng lặp parent-child
-- element name nằm trong whitelist
-```
-
-### 2. Visual validation
-
-Sau khi sinh Bricks JSON:
+### 1. JSON 驗證
 
 ```text
-Original website screenshot
-↓
-Generated Bricks preview screenshot
-↓
-Screenshot diff
-↓
-Score + warnings
+- content 必須是 array
+- 每個 element 都有 id
+- 每個 element 都有 name
+- 每個 element 都有 parent
+- 每個 element 都有 children
+- 每個 parent ID 都必須存在，parent = 0 除外
+- 每個 children ID 都必須存在
+- 沒有重複的 ID
+- 沒有 parent-child 迴圈
+- element name 必須在 whitelist 之內
 ```
 
-So sánh:
+### 2. 視覺驗證
+
+產生 Bricks JSON 之後：
 
 ```text
-- section count
-- heading hierarchy
-- heading position
-- button position
-- image placement
-- color similarity
-- spacing similarity
-- grid/card layout
-- mobile stacking
+原始網站截圖
+↓
+產生的 Bricks 預覽截圖
+↓
+截圖差異比對
+↓
+分數 + 警告
 ```
 
-Report ví dụ:
+比較：
+
+```text
+- section 數量
+- heading 階層
+- heading 位置
+- button 位置
+- image 位置
+- 顏色相似度
+- 間距相似度
+- grid/card 版面配置
+- mobile 堆疊
+```
+
+報告範例：
 
 ```json
 {
@@ -385,15 +385,15 @@ Report ví dụ:
 }
 ```
 
-## Phase phát triển
+## 開發階段
 
-### Phase 1 — Basic generator
+### Phase 1 — 基礎產生器
 
 ```text
 URL → screenshot + DOM + CSS → Page IR → Bricks JSON
 ```
 
-Hỗ trợ:
+支援：
 
 ```text
 - section
@@ -402,59 +402,59 @@ Hỗ trợ:
 - text-basic
 - button
 - image
-- background color
-- basic spacing
+- 背景顏色
+- 基本間距
 ```
 
-### Phase 2 — Theme and responsive
+### Phase 2 — 主題與響應式
 
 ```text
-- detect color system
-- detect font scale
-- detect spacing scale
-- detect card style
-- detect border radius
-- detect background image/gradient
-- detect mobile stacking
+- 偵測 color system
+- 偵測 font scale
+- 偵測 spacing scale
+- 偵測 card style
+- 偵測 border radius
+- 偵測 background image/gradient
+- 偵測 mobile stacking
 ```
 
-### Phase 3 — Preview and screenshot diff
+### Phase 3 — 預覽與截圖差異比對
 
 ```text
-- render generated Bricks page trong WordPress staging
-- capture generated screenshot
-- compare với original screenshot
-- generate validation score
-- tự động tinh chỉnh spacing/style nếu cần
+- 在 WordPress staging 中渲染產生的 Bricks 頁面
+- 擷取產生的截圖
+- 與原始截圖比較
+- 產生驗證分數
+- 必要時自動微調間距/樣式
 ```
 
-### Phase 4 — Bricks-native optimization
+### Phase 4 — Bricks 原生最佳化
 
 ```text
 - global classes
 - CSS variables
 - theme styles
-- reusable sections
-- header/footer template
-- clean editable structure
+- 可重複使用的 section
+- header/footer 範本
+- 乾淨、可編輯的結構
 ```
 
-## Cảnh báo pháp lý và đạo đức
+## 法律與道德警告
 
-Hệ thống này nên dùng cho:
+這套系統適合用於：
 
 ```text
-- Website của chính bạn
-- Website khách hàng đã cho phép
-- Internal design migration
-- Rebuild layout hợp pháp
-- Prototype / testing / educational use
+- 你自己的網站
+- 客戶已授權的網站
+- 內部設計遷移
+- 合法的版面重建
+- 原型 / 測試 / 教育用途
 ```
 
-Không nên dùng để sao chép trái phép website, thương hiệu, hình ảnh, text hoặc thiết kế có bản quyền.
+不應將其用於非法複製受著作權保護的網站、品牌、圖片、文字或設計。
 
-## Cách mô tả dự án ngắn gọn
+## 專案簡短描述
 
 ```text
-Bricks CDP Visual Generator là hệ thống dùng CDP/Playwright để render website thật trong browser, chụp màn hình, trích xuất DOM/CSS/layout metrics, phân tích visual structure và theme, sau đó merge dữ liệu thành Page IR rồi sinh Bricks Builder JSON sạch, import được và dễ chỉnh sửa.
+Bricks CDP Visual Generator 是一套使用 CDP/Playwright 在瀏覽器中渲染真實網站、擷取螢幕截圖、抽取 DOM/CSS/layout metrics、分析視覺結構與主題，接著將資料合併為 Page IR，再產生乾淨、可匯入且易於編輯的 Bricks Builder JSON 的系統。
 ```

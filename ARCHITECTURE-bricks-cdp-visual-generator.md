@@ -1,10 +1,10 @@
-# Architecture — Bricks CDP Visual Generator
+# 架構 — Bricks CDP Visual Generator
 
-## 1. Tổng quan hệ thống
+## 1. 系統總覽
 
-Hệ thống được thiết kế để chuyển một website đã render thực tế thành Bricks Builder template JSON bằng cách kết hợp dữ liệu thị giác và dữ liệu kỹ thuật từ browser.
+本系統的設計目標是透過結合來自 browser 的視覺資料與技術資料，將一個已實際 render 的 website 轉換成 Bricks Builder template JSON。
 
-Luồng tổng quát:
+整體流程：
 
 ```text
 Input URL
@@ -34,59 +34,59 @@ Exporter
 Preview + Screenshot Diff
 ```
 
-## 2. Ba lớp chính
+## 2. 三個主要層級
 
 ```text
 1. Capture Layer
-   Dùng CDP/Playwright để mở website, chụp màn hình, lấy DOM, CSS, box model.
+   使用 CDP/Playwright 開啟 website、擷取螢幕截圖、取得 DOM、CSS、box model。
 
 2. Intelligence Layer
-   Phân tích screenshot + DOM + CSS để hiểu layout, theme, section, component.
+   分析 screenshot + DOM + CSS 以理解 layout、theme、section、component。
 
 3. Generation Layer
-   Chuyển kết quả phân tích thành Bricks Builder .json / .zip.
+   將分析結果轉換成 Bricks Builder .json / .zip。
 ```
 
-## 3. System components
+## 3. 系統元件
 
 ```text
 bricks-cdp-visual-generator
 │
 ├── API Server
-│   ├── nhận URL
-│   ├── tạo job
-│   ├── trả trạng thái job
-│   └── trả file .json / .zip
+│   ├── 接收 URL
+│   ├── 建立 job
+│   ├── 回傳 job 狀態
+│   └── 回傳 .json / .zip 檔案
 │
 ├── Queue
-│   └── xử lý job nặng bằng worker
+│   └── 以 worker 處理繁重的 job
 │
 ├── Browser Worker
-│   ├── mở Chrome bằng CDP
-│   ├── set viewport
-│   ├── scroll page
-│   ├── chụp screenshot
-│   └── extract DOM/CSS/layout
+│   ├── 以 CDP 開啟 Chrome
+│   ├── 設定 viewport
+│   ├── 捲動 page
+│   ├── 擷取 screenshot
+│   └── 擷取 DOM/CSS/layout
 │
 ├── Analyzer Worker
-│   ├── phân tích screenshot
-│   ├── detect section
-│   ├── detect theme
-│   ├── detect layout
-│   ├── classify component
-│   └── merge với DOM
+│   ├── 分析 screenshot
+│   ├── 偵測 section
+│   ├── 偵測 theme
+│   ├── 偵測 layout
+│   ├── 分類 component
+│   └── 與 DOM 合併
 │
 ├── Bricks Generator
-│   ├── tạo element tree
-│   ├── flatten thành Bricks content array
-│   ├── map style sang Bricks settings
-│   └── export JSON/ZIP
+│   ├── 建立 element tree
+│   ├── 扁平化成 Bricks content array
+│   ├── 將 style 映射成 Bricks settings
+│   └── 匯出 JSON/ZIP
 │
 ├── Validator
-│   ├── check JSON
-│   ├── check parent/children
-│   ├── check element name
-│   ├── check missing asset
+│   ├── 檢查 JSON
+│   ├── 檢查 parent/children
+│   ├── 檢查 element name
+│   ├── 檢查缺少的 asset
 │   └── screenshot diff
 │
 ├── Storage
@@ -97,18 +97,18 @@ bricks-cdp-visual-generator
 │   └── reports
 │
 └── Dashboard
-    ├── xem screenshot gốc
-    ├── xem detected sections
-    ├── chỉnh mapping
-    ├── preview Bricks structure
-    └── download template
+    ├── 檢視原始 screenshot
+    ├── 檢視偵測到的 sections
+    ├── 調整 mapping
+    ├── 預覽 Bricks structure
+    └── 下載 template
 ```
 
 ## 4. API Server
 
-API Server nhận yêu cầu generate từ user và tạo job.
+API Server 接收來自 user 的 generate 請求並建立 job。
 
-Endpoint đề xuất:
+建議的 endpoint：
 
 ```text
 POST /jobs
@@ -118,7 +118,7 @@ GET  /jobs/:id/download-json
 GET  /jobs/:id/download-zip
 ```
 
-Request ví dụ:
+Request 範例：
 
 ```json
 {
@@ -129,7 +129,7 @@ Request ví dụ:
 }
 ```
 
-Response ví dụ:
+Response 範例：
 
 ```json
 {
@@ -138,11 +138,11 @@ Response ví dụ:
 }
 ```
 
-## 5. Queue design
+## 5. Queue 設計
 
-Không xử lý trực tiếp trong request vì capture browser, phân tích ảnh và generate template có thể tốn thời gian.
+不在 request 中直接處理，因為 capture browser、影像分析與 generate template 可能相當耗時。
 
-Luồng queue:
+Queue 流程：
 
 ```text
 API Server
@@ -160,22 +160,22 @@ Validate Worker
 Export Worker
 ```
 
-Stack đề xuất:
+建議的技術堆疊：
 
 ```text
 - Node.js / TypeScript
-- Playwright hoặc Puppeteer CDP
+- Playwright 或 Puppeteer CDP
 - BullMQ + Redis
 - PostgreSQL
-- S3-compatible storage hoặc local filesystem
-- WordPress staging site cho preview validation
+- S3-compatible storage 或 local filesystem
+- 用於 preview validation 的 WordPress staging site
 ```
 
 ## 6. Capture Layer
 
-Capture Layer mở website bằng browser thật để lấy dữ liệu sau khi browser đã render.
+Capture Layer 使用真實的 browser 開啟 website，以取得 browser render 完成後的資料。
 
-### Input
+### 輸入
 
 ```text
 - URL
@@ -185,7 +185,7 @@ Capture Layer mở website bằng browser thật để lấy dữ liệu sau khi
 - Scroll strategy
 ```
 
-### Output
+### 輸出
 
 ```text
 screenshots/
@@ -201,7 +201,7 @@ snapshots/
 └── assets.json
 ```
 
-### Dữ liệu cần capture
+### 需要擷取的資料
 
 ```text
 1. Screenshot
@@ -246,45 +246,45 @@ snapshots/
    - font
 ```
 
-## 7. Browser capture flow
+## 7. Browser 擷取流程
 
 ```text
-1. Launch Chromium
-2. Create browser context
-3. Set viewport
-4. Open URL
-5. Wait for network idle / DOM loaded
-6. Dismiss common cookie/modal overlays nếu có thể
-7. Scroll page để lazy-load assets
-8. Capture viewport screenshot
-9. Capture full-page screenshot
-10. Extract DOM tree
-11. Extract computed styles
-12. Extract bounding boxes
-13. Extract assets
-14. Save snapshots
+1. 啟動 Chromium
+2. 建立 browser context
+3. 設定 viewport
+4. 開啟 URL
+5. 等待 network idle / DOM loaded
+6. 盡可能關閉常見的 cookie/modal overlay
+7. 捲動 page 以觸發 assets 的 lazy-load
+8. 擷取 viewport screenshot
+9. 擷取 full-page screenshot
+10. 擷取 DOM tree
+11. 擷取 computed styles
+12. 擷取 bounding boxes
+13. 擷取 assets
+14. 儲存 snapshots
 ```
 
 ## 8. Vision Analyzer
 
-Vision Analyzer dùng screenshot để hiểu giao diện, không dùng để lấy text chính.
+Vision Analyzer 使用 screenshot 來理解介面，而非用來取得主要 text。
 
-Screenshot dùng để xác nhận:
+Screenshot 用於確認：
 
 ```text
-- Website thuộc kiểu gì?
-- Section nào là hero?
-- Section nào là feature?
-- Section nào là pricing/testimonial/footer?
-- Layout là 1 cột, 2 cột, grid hay card?
-- Màu chủ đạo là gì?
-- Button chính nằm ở đâu?
-- Card count có đúng không?
-- Header/footer có tồn tại không?
-- Mobile layout có stack không?
+- Website 屬於哪一種類型？
+- 哪個 section 是 hero？
+- 哪個 section 是 feature？
+- 哪個 section 是 pricing/testimonial/footer？
+- Layout 是單欄、雙欄、grid 還是 card？
+- 主色調是什麼？
+- 主要 button 位於哪裡？
+- Card count 是否正確？
+- Header/footer 是否存在？
+- Mobile layout 是否會 stack？
 ```
 
-Output ví dụ:
+輸出範例：
 
 ```json
 {
@@ -323,9 +323,9 @@ Output ví dụ:
 
 ## 9. DOM Analyzer
 
-DOM Analyzer lấy dữ liệu thật từ DOM.
+DOM Analyzer 從 DOM 取得真實資料。
 
-Dùng DOM cho:
+DOM 用於：
 
 ```text
 - Heading text
@@ -339,7 +339,7 @@ Dùng DOM cho:
 - Semantic tags
 ```
 
-Output ví dụ:
+輸出範例：
 
 ```json
 {
@@ -378,9 +378,9 @@ Output ví dụ:
 
 ## 10. Layout Merger
 
-Layout Merger là phần quyết định chất lượng output.
+Layout Merger 是決定 output 品質的關鍵部分。
 
-Nó gộp:
+它會整合：
 
 ```text
 Screenshot analysis
@@ -392,13 +392,13 @@ Computed CSS
 Bounding boxes
 ```
 
-thành **Page IR**.
+成為 **Page IR**。
 
-Không sinh Bricks JSON trực tiếp từ HTML.
+不會直接從 HTML 產生 Bricks JSON。
 
 ## 11. Page IR schema
 
-Page IR là format trung gian có thể debug được.
+Page IR 是一種可 debug 的中間格式。
 
 ```ts
 type PageIR = {
@@ -451,7 +451,7 @@ type Box = {
 };
 ```
 
-## 12. Example Page IR
+## 12. Page IR 範例
 
 ```json
 {
@@ -506,15 +506,15 @@ type Box = {
 
 ## 13. Bricks Planner
 
-Bricks Planner chuyển Page IR thành cấu trúc Bricks sạch, dễ chỉnh sửa.
+Bricks Planner 將 Page IR 轉換成乾淨、易於編輯的 Bricks 結構。
 
-Ví dụ Page IR:
+Page IR 範例：
 
 ```text
 Hero section, two columns, heading, text, button, image
 ```
 
-Bricks structure:
+Bricks 結構：
 
 ```text
 Section
@@ -528,13 +528,13 @@ Section
             └── Image
 ```
 
-Planner không được copy DOM rác. Nó phải normalize thành component structure hợp lý.
+Planner 不得複製垃圾 DOM。它必須 normalize 成合理的 component structure。
 
 ## 14. Bricks JSON Generator
 
-Bricks JSON Generator biến Bricks plan thành flat content array.
+Bricks JSON Generator 將 Bricks plan 轉換成扁平的 content array。
 
-Bricks element type:
+Bricks element 型別：
 
 ```ts
 type BricksElement = {
@@ -546,7 +546,7 @@ type BricksElement = {
 };
 ```
 
-Output example:
+輸出範例：
 
 ```json
 {
@@ -579,9 +579,9 @@ Output example:
 
 ## 15. Style Mapper
 
-Style Mapper không nên copy toàn bộ CSS. Nó cần normalize CSS thành Bricks-friendly settings.
+Style Mapper 不應複製整份 CSS。它需要將 CSS normalize 成適合 Bricks 的 settings。
 
-Map trước các style quan trọng:
+優先映射重要的 style：
 
 ```text
 Typography:
@@ -611,10 +611,10 @@ Visual:
 - box-shadow
 ```
 
-Ví dụ normalize:
+normalize 範例：
 
 ```text
-CSS gốc:
+原始 CSS:
 font-size: 63.734px;
 line-height: 71.982px;
 margin-top: 17px;
@@ -627,39 +627,39 @@ margin-top: 16px;
 
 ## 16. Asset Pipeline
 
-Ảnh và background cần xử lý riêng.
+圖片與 background 需要獨立處理。
 
-Pipeline đề xuất:
+建議的 pipeline：
 
 ```text
-1. Extract image src/background-image từ DOM/CSS
-2. Download asset
-3. Upload vào WordPress Media Library
-4. Lấy attachment ID
-5. Ghi attachment ID vào Bricks JSON
+1. 從 DOM/CSS 擷取 image src/background-image
+2. 下載 asset
+3. 上傳至 WordPress Media Library
+4. 取得 attachment ID
+5. 將 attachment ID 寫入 Bricks JSON
 ```
 
-MVP có thể dùng remote URL, nhưng bản production nên upload vào WordPress Media Library.
+MVP 可以使用 remote URL，但 production 版本應上傳至 WordPress Media Library。
 
 ## 17. Validator
 
 ### JSON Validator
 
-Kiểm tra:
+檢查項目：
 
 ```text
-- JSON parse được
-- Có key content
-- content là array
-- mọi id unique
-- mọi parent tồn tại, trừ parent = 0
-- mọi children tồn tại
-- không có vòng lặp parent-child
-- element name nằm trong whitelist
-- settings không chứa undefined
+- JSON 可正常 parse
+- 存在 content key
+- content 為 array
+- 所有 id 皆 unique
+- 所有 parent 皆存在，parent = 0 除外
+- 所有 children 皆存在
+- 不存在 parent-child 迴圈
+- element name 位於 whitelist 之中
+- settings 不包含 undefined
 ```
 
-Whitelist MVP:
+MVP 的 whitelist：
 
 ```ts
 const ALLOWED_ELEMENTS = [
@@ -678,23 +678,23 @@ const ALLOWED_ELEMENTS = [
 
 ### Visual Validator
 
-Luồng:
+流程：
 
 ```text
-Original website screenshot
+原始 website screenshot
 ↓
-Generate Bricks JSON
+產生 Bricks JSON
 ↓
-Import/render generated page trong WordPress/Bricks staging
+在 WordPress/Bricks staging 中 import/render 產生的 page
 ↓
-Capture generated screenshot
+擷取產生的 screenshot
 ↓
-Compare original vs generated
+比較原始版本與產生版本
 ↓
-Nếu lệch layout/màu/spacing quá nhiều → report warnings hoặc tinh chỉnh JSON
+若 layout/顏色/spacing 偏差過大 → 回報 warnings 或微調 JSON
 ```
 
-So sánh:
+比較項目：
 
 ```text
 - Section count
@@ -708,7 +708,7 @@ So sánh:
 - Card/grid count
 ```
 
-## 18. Database design
+## 18. 資料庫設計
 
 ### jobs
 
@@ -771,7 +771,7 @@ type
 status
 ```
 
-## 19. Repo structure
+## 19. Repo 結構
 
 ```text
 bricks-cdp-visual-generator/
@@ -842,95 +842,95 @@ bricks-cdp-visual-generator/
 └── README.md
 ```
 
-## 20. Worker responsibilities
+## 20. Worker 職責
 
 ### Capture Worker
 
 ```text
-- nhận job URL
-- mở browser
-- set viewport
-- chụp screenshot
-- extract DOM/CSS/layout
-- lưu snapshots
+- 接收 job URL
+- 開啟 browser
+- 設定 viewport
+- 擷取 screenshot
+- 擷取 DOM/CSS/layout
+- 儲存 snapshots
 ```
 
 ### Analyze Worker
 
 ```text
-- đọc screenshot
-- detect theme
-- detect sections
-- detect layout
-- classify components
-- merge với DOM/CSS/box
-- tạo Page IR
+- 讀取 screenshot
+- 偵測 theme
+- 偵測 sections
+- 偵測 layout
+- 分類 components
+- 與 DOM/CSS/box 合併
+- 建立 Page IR
 ```
 
 ### Generate Worker
 
 ```text
-- đọc Page IR
-- tạo Bricks plan
-- map Bricks elements
-- map style settings
-- generate JSON
-- write JSON/ZIP
+- 讀取 Page IR
+- 建立 Bricks plan
+- 映射 Bricks elements
+- 映射 style settings
+- 產生 JSON
+- 寫入 JSON/ZIP
 ```
 
 ### Validate Worker
 
 ```text
-- validate JSON
-- import/render preview nếu có WordPress staging
+- 驗證 JSON
+- 若有 WordPress staging 則 import/render preview
 - screenshot diff
-- tạo validation report
+- 建立 validation report
 ```
 
-## 21. Rule engine
+## 21. 規則引擎
 
-Một số rule cơ bản:
+一些基本的 rule：
 
 ```text
-Nếu block full-width và cao > 250px
+若 block 為 full-width 且高度 > 250px
 → section
 
-Nếu block nằm giữa và max-width từ 1000px đến 1400px
+若 block 置中且 max-width 介於 1000px 到 1400px
 → container
 
-Nếu nhiều child có cùng kích thước và nằm ngang
-→ grid hoặc flex row
+若多個 child 具有相同尺寸且水平排列
+→ grid 或 flex row
 
-Nếu text lớn nhất viewport và nằm gần top
+若 text 是 viewport 中最大且靠近 top
 → hero heading
 
-Nếu a/button có padding, background hoặc border
+若 a/button 具有 padding、background 或 border
 → button
 
-Nếu img/picture/svg lớn và chiếm visual area đáng kể
+若 img/picture/svg 很大且佔據相當可觀的 visual area
 → image
 
-Nếu nhiều card giống nhau
+若有多個相同的 card
 → card grid
 ```
 
-## 22. Source priority matrix
+## 22. 來源優先順序矩陣
 
-| Trường hợp | Nguồn ưu tiên |
+| 情境 | 優先來源 |
 |---|---|
-| Text content | DOM |
-| Link URL | DOM |
-| Image source | DOM/CSS |
+| 文字內容 | DOM |
+| 連結 URL | DOM |
+| 圖片來源 | DOM/CSS |
 | Layout section | Screenshot + bounding box |
-| Grid/card count | Screenshot + DOM |
-| Font size | Computed CSS |
-| Color | Computed CSS + screenshot |
-| Theme style | Screenshot |
-| Responsive behavior | Multi-viewport screenshot |
-| Spacing | Bounding box + screenshot |
-| Component semantic | Screenshot + DOM role/tag |
+| Grid/card 數量 | Screenshot + DOM |
+| 字型大小 | Computed CSS |
+| 顏色 | Computed CSS + screenshot |
+| Theme 樣式 | Screenshot |
+| 響應式行為 | Multi-viewport screenshot |
+| 間距 | Bounding box + screenshot |
+| Component 語意 | Screenshot + DOM role/tag |
 
-## 23. MVP roadmap
+## 23. MVP 藍圖
 
 ### MVP 1
 
@@ -938,7 +938,7 @@ Nếu nhiều card giống nhau
 URL → screenshot + DOM + CSS → Page IR → Bricks JSON
 ```
 
-Hỗ trợ:
+支援：
 
 ```text
 - section
@@ -981,46 +981,46 @@ Hỗ trợ:
 - asset upload to WordPress Media Library
 ```
 
-## 24. Non-goals for early version
+## 24. 早期版本的非目標
 
-Không nên làm ngay ở bản đầu:
+初版不應立即實作：
 
 ```text
-- Clone toàn bộ website nhiều trang
+- Clone 整個多頁面的 website
 - WooCommerce dynamic template
-- Query Loop phức tạp
+- 複雜的 Query Loop
 - Mega menu
 - Slider animation
-- Form nâng cao
+- 進階 Form
 - 100% visual-perfect reconstruction
 ```
 
-## 25. Security and legal considerations
+## 25. 安全與法律考量
 
-Hệ thống có khả năng phân tích và tái tạo giao diện, nên cần giới hạn usage hợp pháp.
+本系統具備分析與重建介面的能力，因此需要將使用限制在合法範圍內。
 
-Nên dùng cho:
+適合用於：
 
 ```text
-- Website của chính người dùng
-- Website khách hàng đã cho phép
-- Internal rebuild/migration
-- Prototype/testing
-- Educational use
+- 使用者自己的 website
+- 已獲授權的客戶 website
+- 內部重建 / 遷移
+- 原型 / 測試
+- 教育用途
 ```
 
-Không nên dùng để sao chép trái phép:
+不應用於未經授權的複製：
 
 ```text
 - Branding
 - Copywriting
-- Hình ảnh có bản quyền
-- Template thương mại
-- Website của bên thứ ba khi chưa được phép
+- 有版權的圖片
+- 商業 template
+- 未經授權的第三方 website
 ```
 
-## 26. One-sentence architecture summary
+## 26. 一句話架構總結
 
 ```text
-Hệ thống dùng CDP để render website thật trong browser, chụp màn hình và trích xuất DOM/CSS/layout. Screenshot xác nhận cấu trúc giao diện và chủ đề, DOM cung cấp nội dung, CSS/layout cung cấp style và vị trí. Tất cả được merge thành Page IR, sau đó Page IR được convert thành Bricks Builder JSON sạch, import được và dễ chỉnh sửa.
+本系統使用 CDP 在 browser 中 render 真實的 website、擷取螢幕截圖並提取 DOM/CSS/layout。Screenshot 用於確認介面結構與主題，DOM 提供內容，CSS/layout 提供 style 與位置。所有資料會被 merge 成 Page IR，接著 Page IR 會被轉換成乾淨、可 import 且易於編輯的 Bricks Builder JSON。
 ```
