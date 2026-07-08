@@ -1,0 +1,38 @@
+# Normalize line endings: store text as LF in the repo (avoids CRLF noise when
+# committing from Windows and pushing to GitHub / running under Linux Docker).
+* text=auto eol=lf
+
+# Explicit text types
+*.ts    text
+*.tsx   text
+*.js    text
+*.mjs   text
+*.cjs   text
+*.json  text
+*.md    text
+*.html  text
+*.css   text
+*.php   text
+*.yml   text
+*.yaml  text
+*.sh    text eol=lf
+
+# Binary assets — never normalize or diff
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.svg   text
+*.ico   binary
+*.zip   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.eot   binary
+
+# Lockfile: collapse in diffs and mark generated
+package-lock.json linguist-generated -diff
+
+# Vendored reference docs (kept out of GitHub language stats)
+bricks-schema/** linguist-vendored

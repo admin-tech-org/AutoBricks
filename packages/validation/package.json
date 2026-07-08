@@ -1,0 +1,17 @@
+{
+  "name": "@bricks-cdp/validation",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@bricks-cdp/ir": "*",
+    "@bricks-cdp/capture": "*",
+    "pngjs": "^7.0.0",
+    "pixelmatch": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/pngjs": "^6.0.5",
+    "@types/pixelmatch": "^5.2.6"
+  }
+}

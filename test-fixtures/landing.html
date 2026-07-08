@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acme Cloud — Build faster websites</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #111827; background: #ffffff; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+  header { border-bottom: 1px solid #e5e7eb; background: #ffffff; }
+  header .container { display: flex; align-items: center; justify-content: space-between; height: 72px; }
+  .logo { font-size: 20px; font-weight: 700; color: #635bff; }
+  nav a { margin-left: 28px; color: #374151; text-decoration: none; font-size: 15px; }
+  .hero { padding: 96px 0; background: #f5f6ff; }
+  .hero .container { display: flex; gap: 48px; align-items: center; flex-wrap: wrap; }
+  .hero-left { flex: 1 1 420px; }
+  .hero h1 { font-size: 56px; line-height: 1.1; font-weight: 700; margin-bottom: 20px; }
+  .hero p.sub { font-size: 19px; line-height: 1.6; color: #4b5563; margin-bottom: 32px; }
+  .btn { display: inline-block; background: #635bff; color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-size: 16px; font-weight: 600; }
+  .hero-right { flex: 1 1 380px; }
+  .hero-right img { width: 100%; border-radius: 16px; display: block; }
+  .features { padding: 96px 0; background: #ffffff; }
+  .features h2 { font-size: 36px; text-align: center; margin-bottom: 48px; }
+  .grid { display: flex; gap: 24px; flex-wrap: wrap; }
+  .card { flex: 1 1 280px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 16px; padding: 32px; }
+  .card h3 { font-size: 20px; margin-bottom: 12px; }
+  .card p { font-size: 15px; line-height: 1.6; color: #6b7280; }
+  .cta { padding: 88px 0; background: #635bff; text-align: center; }
+  .cta h2 { color: #ffffff; font-size: 34px; margin-bottom: 24px; }
+  .cta .btn { background: #ffffff; color: #635bff; }
+  footer { padding: 48px 0; background: #111827; }
+  footer p { color: #9ca3af; font-size: 14px; text-align: center; }
+  @media (max-width: 767px) { .hero h1 { font-size: 36px; } }
+</style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="logo">Acme Cloud</div>
+      <nav>
+        <a href="/features">Features</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/docs">Docs</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <div class="hero-left">
+        <h1>Build faster websites</h1>
+        <p class="sub">Create beautiful, high-converting websites visually — no code required.</p>
+        <a class="btn" href="/signup">Get started</a>
+      </div>
+      <div class="hero-right">
+        <img alt="Product dashboard preview" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='360'%3E%3Crect width='560' height='360' rx='16' fill='%23635bff'/%3E%3Crect x='40' y='40' width='480' height='60' rx='8' fill='%23ffffff' opacity='0.9'/%3E%3Crect x='40' y='120' width='300' height='200' rx='8' fill='%23ffffff' opacity='0.7'/%3E%3Crect x='360' y='120' width='160' height='200' rx='8' fill='%23ffffff' opacity='0.5'/%3E%3C/svg%3E">
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="container">
+      <h2>Everything you need</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Visual builder</h3>
+          <p>Drag, drop and design pages with a live visual editor built for speed.</p>
+        </div>
+        <div class="card">
+          <h3>Blazing performance</h3>
+          <p>Clean output, tiny CSS and instant loading on every device.</p>
+        </div>
+        <div class="card">
+          <h3>SEO ready</h3>
+          <p>Semantic markup and best practices baked into every page you ship.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="container">
+      <h2>Ready to build something great?</h2>
+      <a class="btn" href="/signup">Start free trial</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>© 2026 Acme Cloud. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "@bricks-cdp/api",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/server.js",
+  "dependencies": {
+    "@bricks-cdp/ir": "*",
+    "@bricks-cdp/bricks": "*",
+    "@bricks-cdp/export": "*",
+    "@bricks-cdp/workers": "*",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/ir" },
+    { "path": "packages/capture" },
+    { "path": "packages/analyzer" },
+    { "path": "packages/bricks" },
+    { "path": "packages/export" },
+    { "path": "packages/validation" },
+    { "path": "workers" },
+    { "path": "apps/api" }
+  ]
+}
