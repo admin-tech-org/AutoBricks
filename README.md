@@ -64,6 +64,7 @@ workers/    job 管線階段
 - [GETTING-STARTED.md](./GETTING-STARTED.md) — 詳細使用指南、選項、vision 模式、design/animation。
 - [ARCHITECTURE-bricks-cdp-visual-generator.md](./ARCHITECTURE-bricks-cdp-visual-generator.md) — 完整架構。
 - [README-bricks-cdp-visual-generator.md](./README-bricks-cdp-visual-generator.md) — 設計理念（為何採用 Page IR）。
+- [SPEC-visual-regression-generator.md](./SPEC-visual-regression-generator.md) — 前瞻規格：視覺回歸驅動的自我修復 generator（VRDG）。
 
 ## 匯入 Bricks
 
