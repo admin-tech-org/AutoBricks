@@ -6,6 +6,8 @@
  * fails its own validator must never be exported) and writes
  * template.json + template-kit.zip.
  */
+import * as fs from "fs";
+import * as path from "path";
 import { AnalysisResult, GenerateResult, StageContext } from "@bricks-cdp/ir";
 import { generateBricksJson, validateBricksJson } from "@bricks-cdp/bricks";
 import { storagePaths, writeTemplateJson, writeTemplateZip } from "@bricks-cdp/export";
@@ -19,9 +21,11 @@ export async function runGenerateStage(
   analysis: AnalysisResult,
   opts?: GenerateStageOptions
 ): Promise<GenerateResult> {
+  const provenance: Record<string, string> = {};
   const template = generateBricksJson(analysis.pageIR, {
     idStyle: opts?.idStyle,
     sourceUrl: ctx.url,
+    provenanceOut: provenance,
   });
 
   const jsonValidation = validateBricksJson(template);
@@ -35,6 +39,12 @@ export async function runGenerateStage(
   const paths = storagePaths(ctx.jobId, ctx.storageRoot);
   await writeTemplateJson(paths, template);
   await writeTemplateZip(paths);
+
+  // brxeId -> source ComponentIR id, next to template.json. Consumed by the
+  // element-delta comparator (validation/correspondence.ts) to align the
+  // rendered #brxe-<id> elements back to their source boxes/styles in page-ir.json.
+  const provenancePath = path.join(path.dirname(paths.templateJson), "provenance.json");
+  await fs.promises.writeFile(provenancePath, JSON.stringify(provenance), "utf8");
 
   return {
     template,

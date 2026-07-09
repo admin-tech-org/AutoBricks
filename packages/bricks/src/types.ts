@@ -31,4 +31,8 @@ export type BricksPlanNode = {
   settings: Record<string, unknown>;
   children: BricksPlanNode[];
   idHint?: string;
+  /** Source ComponentIR id this node was built from — carried through flatten
+   *  into a brxeId → irId provenance map so the element-delta comparator
+   *  (validation/correspondence.ts) can align rendered elements to source. */
+  irId?: string;
 };

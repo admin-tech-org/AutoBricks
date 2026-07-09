@@ -280,7 +280,7 @@ export type NodeIndex = {
   childrenOf: Map<string, DomNode[]>;
 };
 
-function indexNodes(dom: DomSnapshot): NodeIndex {
+export function indexNodes(dom: DomSnapshot): NodeIndex {
   const byId = new Map<string, DomNode>();
   const childrenOf = new Map<string, DomNode[]>();
   for (const n of dom.nodes) byId.set(n.id, n);
@@ -324,7 +324,7 @@ function readingOrderKey(box: Box | undefined): [number, number] {
   return [Math.round(box.y / 24), box.x];
 }
 
-function sortReadingOrder<T extends { box?: Box }>(items: T[]): T[] {
+export function sortReadingOrder<T extends { box?: Box }>(items: T[]): T[] {
   return [...items].sort((a, b) => {
     const ka = readingOrderKey(a.box);
     const kb = readingOrderKey(b.box);
@@ -466,7 +466,7 @@ function collapseNavLinkLists(
 // Card grid nesting
 // ---------------------------------------------------------------------------
 
-function centerInside(inner: Box, outer: Box): boolean {
+export function centerInside(inner: Box, outer: Box): boolean {
   const cx = inner.x + inner.width / 2;
   const cy = inner.y + inner.height / 2;
   return cx >= outer.x && cx <= outer.x + outer.width && cy >= outer.y && cy <= outer.y + outer.height;

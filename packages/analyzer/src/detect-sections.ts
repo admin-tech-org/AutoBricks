@@ -154,7 +154,7 @@ function buildBands(candidates: DomNode[], boxOf: (n: DomNode) => Box): Band[] {
   return out;
 }
 
-function verticalOverlapRatio(a0: number, a1: number, b0: number, b1: number): number {
+export function verticalOverlapRatio(a0: number, a1: number, b0: number, b1: number): number {
   const overlap = Math.min(a1, b1) - Math.max(a0, b0);
   const minH = Math.min(a1 - a0, b1 - b0);
   return minH > 0 ? overlap / minH : 0;

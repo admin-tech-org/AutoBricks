@@ -23,6 +23,22 @@ import { scoreValidation } from "./score";
 export { renderPreview, renderPreviewHtml } from "./render-preview";
 export { screenshotDiff, ScreenshotDiffResult } from "./screenshot-diff";
 export { scoreValidation } from "./score";
+export {
+  computeCorrespondence,
+  colorDeltaE,
+  parseColor,
+} from "./correspondence";
+export type {
+  RenderedElement,
+  RenderedMeasurements,
+  SourceDims,
+  BoxDelta,
+  StyleDelta,
+  ElementMatch,
+  ElementDiff,
+  VisualScore,
+  CorrespondenceReport,
+} from "./correspondence";
 
 function errMsg(err: unknown): string {
   return err instanceof Error ? err.message : String(err);

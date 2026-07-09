@@ -39,6 +39,7 @@ import { classifyComponents, countComponents } from "./classify-components";
 import { detectLayouts } from "./detect-layout";
 import { detectPageType, detectSections } from "./detect-sections";
 import { DetectedTheme, detectTheme } from "./detect-theme";
+import { reconstructSectionChildren } from "./reconstruct-layout";
 import { runVisionAI } from "./vision-ai";
 
 export * from "./analyze-screenshot";
@@ -46,6 +47,44 @@ export * from "./detect-theme";
 export * from "./detect-sections";
 export * from "./detect-layout";
 export * from "./classify-components";
+export * from "./reconstruct-layout";
+
+/**
+ * Flip text colours that are illegible against their effective background.
+ * Effective background = the element's own backgroundColor, else the nearest
+ * ancestor that paints one, else the section's, else the page theme background
+ * (defaulting to white). Contrast below 3:1 (WCAG's large-text minimum) is
+ * treated as objectively unreadable and replaced with white or near-black —
+ * whichever the background contrasts with. Text that already passes is untouched.
+ */
+export function fixUnreadableText(pageIR: PageIR): void {
+  const MIN_CONTRAST = 3;
+  const lumOf = (css: string | undefined): number | undefined => {
+    const rgb = css ? parseCssColor(css) : null;
+    return rgb ? luminance(rgb) : undefined;
+  };
+  const contrast = (a: number, b: number): number => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  const pageBgLum = lumOf(pageIR.theme?.backgroundColor) ?? 1;
+  const walk = (comps: ComponentIR[] | undefined, parentBgLum: number): void => {
+    if (!comps) return;
+    for (const c of comps) {
+      const ownBgLum = lumOf(c.style?.["backgroundColor"] ?? c.style?.["background-color"]);
+      const bgLum = ownBgLum ?? parentBgLum;
+      const textCss = c.style?.["color"];
+      if (c.text && c.text.trim() && textCss) {
+        const tLum = lumOf(textCss);
+        if (tLum !== undefined && contrast(tLum, bgLum) < MIN_CONTRAST) {
+          c.style = { ...(c.style ?? {}), color: bgLum < 0.5 ? "#ffffff" : "#1a1a1a" };
+        }
+      }
+      walk(c.children, bgLum);
+    }
+  };
+  for (const section of pageIR.sections) {
+    const secBgLum = lumOf(section.style?.["backgroundColor"] ?? section.style?.["background-color"]) ?? pageBgLum;
+    walk(section.children, secBgLum);
+  }
+}
 
 export async function analyzeCapture(capture: CaptureResult, ctx: StageContext): Promise<AnalysisResult> {
   const jobId = ctx.jobId || capture.jobId;
@@ -105,10 +144,29 @@ export async function analyzeCapture(capture: CaptureResult, ctx: StageContext):
 
   const vision: VisionAnalysis = { pageType, theme, sections };
 
-  // 6. Page IR (merge + normalize) — never throw on weird pages
+  // 6. Page IR (merge + normalize) — never throw on weird pages.
+  //    In "structural" layout mode, rebuild each section's children as the real
+  //    nested container tree (row/column/grid) reconstructed from box geometry +
+  //    computed flex CSS, instead of the flat, label-guessed heuristic children
+  //    (SPEC §5.1). Reconstruction runs BEFORE normalizeIR so the rebuilt tree
+  //    is normalized like any other. The heuristic path is untouched by default.
   let pageIR: PageIR;
   try {
-    pageIR = normalizeIR(createPageIR({ url, vision, dom, css, layout }));
+    const base = createPageIR({ url, vision, dom, css, layout });
+    if (ctx.layoutMode === "structural") {
+      for (const section of base.sections) {
+        try {
+          const rebuilt = reconstructSectionChildren(section, dom, css, layout);
+          if (rebuilt.length > 0) {
+            section.children = rebuilt;
+            section.layout = "structural";
+          }
+        } catch {
+          // Fall back to the heuristic children for this section on any failure.
+        }
+      }
+    }
+    pageIR = normalizeIR(base);
   } catch {
     pageIR = { url, pageType, theme: { ...theme }, sections: [] };
   }
@@ -239,6 +297,14 @@ export async function analyzeCapture(capture: CaptureResult, ctx: StageContext):
   let visionMode: "heuristic" | "ai" = "heuristic";
   let visionAIReportPath: string | undefined;
   if (ctx.vision && ctx.vision.mode === "ai" && screenshotPath && layout.pageWidth > 0 && layout.pageHeight > 0) {
+    // Vision may correct colours/typography per section, but it returns a
+    // heuristic layout label ("one-column", …). Remember which sections were
+    // reconstructed structurally so we can re-assert that marker afterwards —
+    // otherwise the structural planner is bypassed and the nested tree gets
+    // re-planned (and bloated) by the heuristic path.
+    const structuralIds = new Set(
+      pageIR.sections.filter((s) => s.layout === "structural").map((s) => s.id)
+    );
     const out = await runVisionAI(
       {
         pageIR,
@@ -259,7 +325,22 @@ export async function analyzeCapture(capture: CaptureResult, ctx: StageContext):
       } catch {
         pageIR = out.pageIR;
       }
+      if (structuralIds.size > 0) {
+        for (const s of pageIR.sections) if (structuralIds.has(s.id)) s.layout = "structural";
+      }
     }
+  }
+
+  // 6d. Legibility guard (deterministic, always on). Some captured text colours
+  // are unreadable against their effective background — dark text on a dark
+  // banner, a link whose real (white) colour wasn't the computed one at capture,
+  // etc. Any text failing even the loosest contrast bar (< 3:1, below WCAG's
+  // large-text minimum → objectively illegible) is flipped to a readable colour.
+  // It never touches text that already passes, so well-designed pages are inert.
+  try {
+    fixUnreadableText(pageIR);
+  } catch {
+    // legibility is best-effort — never fail analysis over it
   }
 
   // 7. report

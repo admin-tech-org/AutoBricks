@@ -52,6 +52,8 @@ type ViewportTaskConfig = {
   scrollPage: boolean;
   dismissOverlays: boolean;
   screenshotsDir: string;
+  /** Override the in-page DOM node cap (default DEFAULT_MAX_NODES). */
+  maxNodes?: number;
 };
 
 type ViewportOutcome = {
@@ -209,7 +211,7 @@ async function captureViewport(
       await screenshotFullPage(page, fullPagePath);
       outcome.fullPagePath = fullPagePath;
       // Single in-page pass: DOM + CSS + layout + assets source data.
-      outcome.raw = await extractPageData(page);
+      outcome.raw = await extractPageData(page, cfg.maxNodes ? { maxNodes: cfg.maxNodes } : undefined);
     } else if (viewport === "mobile") {
       outcome.mobileLayout = await extractLayoutSnapshot(page, "mobile");
     }
@@ -265,6 +267,7 @@ export async function captureUrl(options: CaptureOptions): Promise<CaptureResult
     scrollPage,
     dismissOverlays,
     screenshotsDir,
+    maxNodes: options.maxNodes,
   };
 
   const browser = await launchBrowser();

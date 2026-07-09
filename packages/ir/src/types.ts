@@ -107,6 +107,9 @@ export type CaptureOptions = {
   scrollPage?: boolean;
   /** Try to dismiss common cookie/modal overlays. Default true. */
   dismissOverlays?: boolean;
+  /** DOM node cap for extraction (default DEFAULT_MAX_NODES = 4000). Raise for
+   *  dense pages captured in structural layout mode. */
+  maxNodes?: number;
 };
 
 export type ScreenshotSet = {
@@ -309,6 +312,22 @@ export type ThemeIR = {
   containerMaxWidth?: string;
 };
 
+/**
+ * Flex layout of a reconstructed container (structural layout mode). Carried on
+ * "block" ComponentIRs so the planner can emit the source's real nested flex
+ * structure (row/column/grid) instead of re-guessing from a single label.
+ * Optional and additive — the heuristic path never sets it and ignores it.
+ */
+export type LayoutBox = {
+  direction: "row" | "column";
+  /** Wrap onto multiple lines (a grid). Only meaningful with direction "row". */
+  wrap?: boolean;
+  columnGap?: number;
+  rowGap?: number;
+  alignItems?: string;
+  justifyContent?: string;
+};
+
 export type ComponentIR = {
   id: string;
   /** "heading" | "text" | "button" | "image" | "icon" | "divider" | "block" ... */
@@ -321,6 +340,11 @@ export type ComponentIR = {
   styleRole?: string;
   box?: Box;
   style?: Record<string, string>;
+  /** Flex layout for reconstructed container blocks (structural mode). */
+  layout?: LayoutBox;
+  /** This node's width as a fraction (0..1) of its parent's width — set on the
+   *  children of a reconstructed row/grid so the planner can pin flex widths. */
+  widthPct?: number;
   /** Nested children (e.g. a card block containing heading + text). */
   children?: ComponentIR[];
 };
@@ -501,6 +525,16 @@ export type AssetRecord = {
   status: "pending" | "downloaded" | "uploaded" | "remote" | "failed";
 };
 
+/**
+ * Layout planning mode:
+ *  - "heuristic"  (default) — sections classified to a coarse layout label, then
+ *    rebuilt by the label-specific planners. Fast, tuned for landing pages.
+ *  - "structural" — the DOM's real nested container tree is reconstructed from
+ *    box geometry + computed flex CSS and emitted faithfully. For复刻 of complex
+ *    pages (multi-column grids, mega-nav) that the label path collapses.
+ */
+export type LayoutMode = "heuristic" | "structural";
+
 /** Context passed to every worker stage. */
 export type StageContext = {
   jobId: string;
@@ -510,6 +544,10 @@ export type StageContext = {
   storageRoot: string;
   /** Analyze-stage vision configuration (default: heuristic-only). */
   vision?: VisionOptions;
+  /** Layout planning mode (default: "heuristic"). */
+  layoutMode?: LayoutMode;
+  /** Override the capture-stage DOM node cap (default DEFAULT_MAX_NODES = 4000). */
+  maxNodes?: number;
 };
 
 export type AnalysisResult = {

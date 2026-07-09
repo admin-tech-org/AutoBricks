@@ -29,6 +29,9 @@ import { applyFeatureCards } from "./feature-card";
 export type GenerateJsonOptions = {
   idStyle?: IdStyle;
   sourceUrl?: string;
+  /** If provided, filled with a brxeId → source ComponentIR id map (provenance)
+   *  so the element-delta comparator can align rendered elements to the source. */
+  provenanceOut?: Record<string, string>;
 };
 
 // ---------------------------------------------------------------------------
@@ -230,7 +233,8 @@ function flattenNode(
   node: BricksPlanNode,
   parent: string | 0,
   ids: IdFactory,
-  out: BricksElement[]
+  out: BricksElement[],
+  provenanceOut?: Record<string, string>
 ): string {
   const element: BricksElement = {
     id: ids.next(node.idHint ?? node.name),
@@ -240,8 +244,9 @@ function flattenNode(
     settings: cleanSettings(node.settings),
   };
   out.push(element); // parent precedes its children in document order
+  if (provenanceOut && node.irId) provenanceOut[element.id] = node.irId;
   for (const child of node.children) {
-    element.children.push(flattenNode(child, element.id, ids, out));
+    element.children.push(flattenNode(child, element.id, ids, out, provenanceOut));
   }
   return element.id;
 }
@@ -264,7 +269,7 @@ export function generateBricksJson(ir: PageIR, opts?: GenerateJsonOptions): Bric
   for (const section of ir.sections) {
     const plan = planSection(section, ir.theme, ids);
     applyThemeDefaults(plan, ir.theme);
-    flattenNode(plan, 0, ids, content);
+    flattenNode(plan, 0, ids, content, opts?.provenanceOut);
   }
 
   // Design + motion as NATIVE Bricks settings (cards, shadows, hover states,

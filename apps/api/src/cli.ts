@@ -18,6 +18,7 @@ import { defaultStorageRoot, ensureJobDirs, storagePaths } from "@bricks-cdp/exp
 import {
   JobMode,
   JobStatus,
+  LayoutMode,
   StageContext,
   ViewportName,
   VIEWPORT_SIZES,
@@ -44,6 +45,8 @@ type CliOptions = {
   storageRoot: string;
   idStyle?: "readable" | "bricks";
   vision: VisionOptions;
+  layoutMode: LayoutMode;
+  maxNodes?: number;
 };
 
 const USAGE = `Usage:
@@ -60,6 +63,10 @@ Options:
   --vision <mode>          heuristic | ai (default: heuristic). "ai" = parallel claude-cli vision subagents.
   --vision-model <model>   Model for AI vision (default: sonnet)
   --vision-concurrency <n> Parallel vision subagents (default: 4)
+  --layout <mode>          heuristic | structural (default: heuristic). "structural" reconstructs
+                           the source's real nested container tree (multi-column grids, mega-nav)
+                           instead of re-guessing a layout from a single label.
+  --max-nodes <n>          DOM node cap for capture (default 4000). Raise for dense pages.
   -h, --help               Show this help`;
 
 function fail(message: string): never {
@@ -77,6 +84,8 @@ function parseArgs(argv: string[]): CliOptions {
   let visionMode: "heuristic" | "ai" = "heuristic";
   let visionModel = "sonnet";
   let visionConcurrency: number | undefined;
+  let layoutMode: LayoutMode = "heuristic";
+  let maxNodes: number | undefined;
 
   let i = 0;
   const next = (flag: string): string => {
@@ -148,6 +157,20 @@ function parseArgs(argv: string[]): CliOptions {
         visionConcurrency = n;
         break;
       }
+      case "--layout": {
+        const value = next(arg);
+        if (value !== "heuristic" && value !== "structural") {
+          fail(`invalid --layout "${value}" (expected: heuristic | structural)`);
+        }
+        layoutMode = value;
+        break;
+      }
+      case "--max-nodes": {
+        const n = parseInt(next(arg), 10);
+        if (!Number.isFinite(n) || n < 100 || n > 40000) fail("invalid --max-nodes (expected 100-40000)");
+        maxNodes = n;
+        break;
+      }
       case "-h":
       case "--help":
         console.log(USAGE);
@@ -164,12 +187,12 @@ function parseArgs(argv: string[]): CliOptions {
 
   if (jobId) {
     // Re-analyze mode: url is optional (read from db/snapshots when omitted).
-    return { url, jobId, mode, viewports, storageRoot, idStyle, vision };
+    return { url, jobId, mode, viewports, storageRoot, idStyle, vision, layoutMode, maxNodes };
   }
   if (!/^(https?|file):\/\//i.test(url)) {
     fail("provide --url (http/https/file) to capture, or --job <id> to re-analyze a stored capture");
   }
-  return { url, mode, viewports, storageRoot, idStyle, vision };
+  return { url, mode, viewports, storageRoot, idStyle, vision, layoutMode, maxNodes };
 }
 
 /** Resolve the URL for a --job re-analyze: explicit --url, else db, else snapshot. */
@@ -244,11 +267,14 @@ async function main(): Promise<number> {
       viewports: opts.viewports,
       storageRoot: opts.storageRoot,
       vision: opts.vision,
+      layoutMode: opts.layoutMode,
+      maxNodes: opts.maxNodes,
     };
 
     console.log(`[cli] re-analyze job: ${jobId}`);
     console.log(`[cli] url:            ${url || "(unknown)"}`);
     console.log(`[cli] vision:         ${opts.vision.mode}${opts.vision.mode === "ai" ? ` (${opts.vision.model})` : ""}`);
+    console.log(`[cli] layout:         ${opts.layoutMode}`);
     console.log(`[cli] storage:        ${opts.storageRoot}`);
     console.log("");
 
@@ -284,6 +310,8 @@ async function main(): Promise<number> {
     viewports: opts.viewports,
     storageRoot: opts.storageRoot,
     vision: opts.vision,
+    layoutMode: opts.layoutMode,
+    maxNodes: opts.maxNodes,
   };
   const paths = storagePaths(jobId, opts.storageRoot);
   ensureJobDirs(paths);
@@ -304,6 +332,7 @@ async function main(): Promise<number> {
   console.log(`[cli] mode:      ${opts.mode}`);
   console.log(`[cli] viewports: ${opts.viewports.join(", ")}`);
   console.log(`[cli] vision:    ${opts.vision.mode}${opts.vision.mode === "ai" ? ` (${opts.vision.model})` : ""}`);
+  console.log(`[cli] layout:    ${opts.layoutMode}${opts.maxNodes ? ` (max-nodes ${opts.maxNodes})` : ""}`);
   console.log(`[cli] storage:   ${opts.storageRoot}`);
   console.log("");
 

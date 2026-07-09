@@ -17,5 +17,6 @@ export async function runCaptureStage(ctx: StageContext): Promise<CaptureResult>
     jobId: ctx.jobId,
     storageRoot: paths.root,
     viewports: ctx.viewports,
+    maxNodes: ctx.maxNodes,
   });
 }

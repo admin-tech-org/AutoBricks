@@ -14,7 +14,7 @@
  * fall back to simpler structures.
  */
 
-import type { ComponentIR, SectionIR, ThemeIR } from "@bricks-cdp/ir";
+import type { ComponentIR, LayoutBox, SectionIR, ThemeIR } from "@bricks-cdp/ir";
 import type { BricksPlanNode } from "./types";
 import type { IdFactory } from "./create-element";
 import { slugify } from "./create-element";
@@ -101,6 +101,8 @@ export function componentToNode(c: ComponentIR, theme: ThemeIR): BricksPlanNode 
   if (node) {
     const cls = componentClasses(c);
     if (cls.length > 0) addClasses(node.settings, ...cls);
+    // Provenance: remember which source ComponentIR this node came from.
+    if (c.id) node.irId = c.id;
   }
   return node;
 }
@@ -510,6 +512,74 @@ function planHeader(section: SectionIR, theme: ThemeIR, slug: string): BricksPla
 }
 
 // ---------------------------------------------------------------------------
+// Structural layout (SPEC §5.1) — emit the reconstructed nested container tree
+// verbatim (analyzer/reconstruct-layout.ts produced "block" ComponentIRs each
+// carrying a LayoutBox). No label-guessing: direction/gaps/wrap/align and per-
+// child flex widths come straight from the source geometry.
+// ---------------------------------------------------------------------------
+
+/** LayoutBox -> Bricks flex container settings. */
+function layoutToSettings(layout: LayoutBox): Settings {
+  const s: Settings = layout.direction === "row" ? rowSettings() : { _direction: "column" };
+  if (layout.wrap) s._flexWrap = "wrap";
+  if (layout.columnGap !== undefined) s._columnGap = String(layout.columnGap);
+  if (layout.rowGap !== undefined) s._rowGap = String(layout.rowGap);
+  if (layout.alignItems) s._alignItems = layout.alignItems;
+  if (layout.justifyContent) s._justifyContent = layout.justifyContent;
+  return s;
+}
+
+/**
+ * widthPct (0..1) -> Bricks _width percentage, for SUBSTANTIAL columns only.
+ * Narrow items (< 12%) are left auto: pinning a tiny width makes CJK text wrap
+ * one glyph per line (最→最/物/車) and balloons the container height. ~full
+ * width also fills naturally.
+ */
+function widthFromPct(pct: number | undefined): string | undefined {
+  if (pct === undefined || pct < 0.12 || pct >= 0.98) return undefined;
+  return `${Math.round(pct * 1000) / 10}%`;
+}
+
+function structuralNode(c: ComponentIR, theme: ThemeIR): BricksPlanNode | null {
+  if (c.type === "block") {
+    const children = structuralNodes(c.children ?? [], theme);
+    if (children.length === 0) return null;
+    const layout: LayoutBox = c.layout ?? { direction: "column" };
+    const surface = mapComponentStyle(c, theme);
+    delete surface._typography; // containers don't carry inherited text style
+    const settings: Settings = { ...layoutToSettings(layout), ...surface };
+    // Pin the flex width only for real columns/cards; a block wider than a
+    // sibling row needs it or Bricks' default block width:100% stacks them.
+    const w = widthFromPct(c.widthPct);
+    if (w) settings._width = w;
+    addClasses(settings, "cdp-block");
+    // A block with a real surface reads as a card (design pass dims/hovers it).
+    if (c.style && (c.style.backgroundColor || c.style.border || c.style.boxShadow || c.style.borderRadius)) {
+      addClasses(settings, "cdp-card");
+    }
+    return { name: "block", settings, children, idHint: "blk", irId: c.id };
+  }
+
+  // Leaves (text/heading/button) size to their content — never pin a width, or
+  // narrow flex items wrap CJK text vertically. Images keep their measured px
+  // _width (set in buildComponentNode).
+  return componentToNode(c, theme);
+}
+
+function structuralNodes(components: ComponentIR[], theme: ThemeIR): BricksPlanNode[] {
+  const out: BricksPlanNode[] = [];
+  for (const c of components) {
+    const node = structuralNode(c, theme);
+    if (node) out.push(node);
+  }
+  return out;
+}
+
+function planStructuralSection(section: SectionIR, theme: ThemeIR): BricksPlanNode[] {
+  return structuralNodes(section.children, theme);
+}
+
+// ---------------------------------------------------------------------------
 // planSection — the planner entry point
 // ---------------------------------------------------------------------------
 
@@ -529,7 +599,10 @@ export function planSection(section: SectionIR, theme: ThemeIR, ids?: IdFactory)
   const isCentered = layout.includes("center");
 
   let innerNodes: BricksPlanNode[];
-  if (isHeader) {
+  if (layout === "structural") {
+    // Reconstructed nested container tree — emit it verbatim (all section types).
+    innerNodes = planStructuralSection(section, theme);
+  } else if (isHeader) {
     innerNodes = planHeader(section, theme, slug);
   } else if (layout === "two-column" || layout === "two-columns") {
     innerNodes = planTwoColumn(section, theme, slug);
@@ -553,6 +626,17 @@ export function planSection(section: SectionIR, theme: ThemeIR, ids?: IdFactory)
   // containers are centered by default, so this reproduces the real max-width).
   if (hints?.contentMaxWidthPx !== undefined) {
     containerSettings._widthMax = String(hints.contentMaxWidthPx);
+  }
+  // Structural mode: pin the container to the source's content width so the
+  // reconstructed percentage widths map to the right canvas (SPEC §5.2) and
+  // Bricks' ~1100px default container doesn't squish a full-width page.
+  if (layout === "structural" && containerSettings._widthMax === undefined) {
+    const structuralMax = theme.containerMaxWidth
+      ? pxToGridString(theme.containerMaxWidth)
+      : section.box && section.box.width > 0
+        ? String(Math.round(section.box.width))
+        : undefined;
+    if (structuralMax) containerSettings._widthMax = structuralMax;
   }
 
   // Theme font cascades from the section element to every child via CSS
