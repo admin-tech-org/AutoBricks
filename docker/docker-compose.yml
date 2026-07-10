@@ -1,0 +1,63 @@
+# AutoBricks 本機驗證環境：WordPress + MariaDB
+# 啟動：docker compose up -d（或直接跑 ./init-wp.sh 一鍵到位）
+# 站台 http://localhost:8080 · 後台 admin/admin（僅本機測試用，勿對外）
+#
+# 掛載策略：
+#   - wp → bind mount ./wp/：看得到、摸得到——Bricks theme 直接解壓進
+#          ./wp/wp-content/themes/bricks/ 即可（代價：Windows 檔案分享層較慢，可接受）
+#   - db → named volume：MariaDB/InnoDB 在 Windows bind mount 有鎖檔/損毀地雷
+#          （9p/gRPC-FUSE 的 POSIX 語意不完整），且 db 檔案本來就不會手動去讀。
+name: autobricks-wp
+
+services:
+  db:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD: wordpress
+      MARIADB_ROOT_PASSWORD: root
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+
+  wordpress:
+    # PHP 8.2：Bricks 1.12.5 的安全選擇（8.3+ 未經團隊驗證）
+    image: wordpress:6.8-php8.2-apache
+    container_name: autobricks-wp
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - ./wp:/var/www/html # 首次啟動 image 會自動把 WordPress core 鋪進來
+
+  # wp-cli：不常駐，用 docker compose run --rm wpcli <指令>（init-wp.sh 會用）
+  wpcli:
+    image: wordpress:cli-php8.2
+    depends_on:
+      db:
+        condition: service_healthy
+    environment: # wp-config-docker.php 從環境變數讀 DB 設定，cli 容器也要給
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - ./wp:/var/www/html
+    entrypoint: ["wp"]
+    command: ["--info"]
+    profiles: ["cli"]
+
+volumes:
+  db_data:
