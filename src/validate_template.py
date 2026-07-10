@@ -44,16 +44,17 @@ GENERIC_FONTS = {
 
 
 def load_elements(path):
-    """回傳 (elements, top_level_keys)。接受三種輸入：
+    """回傳 (elements, global_classes)。接受三種輸入：
     裸元素陣列、{"content": [...]}、或完整 template export（含 id/title/.../content）。"""
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
     if isinstance(data, list):
-        return data, None
+        return data, []
     if isinstance(data, dict):
         content = data.get("content")
         if isinstance(content, list):
-            return content, set(data.keys())
+            gc = data.get("globalClasses")
+            return content, gc if isinstance(gc, list) else []
         raise ValueError('JSON 是物件但沒有 "content" 陣列')
     raise ValueError("JSON 頂層必須是陣列或含 content 的物件")
 
@@ -69,8 +70,25 @@ def known_element_names(schema_dir):
     return names or None
 
 
-def check(elements, schema_names):
+def check(elements, schema_names, global_classes=None):
     errors, warnings = [], []
+    global_classes = global_classes or []
+
+    # ---- 0. Global Classes（樣式元件）---------------------------------
+    class_ids = set()
+    for i, c in enumerate(global_classes):
+        if not isinstance(c, dict) or "id" not in c or "name" not in c:
+            errors.append(f"[globalClasses {i}] 缺 id 或 name")
+            continue
+        cid = c["id"]
+        if not ID_RE.match(str(cid)):
+            errors.append(f"[globalClasses {i}] id {cid!r} 不符 ^[a-z0-9]{{6}}$")
+        if cid in class_ids:
+            errors.append(f"[globalClasses {i}] id {cid!r} 重複")
+        class_ids.add(cid)
+        cs = c.get("settings")
+        if cs is not None and not isinstance(cs, dict) and cs != []:
+            errors.append(f"[globalClasses {i}] settings 必須是物件")
 
     def err(i, el, msg):
         errors.append(f"[{i}] id={el.get('id', '?')} name={el.get('name', '?')}: {msg}")
@@ -119,6 +137,15 @@ def check(elements, schema_names):
 
         if "selectors" in el:
             warn(i, el, "selectors 是 Bricks 2.0+ 特性，1.12.5 不支援（會被忽略）")
+
+        refs = (settings or {}).get("_cssGlobalClasses") if isinstance(settings, dict) else None
+        if refs is not None:
+            if not isinstance(refs, list):
+                err(i, el, "_cssGlobalClasses 必須是 class id 陣列")
+            else:
+                for cid in refs:
+                    if cid not in class_ids:
+                        err(i, el, f"_cssGlobalClasses 引用不存在的 class {cid!r}（template 的 globalClasses 沒有它）")
 
         # ---- 5. 1.12.5 已知形狀 ----------------------------------------
         if isinstance(settings, dict):
@@ -222,13 +249,13 @@ def main():
 
     schema_dir = args.schema_dir or os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "bricks-schema")
     try:
-        elements, _ = load_elements(args.template)
+        elements, global_classes = load_elements(args.template)
     except (OSError, ValueError, json.JSONDecodeError) as e:
         print(f"[x] 讀取失敗: {e}", file=sys.stderr)
         sys.exit(2)
 
     schema_names = known_element_names(schema_dir)
-    errors, warnings = check(elements, schema_names)
+    errors, warnings = check(elements, schema_names, global_classes)
     ok = not errors and not (args.strict and warnings)
 
     if args.as_json:
@@ -240,7 +267,7 @@ def main():
             )
         )
     else:
-        print(f"elements: {len(elements)}")
+        print(f"elements: {len(elements)}  global classes: {len(global_classes)}")
         if schema_names is None:
             print("[!] 找不到 bricks-schema/elements —— 跳過 element name 檢查")
         for msg in errors:

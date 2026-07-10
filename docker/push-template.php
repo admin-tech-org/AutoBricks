@@ -45,6 +45,17 @@ if ($page_id) {
 update_post_meta($page_id, '_bricks_page_content_2', wp_slash($tpl['content']));
 update_post_meta($page_id, '_bricks_editor_mode', 'bricks');
 
+// template 頂層 globalClasses（樣式元件）→ 合併寫入全站 option（以 id 去重、後者覆蓋）
+if (!empty($tpl['globalClasses']) && is_array($tpl['globalClasses'])) {
+  $existing = get_option('bricks_global_classes', []);
+  if (!is_array($existing)) $existing = [];
+  $by_id = [];
+  foreach ($existing as $c) { if (isset($c['id'])) $by_id[$c['id']] = $c; }
+  foreach ($tpl['globalClasses'] as $c) { if (isset($c['id'])) $by_id[$c['id']] = $c; }
+  update_option('bricks_global_classes', array_values($by_id));
+  echo 'global classes merged: ' . count($tpl['globalClasses']) . "\n";
+}
+
 if (!empty($tpl['customCss'])) {
   $settings = get_post_meta($page_id, '_bricks_page_settings', true);
   if (!is_array($settings)) $settings = [];

@@ -71,6 +71,52 @@ generic 清單：`serif / sans-serif / monospace / cursive / fantasy / system-ui
 不透明 → `{ "hex": "#rrggbb" }`；半透明 → `{ "rgb": "rgba(...)" }`（轉 hex 會丟 alpha，
 柔和陰影會變成死黑）。alpha ≤ 0 → 整個 key 省略。
 
+## 版面預設值的雷（實機驗證於 1.12.5）
+
+- **container 預設寬 1100（theme 預設），`_widthMax` 撐不開它**——要對齊來源內容寬，
+  必須同時設 `_width` 與 `_widthMax`（如 `"_width":"1280px","_widthMax":"1280px"`）。
+- **block 預設寬 100%**——放進 flex row 當「行內群組」（logo 群、按鈕群、社群 icon 群）
+  時會吃光 `space-between` 的空隙、甚至配上 `_flexShrink:"0"` 直接把頁面撐出水平捲軸。
+  行內群組 block 一律補 `"_width":"fit-content"`。
+- **跑馬燈/輪播軌道**：文字項目要 `white-space:nowrap` + `flex-shrink:0`（否則項目先換行、
+  `width:max-content` 量不出真實寬）；外層 section 記得 `overflow:hidden`（軌道幾何仍會
+  撐大 `scrollWidth`）。
+
+## 斷點（RWD 的落地方式）
+
+- 響應設定＝**同一個 settings key 加斷點後綴**：`_typography:tablet_portrait`、
+  `_direction:mobile_portrait`、可再疊狀態（`_typography:mobile_landscape:hover`）。
+- 1.12.5 預設斷點（桌機優先、往下覆蓋）：
+
+  | Bricks key | 生效寬度 | 常用對映（Tailwind 桌機優先換算） |
+  |---|---|---|
+  | （無後綴）| 基準（desktop） | `lg:`/`xl:` 的樣式＝基準 |
+  | `tablet_portrait` | ≤991 | `md:` 以下的變化 |
+  | `mobile_landscape` | ≤767 | `sm:` 以下的變化 |
+  | `mobile_portrait` | ≤478 | 最小手機 |
+
+  注意方向相反：Tailwind 是 mobile-first（`md:` = ≥768 起套用），Bricks 是 desktop-first
+  （後綴 = 該寬以下套用）——換算時把「md: 才有的樣式」寫成基準、把「沒有 md: 的
+  基礎樣式」寫進 `mobile_landscape`/`tablet_portrait` 後綴。
+- 自訂斷點存 `wp_options` 的 `bricks_breakpoints`（`{key,label,width}` 陣列）；
+  沒設定＝用上表預設。
+
+## Global Classes（樣式元件化的正解）
+
+- 儲存在 `wp_options` 的 `bricks_global_classes`（**不在 template JSON、不隨 UI 匯入攜帶**；
+  本 plugin 的 push 腳本支援 template 頂層 `globalClasses` 合併寫入——走 UI Import 交付時
+  classes 要另外帶）。
+- 形狀：陣列 `{id, name, settings}`——id 規則同元素（6 碼含數字）；settings 與元素 settings
+  同形狀，**支援 `:hover` 等後綴**（hover 浮起＝class 裡放 `_transform:hover` + `_boxShadow:hover`，
+  builder 可編輯）。
+- 元素掛用：settings 加 `_cssGlobalClasses: ["classId1", "classId2", …]`（可多個，組裝式）。
+
+## 原生 transform（旋轉別急著寫 CSS）
+
+`_transform` 與 `_transformOrigin` 是 1.12.5 既有的共通控制——neo-brutalism 那類
+「區塊歪一度」用 native 設定做（值形狀查 bricks-schema/controls），保住 builder 可編輯性；
+`_cssCustom` 的 transform 只留給 keyframes 動畫。
+
 ## 精準尺寸
 
 - **間距用實測原值**，不吸附 4px 網格（吸附就是間距漂移的來源）。

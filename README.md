@@ -40,7 +40,6 @@ templates/        launch-chrome-cdp.{bat,sh} —— setup 複製到使用者專�
 docker/           WP+Bricks 驗證環境（compose / init-wp.sh / push-template.php）
 doc/              tutorial.md —— 從 Docker 到第一個 Bricks 頁面的完整教學
 bricks-schema/    官方 Bricks 資料模型 schema v2.3 本地副本（元素/設定欄位存在性的依據）
-test-fixtures/    本機測試用 landing page（file:// 即可分析）
 ```
 
 ## Bricks 版本注意

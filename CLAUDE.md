@@ -16,8 +16,10 @@ Bricks Builder 1.12.5 模板。**分析與生成由 skills 在 Claude session �
   （profile／登入態是使用者資產，不隨 plugin 發佈）。
 - **plugin 路徑**：skill 要定位包內檔案，用 skill 開頭系統給的「Base directory」推 plugin 根
   （`<skill base>/../..`）——**不用** `$CLAUDE_PLUGIN_ROOT`（skill bash 不可靠）、不靠 cwd。
-- **路徑鐵律**：plugin 目錄全程唯讀；產物寫使用者專案 `data/`；暫存進 `.browser/tmp/`
-  （瀏覽器流程）或 `tmp/`（過程檔），收尾清空，**專案根不留垃圾**。
+- **路徑鐵律**：plugin 目錄全程唯讀；產物寫使用者專案 `data/`。暫存分兩類、各有歸處：
+  **瀏覽器中間產物**（截圖 dump、量測 JSON、dataURL 等）→ `.browser/tmp/`；
+  **分析過程紀錄**（中間筆記、dump、比對草稿）→ 專案 `tmp/`。兩者都是用完即刪，
+  **收尾清空、專案根不留垃圾**（MCP 工具給 `filename` 時務必帶資料夾前綴，裸檔名會落到根目錄）。
 
 ## 環境與指令（uv）
 
