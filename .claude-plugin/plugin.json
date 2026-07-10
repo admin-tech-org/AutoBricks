@@ -1,0 +1,12 @@
+{
+  "name": "autobricks",
+  "description": "把任一網頁複刻成「設計部好編輯」的 Bricks Builder 1.12.5 模板（clone，一條龍）：CDP 接管真 Chrome 全面分析（HTML/CSS/JS 動態）→ 施工 plan → 生成模板 JSON（驗證 gate、結構極簡不照翻 DOM）→ 推本機 Docker WP 實測對照；附環境安裝（setup）。",
+  "version": "0.1.0",
+  "author": {
+    "name": "Allen Chen"
+  },
+  "license": "MIT",
+  "category": "web-development",
+  "tags": ["bricks-builder", "wordpress", "website-clone", "cdp", "web-design"],
+  "skills": "./skills"
+}

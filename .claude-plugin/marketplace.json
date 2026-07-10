@@ -1,0 +1,17 @@
+{
+  "name": "autobricks",
+  "owner": {
+    "name": "Allen Chen"
+  },
+  "metadata": {
+    "description": "AutoBricks — 網頁 → Bricks Builder 模板複刻（設計部先 copy 再改）",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "autobricks",
+      "description": "CDP 接管真 Chrome 分析網頁 → 施工 plan → Bricks 1.12.5 JSON（驗證 gate、結構極簡好編輯）→ 本機 WP 實測，一條龍。skills：clone / setup。",
+      "source": "./"
+    }
+  ]
+}

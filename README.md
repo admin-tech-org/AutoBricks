@@ -1,82 +1,54 @@
-# Bricks CDP Visual Generator
+# AutoBricks
 
-以 CDP/Playwright 渲染真實網站，擷取**螢幕截圖 + DOM + 計算後的
-CSS + 版面配置框**，合併為 **Page IR**，再產生乾淨、可匯入的
-**Bricks Builder JSON**（WordPress）。
+**Claude Code plugin：把任一網頁複刻成可匯入的 Bricks Builder（1.12.5）模板。**
+給設計部「先 copy 一版、再動手改」用——取代照著參考網站手拉 Bricks 的苦工。
 
 ```text
-URL → CDP/Playwright capture → heuristic Analyzer → (optional AI Vision) → Page IR
-    → Bricks Planner → flat Bricks JSON → Validator → Export (.json / kit .zip)
+/autobricks:clone    網址 → 一條龍：CDP 真 Chrome 全面分析（數字全實測）→ 施工 plan
+                     → Bricks 1.12.5 模板 JSON（驗證 gate）→ 推本機 WP 實測、多策略對照
+/autobricks:setup    環境一鍵備好（uv、Node、CDP 瀏覽器、選配 WP 環境、權限預核准）
 ```
 
-> DOM = 存在什麼 · 螢幕截圖 = 看起來如何 · 計算後的 CSS + 邊界框 =
-> 位置與大小。Page IR 是產生 Bricks JSON
-> 前的唯一真實來源。
+分析與生成由 **Claude 在 session 內完成**（skills）；程式碼只有兩塊確定性工具：
+量測器（`skills/clone/measure.js`，餵給 browser_evaluate）與驗證 gate（`src/validate_template.py`）。
+
+## 安裝（marketplace）
+
+```text
+/plugin marketplace add <帳號>/<repo>     # 或本機路徑
+/plugin install autobricks@autobricks
+```
+
+安裝完成後，使用者在**自己的專案**跑 `/autobricks:setup`。之後使用者專案只會多三樣東西：
+`.claude/settings.local.json`（權限）、`.browser/`（CDP Chrome 腳本＋profile，使用者需自行 gitignore）、
+`data/`（每次複刻一個資料夾：plan、模板、前後截圖）。plugin 目錄全程唯讀。
 
 ## 需求
 
-- **Node.js ≥ 18**（Node/TypeScript 專案，npm workspaces — **不使用 Python**）
-- 供 Playwright 使用的 Chromium（用下方指令安裝一次即可）
-
-## 安裝
-
-```bash
-npm install
-npm run browsers        # playwright 安裝 chromium（一次即可）
-npm run build           # tsc -b + 建置 dashboard
-```
-
-## 快速使用（CLI）
-
-```bash
-# 從真實 URL 擷取 + 產生：
-npm run generate -- --url https://example.com
-
-# 使用本地 fixture 測試：
-npm run generate -- --url "file:///<path>/test-fixtures/landing.html"
-
-# AI Vision 模式（pixel-fidelity，平行 fan-out subagent claude -p）：
-npm run generate -- --url https://example.com --vision ai
-
-# 重新分析 1 個已擷取的 job（不重新開啟 browser）：
-npm run generate -- --job <jobId> --vision ai
-```
-
-輸出位於 `storage/`（已列入 gitignore）：`screenshots/`、`snapshots/`、`ir/`、
-`templates/{template.json, template-kit.zip}`、`reports/`。
-
-## API + Dashboard
-
-```bash
-npm run api             # http://localhost:4000
-```
+- Google Chrome（真瀏覽器＝無自動化指紋，防爬蟲嚴的網站也能分析）
+- Node ≥ 20（Playwright MCP 走 `npx`）與 [uv](https://docs.astral.sh/uv/)——`setup` 會為使用者安裝
+- （選配）Docker Desktop ＋ 已授權的 Bricks theme（解壓進 `docker/wp/wp-content/themes/bricks/`）——實測階段用，見 [docker/README.md](docker/README.md)
 
 ## 結構
 
 ```text
-packages/   ir · capture · analyzer · bricks · export · validation   (契約型別位於 packages/ir/src/types.ts)
-apps/       api · dashboard
-workers/    job 管線階段
+.claude-plugin/   plugin.json + marketplace.json（發版 bump version、合進 main）
+.mcp.json         內建 Playwright MCP（接管 CDP 9222，不自啟瀏覽器）
+skills/           clone（一條龍，含 measure.js、bricks-1125-gotchas.md）· setup
+src/              validate_template.py —— 模板 JSON 驗證 gate（uv run）
+templates/        launch-chrome-cdp.{bat,sh} —— setup 複製到使用者專案 .browser/
+docker/           WP+Bricks 驗證環境（compose / init-wp.sh / push-template.php）
+doc/              tutorial.md —— 從 Docker 到第一個 Bricks 頁面的完整教學
+bricks-schema/    官方 Bricks 資料模型 schema v2.3 本地副本（元素/設定欄位存在性的依據）
+test-fixtures/    本機測試用 landing page（file:// 即可分析）
 ```
 
-## 文件
+## Bricks 版本注意
 
-- [GETTING-STARTED.md](./GETTING-STARTED.md) — 詳細使用指南、選項、vision 模式、design/animation。
-- [ARCHITECTURE-bricks-cdp-visual-generator.md](./ARCHITECTURE-bricks-cdp-visual-generator.md) — 完整架構。
-- [README-bricks-cdp-visual-generator.md](./README-bricks-cdp-visual-generator.md) — 設計理念（為何採用 Page IR）。
-- [SPEC-visual-regression-generator.md](./SPEC-visual-regression-generator.md) — 前瞻規格：視覺回歸驅動的自我修復 generator（VRDG）。
-
-## 匯入 Bricks
-
-WordPress → Bricks → Templates → **Import Templates** → 選擇 `template.json`。
-每個 `.json` = 1 個 template；kit `.zip` 刻意設計成只包含剛好 1 個 `.json`。
-
-## 設定（選用）
-
-複製 `.env.example` → `.env`。所有變數皆為選用（`PORT`、
-`WORKER_CONCURRENCY`、`STORAGE_DIR`）— app 以預設值即可執行。
+團隊目標版本 **1.12.5**。`bricks-schema/` 是官方 schema（對應 Bricks 2.x）——查「欄位存不存在」
+用它；**設定值的形狀以 `skills/clone/bricks-1125-gotchas.md` 為準**（對照 1.12.5 theme 原始碼
+驗證過，和 h2b（html2bricks）文件不同）。兩者衝突時信 gotchas。
 
 ## 法律注意事項
 
-僅可用於你的網站 / 已授權的客戶 / 內部重建 /
-學習用途。
+僅可用於使用者自有網站／已授權的客戶網站／內部重建／學習用途。
