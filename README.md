@@ -4,8 +4,9 @@
 給設計部「先 copy 一版、再動手改」用——取代照著參考網站手拉 Bricks 的苦工。
 
 ```text
-/autobricks:clone    網址 → 一條龍：CDP 真 Chrome 全面分析（數字全實測）→ 施工 plan
-                     → Bricks 模板 JSON（驗證 gate）→ 推本機 WP 實測、多策略對照
+/autobricks:clone    網址 → 一條龍：CDP 真 Chrome 全局分析（數字全實測）→ 逐區塊
+                     「實作 → 推本機 WP 渲染 → 與原站並排對照 → 微調」一區收斂才下一區
+                     → RWD 逐斷點把同一套迴圈再走一遍（驗證 gate 全程把關）
 /autobricks:setup    環境一鍵備好（uv、Node、CDP 瀏覽器、選配 WP 環境、權限預核准）
 ```
 

@@ -8,7 +8,8 @@ Bricks Builder 模板。**分析與生成由 skills 在 Claude session 內完成
 **沒有 TS、沒有 server、沒有 webui**。
 
 - 清單：`.claude-plugin/plugin.json` + `marketplace.json`；skills 在 **`skills/<name>/SKILL.md`**：
-  `clone`（URL→plan→模板 JSON→WP 實測，一條龍；**結構極簡鐵律：好編輯 > 還原 DOM 層次**）、
+  `clone`（全局分析→逐區塊實作並即時渲染對照原站→RWD 逐斷點，一條龍；
+  **結構極簡鐵律：好編輯 > 還原 DOM 層次**）、
   `setup`（環境，user-only）。
 - **內建 MCP**：根目錄 `.mcp.json` 宣告 Playwright MCP，`--cdp-endpoint` 接管 9222 的真 Chrome
   （不自啟、無自動化指紋——這是能分析防爬蟲網站的關鍵，勿改成 launch）。
