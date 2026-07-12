@@ -169,7 +169,8 @@ MSYS_NO_PATHCONV=1 docker compose run --rm wpcli post meta get <page_id> _bricks
 自動化，直接生成存檔結果，再由 `docker/push-template.php` 寫進資料庫。
 
 細節注意：空的 `settings` Bricks 存成 `[]`（不是 `{}`）；元素 id 是 6 碼小寫英數。
-完整格式規範見 `skills/clone/bricks-1125-gotchas.md`。
+格式細節：欄位存在性查 `data/bricks-schema-live.json`（`uv run python src/extract_bricks_schema.py`
+從 theme 原始碼現抽）；實戰經驗累積在專案的 `bricks-gotchas.local.md`。
 
 ## 7. 觀念篇：WordPress、PHP、wp-cli 怎麼運作（複習用）
 

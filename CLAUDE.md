@@ -3,7 +3,7 @@
 ## 這是什麼
 
 **AutoBricks**：Claude Code plugin（本 repo 同時是 plugin 與自己的 marketplace），把網頁複刻成
-Bricks Builder 1.12.5 模板。**分析與生成由 skills 在 Claude session 內完成**（CDP 接管真 Chrome），
+Bricks Builder 模板。**分析與生成由 skills 在 Claude session 內完成**（CDP 接管真 Chrome），
 程式碼只有兩塊確定性工具：量測器（`skills/clone/measure.js`）與驗證 gate（`src/validate_template.py`）。
 **沒有 TS、沒有 server、沒有 webui**。
 
@@ -42,13 +42,15 @@ uv run ruff format . && uv run ruff check --fix .  # lint/format（手動跑）
   （只推個人分支不會被抓；`marketplace.json` 的 version 是純標籤）。
 - 完整心法與坑：參考 `../Meta_ad_Generator/docs/plugin-tutorial.md`（同機的姊妹 plugin，格式範本）。
 
-## Bricks 1.12.5 鐵律（skills 已內建，改 skill 時勿違反）
+## Bricks 鐵律（skills 已內建，改 skill 時勿違反）
 
-- **`%root%` 在 `_cssCustom` 不會被替換**——會原樣輸出成無效 selector。一律用真實
-  `#brxe-<id>`，且在元素 id 定案後才寫。
-- 設定形狀以 **`skills/clone/bricks-1125-gotchas.md`** 為單一真相來源（對照 1.12.5 theme
-  原始碼驗證；h2b（html2bricks）文件在 1.12.x 是錯的）。`bricks-schema/`（官方 v2.3，對應 2.x）只用來查
-  「元素/欄位存不存在」；衝突時信 gotchas。
+- **plugin 不鎖定 Bricks 版本、不內建版本經驗**。真相來源順序：使用者專案
+  `bricks-gotchas.local.md`（實證經驗，隨專案成長；gitignored、不隨 plugin 發佈）→
+  live schema（`src/extract_bricks_schema.py` 從使用者 theme 原始碼現抽，
+  欄位存在性最高權威）→ `bricks-schema/`（官方 v2.3、對應 2.x，fallback）。
+  **版本經驗絕不寫進 plugin 目錄**（marketplace update 會整包蒸發，也污染通用性）。
+- **`%root%` 在 `_cssCustom` 不會被替換**（1.12.x 實證）——會原樣輸出成無效 selector。
+  一律用真實 `#brxe-<id>`，且在元素 id 定案後才寫。
 - id：6 碼 `[a-z0-9]` 且含數字；一個 kit zip 恰好一個 `.json`。
 - 圖片釘 `_width` ＋ id-scoped `aspect-ratio`，絕不固定 `_height`；間距用實測值不吸附。
 - **WordPress 寫入**走 `docker exec … php`（`wp_set_current_user(admin)` + `wp_slash()`），

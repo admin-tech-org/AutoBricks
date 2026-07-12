@@ -1,4 +1,4 @@
-"""AutoBricks 驗證 gate — 檢查 Bricks Builder 模板 JSON 是否可安全匯入 1.12.5。
+"""AutoBricks 驗證 gate — 檢查 Bricks Builder 模板 JSON 是否可安全匯入 Bricks。
 
 clone skill 產出 template.json 後必須跑本腳本並修到 PASS 才交付。
 只用標準函式庫。檢查層次：
@@ -6,10 +6,12 @@ clone skill 產出 template.json 後必須跑本腳本並修到 PASS 才交付�
   1. 信封：{id, name, parent, children, settings}（component 實例以 cid 識別、放寬 name）
   2. id：格式 ^[a-z0-9]{6}$、唯一；警告不含數字（匯入 id 全域字串替換的踩雷防護）
   3. 圖：parent/children 互相一致、無懸空引用、無環、皆可從根到達
-  4. element name：對照 bricks-schema/elements/*.json（官方 schema 副本）
-  5. 1.12.5 已知形狀（見 skills/clone/bricks-1125-gotchas.md）：
+  4. element name 與 settings 欄位：優先對照 data/bricks-schema-live.json
+     （extract_bricks_schema.py 從使用者 theme 原始碼抽出、版本自動對齊——含逐鍵檢查）；
+     沒有 live schema 才退官方 bricks-schema/（2.3，只查 element 名）
+  5. 已知形狀（實機驗證於 1.12.x；經驗明細在使用者專案的 bricks-gotchas.local.md）：
      _boxShadow 必須 object、_gradient 必須 object、_background 不可是字串、
-     _cssCustom 含 %root% 直接判 error（1.12.5 不替換）、font-family 帶逗號警告、
+     _cssCustom 含 %root% 直接判 error（1.12.x 實證不替換）、font-family 帶逗號警告、
      image 同時固定 _width 與 _height 警告（變形）、selectors 為 2.x 特性警告
 
 用法：
@@ -59,6 +61,23 @@ def load_elements(path):
     raise ValueError("JSON 頂層必須是陣列或含 content 的物件")
 
 
+def load_live_schema(path):
+    """src/extract_bricks_schema.py 的輸出：從使用者 theme 原始碼抽取的 schema（比官方 2.3 更權威）。"""
+    if not path or not os.path.isfile(path):
+        return None
+    try:
+        d = json.load(open(path, encoding="utf-8"))
+        els = d.get("elements", {})
+        base = set(els.get("__base__", {}).get("controls", []))
+        return {
+            "version": d.get("bricks_version", "?"),
+            "names": {k for k in els if k != "__base__"},
+            "controls": {k: set(v.get("controls", [])) | base for k, v in els.items() if k != "__base__"},
+        }
+    except (OSError, json.JSONDecodeError, AttributeError):
+        return None
+
+
 def known_element_names(schema_dir):
     eldir = os.path.join(schema_dir, "elements")
     if not os.path.isdir(eldir):
@@ -70,9 +89,11 @@ def known_element_names(schema_dir):
     return names or None
 
 
-def check(elements, schema_names, global_classes=None):
+def check(elements, schema_names, global_classes=None, live=None):
     errors, warnings = [], []
     global_classes = global_classes or []
+    if live:  # live schema（使用者環境的真版本）優先於官方 2.3 目錄
+        schema_names = live["names"]
 
     # ---- 0. Global Classes（樣式元件）---------------------------------
     class_ids = set()
@@ -133,10 +154,17 @@ def check(elements, schema_names, global_classes=None):
         # ---- 4. element name 對 schema --------------------------------
         name = el.get("name")
         if name and schema_names is not None and name not in schema_names:
-            err(i, el, f"element name {name!r} 不在 bricks-schema/elements/（不存在的元素或拼錯）")
+            src = f"Bricks {live['version']} 原始碼（live schema）" if live else "bricks-schema/elements/"
+            err(i, el, f"element name {name!r} 不在 {src}（不存在的元素或拼錯）")
+        if live and name in live["controls"] and isinstance(settings, dict):
+            ctrls = live["controls"][name]
+            for skey in settings:
+                base_key = skey.split(":", 1)[0]
+                if not base_key.startswith("_") and base_key not in ctrls:
+                    warn(i, el, f"設定鍵 {base_key!r} 不在 {name} 的 controls 裡（theme 原始碼查無此欄位）")
 
         if "selectors" in el:
-            warn(i, el, "selectors 是 Bricks 2.0+ 特性，1.12.5 不支援（會被忽略）")
+            warn(i, el, "selectors 是 Bricks 2.0+ 特性，1.12.x 不支援（會被忽略）")
 
         refs = (settings or {}).get("_cssGlobalClasses") if isinstance(settings, dict) else None
         if refs is not None:
@@ -147,12 +175,12 @@ def check(elements, schema_names, global_classes=None):
                     if cid not in class_ids:
                         err(i, el, f"_cssGlobalClasses 引用不存在的 class {cid!r}（template 的 globalClasses 沒有它）")
 
-        # ---- 5. 1.12.5 已知形狀 ----------------------------------------
+        # ---- 5. 已知形狀（1.12.x 實證）----------------------------------------
         if isinstance(settings, dict):
             for skey, sval in settings.items():
                 base = skey.split(":", 1)[0]
                 if base == "_boxShadow" and not isinstance(sval, dict):
-                    err(i, el, f"{skey} 必須是 OBJECT（h2b 的陣列寫法在 1.12.5 是錯的）")
+                    err(i, el, f"{skey} 必須是 OBJECT（h2b 的陣列寫法是錯的；1.12.x 實證）")
                 if base == "_gradient" and not isinstance(sval, dict):
                     err(i, el, f"{skey} 必須是 object（獨立 _gradient key，勿塞 CSS 字串）")
                 if base == "_background":
@@ -161,7 +189,7 @@ def check(elements, schema_names, global_classes=None):
                     elif isinstance(sval, dict) and "linear-gradient" in json.dumps(sval):
                         warn(i, el, "_background 內出現 linear-gradient 字串——漸層應走獨立 _gradient key")
                 if base == "_cssCustom" and isinstance(sval, str) and "%root%" in sval:
-                    err(i, el, "_cssCustom 含 %root% —— 1.12.5 不會替換，會輸出無效 selector；改用真實 #brxe-<id>")
+                    err(i, el, "_cssCustom 含 %root% —— 1.12.x 實證不會替換，會輸出無效 selector；改用真實 #brxe-<id>")
                 if base == "_typography" and isinstance(sval, dict):
                     fam = sval.get("font-family", "")
                     if isinstance(fam, str) and "," in fam:
@@ -240,9 +268,14 @@ def check(elements, schema_names, global_classes=None):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Bricks 1.12.5 模板 JSON 驗證 gate")
+    ap = argparse.ArgumentParser(description="Bricks 模板 JSON 驗證 gate")
     ap.add_argument("template", help="template.json 路徑（裸陣列或含 content 的物件皆可）")
     ap.add_argument("--schema-dir", default=None, help="bricks-schema 目錄（預設：本腳本上層的 bricks-schema/）")
+    ap.add_argument(
+        "--live-schema",
+        default=os.path.join("data", "bricks-schema-live.json"),
+        help="extract_bricks_schema.py 的輸出（存在時優先於官方 schema）",
+    )
     ap.add_argument("--strict", action="store_true", help="警告也視為失敗")
     ap.add_argument("--json", action="store_true", dest="as_json", help="機器可讀輸出")
     args = ap.parse_args()
@@ -255,7 +288,8 @@ def main():
         sys.exit(2)
 
     schema_names = known_element_names(schema_dir)
-    errors, warnings = check(elements, schema_names, global_classes)
+    live = load_live_schema(args.live_schema)
+    errors, warnings = check(elements, schema_names, global_classes, live)
     ok = not errors and not (args.strict and warnings)
 
     if args.as_json:
@@ -267,7 +301,10 @@ def main():
             )
         )
     else:
-        print(f"elements: {len(elements)}  global classes: {len(global_classes)}")
+        print(
+            f"elements: {len(elements)}  global classes: {len(global_classes)}"
+            + (f"  [live schema: Bricks {live['version']}]" if live else "")
+        )
         if schema_names is None:
             print("[!] 找不到 bricks-schema/elements —— 跳過 element name 檢查")
         for msg in errors:

@@ -1,7 +1,7 @@
 [project]
 name = "autobricks"
 version = "0.1.0"
-description = "AutoBricks plugin 隨附腳本（Bricks 1.12.5 模板 JSON 驗證 gate）；分析與生成由 skills 在 Claude session 內完成"
+description = "AutoBricks plugin 隨附腳本（Bricks 模板 JSON 驗證 gate＋live schema 抽取）；分析與生成由 skills 在 Claude session 內完成"
 requires-python = ">=3.10"
 dependencies = []
 

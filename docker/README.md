@@ -1,6 +1,6 @@
 # docker/ — 本機 Bricks 驗證環境
 
-`push` skill 的靶場：WordPress + MariaDB + Bricks 1.12.5，跑在 http://localhost:8080。
+`clone` 實測階段的靶場：WordPress + MariaDB + Bricks（使用者自備 theme），跑在 http://localhost:8080。
 
 **掛載策略**：WordPress 檔案 bind mount 在 `docker/wp/`（看得到、theme 直接丟）；
 資料庫用 named volume（MariaDB 在 Windows bind mount 有鎖檔/損毀地雷，且 db 檔不會手動讀）。

@@ -59,7 +59,7 @@ uv sync --project "<PLUGIN_DIR>"
    換 port 就設環境變數 `PLAYWRIGHT_CDP_URL`。
 
 ### 6.（選配）Docker WordPress + Bricks 驗證環境
-`clone` 的實測階段需要本機有一套 WordPress + Bricks 1.12.5。**問使用者要不要現在建**（只做到 template.json 可跳過）：
+`clone` 的實測階段需要本機有一套 WordPress + Bricks（使用者自備已授權 theme）。**問使用者要不要現在建**（只做到 template.json 可跳過）：
 
 1. 需求：Docker Desktop 已啟動。
 2. 一鍵建置：

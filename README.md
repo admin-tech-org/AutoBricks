@@ -1,11 +1,11 @@
 # AutoBricks
 
-**Claude Code plugin：把任一網頁複刻成可匯入的 Bricks Builder（1.12.5）模板。**
+**Claude Code plugin：把任一網頁複刻成可匯入的 Bricks Builder 模板。**
 給設計部「先 copy 一版、再動手改」用——取代照著參考網站手拉 Bricks 的苦工。
 
 ```text
 /autobricks:clone    網址 → 一條龍：CDP 真 Chrome 全面分析（數字全實測）→ 施工 plan
-                     → Bricks 1.12.5 模板 JSON（驗證 gate）→ 推本機 WP 實測、多策略對照
+                     → Bricks 模板 JSON（驗證 gate）→ 推本機 WP 實測、多策略對照
 /autobricks:setup    環境一鍵備好（uv、Node、CDP 瀏覽器、選配 WP 環境、權限預核准）
 ```
 
@@ -34,19 +34,22 @@
 ```text
 .claude-plugin/   plugin.json + marketplace.json（發版 bump version、合進 main）
 .mcp.json         內建 Playwright MCP（接管 CDP 9222，不自啟瀏覽器）
-skills/           clone（一條龍，含 measure.js、bricks-1125-gotchas.md）· setup
-src/              validate_template.py —— 模板 JSON 驗證 gate（uv run）
+skills/           clone（一條龍，含 measure.js）· setup
+src/              validate_template.py（驗證 gate）· extract_bricks_schema.py
+                  （從使用者 theme 原始碼抽 schema、版本自動對齊，驗證與生成共用）
 templates/        launch-chrome-cdp.{bat,sh} —— setup 複製到使用者專案 .browser/
 docker/           WP+Bricks 驗證環境（compose / init-wp.sh / push-template.php）
 doc/              tutorial.md —— 從 Docker 到第一個 Bricks 頁面的完整教學
 bricks-schema/    官方 Bricks 資料模型 schema v2.3 本地副本（元素/設定欄位存在性的依據）
 ```
 
-## Bricks 版本注意
+## Bricks 版本與經驗知識
 
-團隊目標版本 **1.12.5**。`bricks-schema/` 是官方 schema（對應 Bricks 2.x）——查「欄位存不存在」
-用它；**設定值的形狀以 `skills/clone/bricks-1125-gotchas.md` 為準**（對照 1.12.5 theme 原始碼
-驗證過，和 h2b（html2bricks）文件不同）。兩者衝突時信 gotchas。
+plugin **不鎖定 Bricks 版本**：元素/欄位存在性由 `src/extract_bricks_schema.py` 直接從
+使用者裝的 theme 原始碼現抽（`data/bricks-schema-live.json`，版本自動對齊）；`bricks-schema/`
+（官方 v2.3，對應 2.x）只是 live 不可用時的 fallback。使用經驗（設定值形狀、渲染地雷）
+**不隨 plugin 發佈**——累積在使用者專案的 `bricks-gotchas.local.md`，clone skill 讀取時
+以它為最優先 ground truth、新教訓也回寫它。
 
 ## 法律注意事項
 

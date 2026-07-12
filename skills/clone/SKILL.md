@@ -1,6 +1,6 @@
 ---
 name: clone
-description: 一條龍把任一網頁複刻成「設計部好編輯」的 Bricks Builder 1.12.5 頁面——CDP 接管真 Chrome（無自動化指紋）全面分析網頁（HTML/CSS/JS 動態，數字全實測）→ 寫施工 plan（結構已重組成極簡 Bricks 樹、element 參照 schema）→ 直接生成模板 JSON（驗證 gate 必過）→ 推進本機 Docker WP 實際渲染 → 照區塊清單逐區驗證（視覺截圖／HTML 結構／CSS 套用／動態操作實測）、逐區微調 → RWD 逐斷點驗證。觸發詞（含口語與意圖）：「複刻這個網站 / clone 這個網頁 / 照這個網站做一版 / 抄這個版型 / 參考這個網站拉一版 / 把這個網址變 bricks / 網頁轉 bricks / 幫我 copy 這個網站 / 分析這個網站 / 做成模板」等，或使用者貼了一個要複刻的網址時，觸發。
+description: 一條龍把任一網頁複刻成「設計部好編輯」的 Bricks Builder 頁面——CDP 接管真 Chrome（無自動化指紋）全面分析網頁（HTML/CSS/JS 動態，數字全實測）→ 寫施工 plan（結構已重組成極簡 Bricks 樹、element 參照 schema）→ 直接生成模板 JSON（驗證 gate 必過）→ 推進本機 Docker WP 實際渲染 → 照區塊清單逐區驗證（視覺截圖／HTML 結構／CSS 套用／動態操作實測）、逐區微調 → RWD 逐斷點驗證。觸發詞（含口語與意圖）：「複刻這個網站 / clone 這個網頁 / 照這個網站做一版 / 抄這個版型 / 參考這個網站拉一版 / 把這個網址變 bricks / 網頁轉 bricks / 幫我 copy 這個網站 / 分析這個網站 / 做成模板」等，或使用者貼了一個要複刻的網址時，觸發。
 ---
 
 # clone
@@ -91,7 +91,8 @@ description: 一條龍把任一網頁複刻成「設計部好編輯」的 Bricks
    記 `{target, trigger, effect, css}`。
 7. **RWD 實測（必做，行動流量是行銷頁的大宗）**：
    - 宣告面：第 4 步已登錄的 `sm:/md:/lg:` 斷點 class ＝ 原站的響應意圖，對映到
-     Bricks 斷點（見 gotchas 的對映表）。
+     Bricks 斷點（desktop-first：後綴＝該寬以下生效，與 Tailwind mobile-first
+     方向相反，換算時「基準」與「後綴」要互換）。
    - 實測面：`browser_resize` 到 **768 與 375**（皆做 viewport 校準）各做一輪——
      全頁截圖＋逐區記錄行為：幾欄變幾欄、導覽列收合成什麼、哪些元素隱藏、
      字級/間距縮多少。
@@ -144,7 +145,8 @@ Bricks 樹」的重組（鐵律 1–5），不是把 DOM 抄下來留給生成�
 }
 ```
 
-- `bricks` 只准填 `<PLUGIN_DIR>/bricks-schema/elements/` 存在的 element 名
+- `bricks` 只准填 schema 查得到的 element 名（live schema 已抽就以它為準；
+  否則 `<PLUGIN_DIR>/bricks-schema/elements/`）
   （`h1–h6`→`heading`、內文→`text-basic`、CTA→`button`、圖→`image`）；對不上→`fallbacks`。
 - 文字內容**逐字照抄**；measured 用實測原值（不吸附、不湊整）。
 - **`responsive.rules` 必須填**（Phase 1 第 7 步的產出）：每條寫「哪一區、哪個斷點、
@@ -157,10 +159,17 @@ Bricks 樹」的重組（鐵律 1–5），不是把 DOM 抄下來留給生成�
 
 ## Phase 3 — 生成 Bricks JSON ＋ 驗證 gate
 
-**先讀 `<skill base>/bricks-1125-gotchas.md` 整份**（1.12.5 已驗證形狀——`_gradient` 獨立
-key、`_boxShadow` 是 object、字體拆 fallback、`%root%` 不替換…衝突時以它為準）；
-每個 element 的 settings 欄位逐一對 `<PLUGIN_DIR>/bricks-schema/elements/<name>.json`
-確認存在——**schema 沒有的欄位＝不存在，絕不發明**（`selectors` 等 2.x 特性 1.12.5 不可用）。
+**先讀 ground truth（順序即優先序；plugin 不內建版本知識、絕不假設 Bricks 版本）**：
+1. **使用者專案的 `bricks-gotchas.local.md`**（若存在）——本專案累積的實證經驗
+   （設定值形狀與渲染地雷，每條標註驗證版本）。
+2. **live schema（元素/欄位存在性的最高權威）**：docker 環境在時，確保
+   `data/bricks-schema-live.json` 存在——沒有就跑
+   `uv run --project "<PLUGIN_DIR>" python "<PLUGIN_DIR>/src/extract_bricks_schema.py"`
+   （直接從**使用者裝的 theme** PHP 原始碼抽出 schema，版本自動對齊）。
+   值的「形狀」不確定、經驗又沒記載時：用 live schema 各 element 的 `file` 欄位
+   開對應 theme 原始碼查 control 定義，或推 WP 渲染實測定案——不猜。
+3. `<PLUGIN_DIR>/bricks-schema/`——官方 v2.3 副本（對應 Bricks 2.x）：live 不可用時
+   的 fallback。**官方有、live 查無的欄位＝使用者的版本沒有，絕不發明。**
 
 - 扁平陣列 `{id, name, parent, children, settings, label}`，根 `parent: 0`。
 - **id：6 碼 `[a-z0-9]` 且至少 1 個數字**（匯入 id 全域字串替換的防撞規則）。
@@ -170,11 +179,13 @@ key、`_boxShadow` 是 object、字體拆 fallback、`%root%` 不替換…衝突
   重複樣式只定義一次，設計部改 class 全站連動。元素自己的 settings 只放「這顆獨有」的值。
 - 圖片釘 `_width` ＋ id-scoped `aspect-ratio`，不固定 `_height`。
 - **RWD 用斷點後綴 key 落地**（`_direction:mobile_portrait`、`_typography:tablet_portrait`、
-  `_padding:mobile_portrait`…，斷點鍵名見 gotchas）：依 plan 的 `responsive.rules` 逐條
+  `_padding:mobile_portrait`…，斷點鍵名讀 WP option
+  `bricks_breakpoints`，未自訂＝預設 tablet_portrait ≤991／mobile_landscape ≤767／
+  mobile_portrait ≤478）：依 plan 的 `responsive.rules` 逐條
   轉成對應元素的後綴設定——欄數收合（row→column 或 wrap）、字級降階、間距縮減、
   `_display:none` 隱藏。Global Classes 的 settings 同樣支援斷點後綴，共用樣式的響應
   行為寫在 class 裡一次搞定。
-- 動態與視覺效果照 gotchas 的**四層階梯**處理：自帶 JS 的原生元素（輪播/手風琴/
+- 動態與視覺效果照**四層階梯**處理：自帶 JS 的原生元素（輪播/手風琴/
   counter…）→ `_interactions` 原生互動 → CSS 層（**優先 native 狀態設定**：`_transform`
   旋轉、`_boxShadow:hover`/`_transform:hover` 浮起——builder 可編輯；native 表達不了的
   keyframes/偽元素/pattern 才用 `_cssCustom`——共用的放 class、單顆的放元素，
@@ -240,8 +251,12 @@ key、`_boxShadow` 是 object、字體拆 fallback、`%root%` 不替換…衝突
 
 ## Phase 5 — 收尾
 
-1. 關掉本次開的分頁（別關整台 Chrome）；清空 `.browser/tmp/` 與 `tmp/`；掃一眼專案根沒有垃圾。
-2. 回報：plan 與 template 路徑、element 數/最大深度（編輯性指標）、**逐區驗證表**
+1. **新知識的歸宿（鐵則）**：驗證中發現的新平台知識（渲染怪癖、欄位行為、版面雷）寫進
+   **使用者專案的 `bricks-gotchas.local.md`**（不存在就建立；一條＝現象＋解法＋驗證當時的
+   Bricks 版本）。**絕不寫 plugin 目錄**——plugin 只該有通用方法，且 marketplace update
+   時會重新複製出全新的版本資料夾，寫在 plugin 內的任何修改都會無聲蒸發。
+2. 關掉本次開的分頁（別關整台 Chrome）；清空 `.browser/tmp/` 與 `tmp/`；掃一眼專案根沒有垃圾。
+3. 回報：plan 與 template 路徑、element 數/最大深度（編輯性指標）、**逐區驗證表**
    （區塊｜視覺｜程式碼｜操作｜判定）＋ **RWD 逐斷點結果**、「待人工」清單（有的話）、
    PAGE_ID 與 permalink（有推的話）、unsupported 清單（有的話）。
-3. 提醒使用者：也可在 WP 後台 Bricks → Templates → Import 直接匯入 `template.json`。
+4. 提醒使用者：也可在 WP 後台 Bricks → Templates → Import 直接匯入 `template.json`。
