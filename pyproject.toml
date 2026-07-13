@@ -1,0 +1,18 @@
+[project]
+name = "autobricks"
+version = "0.1.0"
+description = "AutoBricks plugin 隨附腳本（Bricks 模板 JSON 驗證 gate＋live schema 抽取）；分析與生成由 skills 在 Claude session 內完成"
+requires-python = ">=3.10"
+dependencies = []
+
+[dependency-groups]
+# 開發用工具（uv sync 會自動安裝 dev 群組）
+dev = ["ruff>=0.6"]
+
+[tool.uv]
+# 平面腳本、非安裝套件——uv 只管 venv + deps，不建置本專案
+package = false
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120

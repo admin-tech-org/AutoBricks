@@ -1,27 +1,25 @@
-# Dependencies
-node_modules/
+# Python / uv
+.venv/
+__pycache__/
+*.pyc
+.ruff_cache/
 
-# Build output
-dist/
-*.tsbuildinfo
-apps/dashboard/public/bundle.js
-
-# Generated runtime artifacts (screenshots, IR, templates, db.json, reports…)
-storage/
-
-# Chrome CDP user-data-dir / browser profile (large, machine-local — never commit)
+# 使用者側執行期（在本 repo 內開發/測試 plugin 時會產生）
 .browser/
+tmp/
+data/
+bricks-gotchas.local.md
 
-# Environment & secrets (keep .env.example tracked as the template)
+# Docker 本機環境：wp 是 bind mount（含商業的 Bricks theme，絕不進版控）
+docker/wp/
+bricks_src/
+
+# 環境
 .env
 .env.*
-!.env.example
 
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-pnpm-debug.log*
+# Claude 本機設定
+.claude/settings.local.json
 
 # OS / editor cruft
 .DS_Store
@@ -30,3 +28,4 @@ Desktop.ini
 .vscode/
 .idea/
 *.swp
+*.log

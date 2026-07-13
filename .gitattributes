@@ -1,38 +1,43 @@
-# Normalize line endings: store text as LF in the repo (avoids CRLF noise when
-# committing from Windows and pushing to GitHub / running under Linux Docker).
+# 預設：所有文字檔自動偵測，且在 repo 與 checkout 時一律使用 LF。
+# plugin 會在 Windows / macOS / Linux 的使用者機器上跑，換行必須一致，
+# 避免 shell script 出現 `#!/bin/sh^M`、或 Python 解析到 \r 的問題。
 * text=auto eol=lf
 
-# Explicit text types
-*.ts    text
-*.tsx   text
-*.js    text
-*.mjs   text
-*.cjs   text
-*.json  text
-*.md    text
-*.html  text
-*.css   text
-*.php   text
-*.yml   text
-*.yaml  text
-*.sh    text eol=lf
+# --- 明確指定 LF 的文字檔 ---
+*.py        text eol=lf
+*.sh        text eol=lf
+*.js        text eol=lf
+*.json      text eol=lf
+*.php       text eol=lf
+*.toml      text eol=lf
+*.md        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.html      text eol=lf
+*.css       text eol=lf
+.gitignore  text eol=lf
+.gitattributes text eol=lf
 
-# Binary assets — never normalize or diff
-*.png   binary
-*.jpg   binary
-*.jpeg  binary
-*.gif   binary
-*.webp  binary
-*.svg   text
-*.ico   binary
-*.zip   binary
-*.woff  binary
-*.woff2 binary
-*.ttf   binary
-*.eot   binary
+# --- Windows 專用腳本：保留 CRLF ---
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
 
-# Lockfile: collapse in diffs and mark generated
-package-lock.json linguist-generated -diff
+# --- Lockfile：文字、標記自動產生（diff 摺疊）---
+uv.lock     text eol=lf linguist-generated=true
 
-# Vendored reference docs (kept out of GitHub language stats)
+# --- 二進位檔 ---
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.webp      binary
+*.ico       binary
+*.zip       binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.pdf       binary
+
+# --- 官方 schema 副本：不算進語言統計 ---
 bricks-schema/** linguist-vendored
