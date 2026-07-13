@@ -182,6 +182,9 @@ RWD 逐斷點把同一套迴圈再走一遍 → 全頁總檢。
    ```
    **error 清零；純 wrapper 警告一律壓平；深度警告逐一審核**（鐵律 6）→ 推送
    （第一區建新頁並記 PAGE_ID，之後 `-e PAGE_ID=<n>` 重推同頁）。落地要點：
+   - **element 名與 settings 鍵一律以 live schema（原始碼抽出）為準**——不確定就
+     當場查 `data/bricks-schema-live.json` 或對應 PHP 原始碼，絕不憑記憶發明鍵名
+     （gate 也會用 live schema 逐鍵複查）。
    - 扁平陣列 `{id, name, parent, children, settings, label}`，根 `parent: 0`；
      **id：6 碼 `[a-z0-9]` 且至少 1 個數字**（匯入 id 全域字串替換的防撞規則）。
    - container 用 plan 的 `content_width` 釘 `_widthMax`；圖片釘 `_width` ＋
