@@ -74,7 +74,16 @@ RWD 逐斷點把同一套迴圈再走一遍 → 全頁總檢。
    - 盤點完與全頁截圖**互相對照**：截圖上看得到的每一塊都要在清單裡，缺了就回頭補掃。
    - 第三方浮動 widget（客服泡泡、樣式切換工具列等 `position:fixed` 且非設計本體）
      標記排除，不進清單。
-4. **原始碼分析（全局層；宣告真相與量測互補，缺一不可）**：computed style 只給
+4. **全頁行為普查（視覺之外的另一半真相；工具：`<skill base>/behavior.js`）**：
+   截圖量得到「長什麼樣」，量不到「會做什麼」——行為只存在於這份普查裡。對 `body`
+   跑一次 behavior.js（結果落 `.browser/tmp/behavior-global.json`），得到五類證據：
+   執行中動畫（`iterations:"Infinity"`＝常駐 marquee/spinner）、@keyframes 與 hover 規則
+   （computed 讀不到的設計意圖）、互動元素盤點、JS 程式庫指紋（Swiper/GSAP/AOS…＝
+   原站實作線索，主迴圈選階梯層時用）、2 秒 Mutation 熱點（自動輪播/跑馬燈/計數器
+   抓漏網）。命中結果按區塊掛回工作清單（`dynamic` 標記＋行為摘要）——**清單上每一項
+   行為之後都要有下落**（主迴圈登錄成 dynamic_tests 實作並實測，或明列 excluded／
+   unsupported＋理由），不許無聲消失。
+5. **原始碼分析（全局層；宣告真相與量測互補，缺一不可）**：computed style 只給
    「結果值」，讀不到設計意圖——rotate 常量出 `none`、hover 效果完全不在 computed 裡、
    斷點行為看不見。所以：
    - 抓 `document.documentElement.outerHTML` 落 `.browser/tmp/source.html`；主要 stylesheet
@@ -86,10 +95,10 @@ RWD 逐斷點把同一套迴圈再走一遍 → 全頁總檢。
    - **樣式元件化**：跨區重複出現的樣式組合提取成語意化元件（如「neo 卡片」＝白底+
      4px 黑框+硬陰影；「neo 按鈕」＝…含 hover 行為）→ 進 plan 的 `classes`，
      生成時＝Bricks Global Classes。
-5. **tokens 與 assets**：統計重複色/字族/字級階/間距刻度；列 img/背景圖/SVG/字體
+6. **tokens 與 assets**：統計重複色/字族/字級階/間距刻度；列 img/背景圖/SVG/字體
    （商用字體記最接近的免費替代）。另量**內容寬**（最外層置中容器實測寬）——
    之後釘 container 寬用。
-6. **讀 ground truth（一次讀、全程用；plugin 不內建版本知識、絕不假設 Bricks 版本）**：
+7. **讀 ground truth（一次讀、全程用；plugin 不內建版本知識、絕不假設 Bricks 版本）**：
    1. **使用者專案的 `bricks-gotchas.local.md`**（若存在）——本專案累積的實證經驗
       （設定值形狀與渲染地雷，每條標註驗證版本）。
    2. **live schema（元素/欄位存在性的最高權威）**：確保 `data/bricks-schema-live.json`
@@ -101,7 +110,7 @@ RWD 逐斷點把同一套迴圈再走一遍 → 全頁總檢。
       開對應 theme 原始碼查 control 定義，或推 WP 渲染實測定案——不猜。
    3. `<PLUGIN_DIR>/bricks-schema/`——官方 v2.3 副本（對應 Bricks 2.x）：live 不可用時
       的 fallback。**官方有、live 查無的欄位＝使用者的版本沒有，絕不發明。**
-7. 寫 `data/<id>/plan.json`（全局版）：
+8. 寫 `data/<id>/plan.json`（全局版）：
 
 ```json
 {
@@ -164,17 +173,24 @@ RWD 逐斷點把同一套迴圈再走一遍 → 全頁總檢。
    - 該區原始碼 class 意圖逐一登錄（查 Phase 1 落檔的 source/CSS，兩邊互相印證：
      精確 px/色值以量測為準；rotate/hover/斷點/偽元素以宣告為準）；
      `sm:/md:/lg:` 斷點宣告**先登錄**進該區 plan，實作留給 Phase 3。
-   - 動態行為：真實指標 `browser_hover` 實測主要按鈕/卡片（`browser_evaluate` 派發
-     合成 mouseover **不會**觸發 CSS `:hover`，量了等於沒量）＋捲動觀察入場動畫/sticky。
+   - **區塊行為普查（必做）**：以該區根節點跑 `<skill base>/behavior.js`
+     （落 `.browser/tmp/behavior-<區>.json`），加上全局普查掛到本區的項目＝該區行為清單；
+     hover 效果再用真實指標 `browser_hover` 實測補證（`browser_evaluate` 派發合成
+     mouseover **不會**觸發 CSS `:hover`，量了等於沒量）＋捲動觀察入場動畫/sticky。
 2. **區塊 plan 初稿**（補進 plan.json 的該 section；**初稿非鐵則**，渲染實測後隨時改）：
    - Bricks 目標結構＝**極簡樹**——在這裡完成「DOM → Bricks」的重組（鐵律 1–5），
-     不是把 DOM 抄下來；`bricks` 只准填 schema 查得到的 element 名
-     （`h1–h6`→`heading`、內文→`text-basic`、CTA→`button`、圖→`image`），
-     對不上就記 fallback 策略。
+     不是把 DOM 抄下來。
+   - **element 選型必查 `<skill base>/element-map.md`**：以第 1 步的量測＋行為普查
+     為證據走決策漏斗（認角色 → 行為型 native 優先 → 沒有就基本元素拼裝），
+     兩難時選設計部在 builder 裡改得動的那個；候選定案前查 live schema 確認存在，
+     查無＝記 fallback 策略，絕不發明。**靜態複刻禁用 QUERY／WORDPRESS／SINGLE／
+     WooCommerce 類元素**（吃 WP 資料庫的動態元素；細節與簽章對照表見 element-map）。
    - measured 用實測原值（不吸附、不湊整）；文字內容**逐字照抄**。
-   - **`dynamic_tests`（該區的動態測試合約）**：這一區看到的每個互動/動態行為
-     （hover、點擊展開、輪播、sticky、表單…）登錄成 `{target, action, expect}`——
-     沒登錄的行為第 4 步不會測，等於沒驗。
+   - **`dynamic_tests`（該區的動態測試合約）**：以**行為普查清單為底稿逐項過帳**——
+     每個互動/動態行為（hover、點擊展開、輪播、sticky、表單、入場動畫…）登錄成
+     `{target, action, expect}`；決定不做的項目登錄成 `{target, excluded: "<理由>"}`
+     （第三方 widget、純裝飾雜訊…）。普查有、合約沒有＝該行為第 4 步不會測，
+     等於沒驗——**行為不是加分項，缺效果就是沒做完**。
 3. **實作**：該區資料加進 build script → rebuild `data/<id>/template.json` → 驗證 gate
    （語法層級的靜態測試）：
    ```bash
@@ -191,11 +207,31 @@ RWD 逐斷點把同一套迴圈再走一遍 → 全頁總檢。
      id-scoped `aspect-ratio`，不固定 `_height`。
    - 重複樣式一律掛 Global Classes（前置已定義；設計部改 class 全站連動）；
      元素自己的 settings 只放「這顆獨有」的值。
-   - 動態與視覺效果照**四層階梯**（由上往下找，落在越上層越好）：自帶 JS 的原生元素
-     （輪播/手風琴/counter/tabs…）→ `_interactions` 原生互動 → CSS 層（**優先 native
-     狀態設定**：`_transform` 旋轉、hover 後綴——builder 可編輯；native 表達不了的
-     keyframes/偽元素/pattern 才用 `_cssCustom`——共用的放 class、單顆的放元素，
-     **一律真實 `#brxe-<id>`、絕不 `%root%`**，id 定案後才寫）→ 明列 unsupported。
+   - 動態與視覺效果照**五層階梯**（由上往下找，落在越上層越好——越上層設計部越能
+     在 builder 裡編輯；普查到的 JS 程式庫指紋是選層線索：有 Swiper→slider-nested、
+     有 AOS→`_interactions` 入場…）：
+     1. 自帶 JS 的原生元素（slider/accordion/counter/tabs/countdown/animated-typing…）；
+     2. `_interactions` 原生互動（入場動畫、scroll 觸發、顯示/隱藏切換）；
+     3. CSS 層——**優先 native 狀態設定**（`_transform` 旋轉、hover 後綴——builder
+        可編輯）；native 表達不了的 keyframes/偽元素/pattern 才用 `_cssCustom`
+        （共用的放 class、單顆的放元素，**一律真實 `#brxe-<id>`、絕不 `%root%`**，
+        id 定案後才寫）；
+     4. **自訂 JS（`code` 元素）——1–3 層表達不了的行為才落到這層**（自製分頁/篩選
+        邏輯、捲動觸發 class 切換、視差、倒數/計數、複合輪播…），別再把它記
+        unsupported。鐵則：
+        - settings 形狀：純 JS（不含 `<script>` 標籤）放 `javascriptCode` ＋
+          `executeCode: true`；附帶 markup 放 `code`、樣式放 `cssCode`；
+          不需輸出容器時 `noRoot: true`。
+        - **vanilla、自包含、冪等**：不載外部 CDN、不動全域、不 `document.write`；
+          包 IIFE ＋ DOM ready 防衛；selector 一律鎖真實 `#brxe-<id>`（絕不 `%root%`）。
+        - 一區至多一顆 code 元素打包該區行為，`label` 註明「〈區名〉行為 JS」——
+          設計部找得到、也改得動。
+        - **前台會不會執行不是理所當然**：Bricks 對 code 元素有 code execution 權限
+          與程式碼簽章機制（版本相關）——第 4 步實測沒跑時，用 live schema 的 `file`
+          欄位開 code element 的 PHP 原始碼查簽章/開關真相（不猜），解法回寫 gotchas。
+     5. 明列 unsupported＋原因——**只准是真後端功能**（登入、購物車、真實表單送出、
+        即時資料…）：本 skill 產的是前端複刻，後端行為以 UI 狀態模擬或明列不做；
+        純前端行為走不到這層。
 4. **渲染對照（原站分頁 ↔ 渲染分頁，同一區並排看差異）**：
    - **a. 視覺**：兩邊該區各截圖、**並排判讀**——版型、色塊、陰影、角度、間距；
      `dynamic: true` 的區只驗結構佈局、不做像素級比對。
@@ -207,7 +243,9 @@ RWD 逐斷點把同一套迴圈再走一遍 → 全頁總檢。
      （截圖存 `.browser/tmp/test-<區>-<n>.png`＋量測 transform/shadow/高度變化），
      與 `expect` 比對。常見測法：hover＝前後 transform/box-shadow 差；手風琴/tab＝
      點開後內容出現且文字正確；跑馬燈/輪播＝隔 1–2 秒兩讀 transform 證明在動＋
-     hover 暫停；sticky＝捲動後仍在頂；表單＝可輸入。
+     hover 暫停；sticky＝捲動後仍在頂；表單＝可輸入；入場動畫＝捲入前後 opacity/
+     transform 差。**階梯第 4 層（自訂 JS）的行為必逐條實測**——console 無錯但行為
+     不動＝多半被 Bricks code execution／簽章擋下，照階梯 4 的辦法查明、勿當作過。
 5. **微調**：a/b/c 任一 FAIL → **當場只修該區**（改 build script 該區資料或該 class）→
    rebuild → gate → 重推 → **只重驗該區**。同一區修 2 次仍不過 → status 記 `"manual"`、
    列入待人工清單，繼續下一區，別整批卡死。（Bricks 有外部 CSS 檔快取：重推後前端
@@ -253,6 +291,8 @@ RWD 逐斷點把同一套迴圈再走一遍 → 全頁總檢。
    時會重新複製出全新的版本資料夾，寫在 plugin 內的任何修改都會無聲蒸發。
 3. 關掉本次開的分頁（別關整台 Chrome）；清空 `.browser/tmp/` 與 `tmp/`；掃一眼專案根沒有垃圾。
 4. 回報：plan 與 template 路徑、element 數/最大深度（編輯性指標）、**逐區驗證表**
-   （區塊｜視覺｜程式碼｜操作｜桌機/768/375 判定）、「待人工」清單（有的話）、
-   PAGE_ID 與 permalink、unsupported 清單（有的話）。
+   （區塊｜視覺｜程式碼｜操作｜桌機/768/375 判定）、**行為覆蓋帳**（普查條目 →
+   dynamic_tests → PASS／excluded／unsupported，一條不漏——這就是「不只複刻外觀」
+   的交付證明）、「待人工」清單（有的話）、PAGE_ID 與 permalink、
+   unsupported 清單（有的話）。
 5. 提醒使用者：也可在 WP 後台 Bricks → Templates → Import 直接匯入 `template.json`。

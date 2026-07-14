@@ -13,6 +13,11 @@ clone skill 產出 template.json 後必須跑本腳本並修到 PASS 才交付�
      _boxShadow 必須 object、_gradient 必須 object、_background 不可是字串、
      _cssCustom 含 %root% 直接判 error（1.12.x 實證不替換）、font-family 帶逗號警告、
      image 同時固定 _width 與 _height 警告（變形）、selectors 為 2.x 特性警告
+  6. code 元素（動態階梯第 4 層＝自訂 JS）：executeCode 開了但無任何 code 內容判 error、
+     code/javascriptCode/cssCode 含 %root% 判 error、javascriptCode 內含 <script> 標籤警告、
+     外部載入（script src / import()）與 document.write 警告（JS 鐵則：vanilla 自包含）、
+     有 javascriptCode 但 executeCode 未開警告（前台不執行）、
+     每顆可執行 code 元素都發警告供逐一審核（渲染對照必實測有跑）
 
 用法：
   uv run python src/validate_template.py <template.json> [--schema-dir DIR] [--strict] [--json]
@@ -198,6 +203,38 @@ def check(elements, schema_names, global_classes=None, live=None):
                         warn(i, el, f"font-family 只有 generic {fam!r}——確認是否漏了主字族")
             if el.get("name") == "image" and "_width" in settings and "_height" in settings:
                 warn(i, el, "image 同時固定 _width 與 _height——窄容器會變形；高度改用 id-scoped aspect-ratio")
+
+            # ---- 6. code 元素（動態階梯第 4 層：自訂 JS）---------------------
+            if el.get("name") == "code":
+                exec_on = bool(settings.get("executeCode"))
+                has_body = any(
+                    isinstance(settings.get(k), str) and settings.get(k).strip()
+                    for k in ("code", "javascriptCode", "cssCode")
+                )
+                if exec_on and not has_body:
+                    err(i, el, "executeCode 開了但 code/javascriptCode/cssCode 全空——空殼 code 元素")
+                for ck in ("code", "cssCode"):
+                    cv = settings.get(ck)
+                    if isinstance(cv, str) and "%root%" in cv:
+                        err(i, el, f"{ck} 含 %root% —— 不會被替換，改用真實 #brxe-<id>")
+                js = settings.get("javascriptCode")
+                if isinstance(js, str) and js.strip():
+                    if not exec_on:
+                        warn(i, el, "有 javascriptCode 但 executeCode 未開——前台不會執行")
+                    if "%root%" in js:
+                        err(i, el, "javascriptCode 含 %root% —— 不會被替換；selector 改用真實 #brxe-<id>")
+                    if "<script" in js.lower():
+                        warn(i, el, "javascriptCode 內含 <script> 標籤——此欄位要純 JS（markup 放 code 欄位）")
+                    if re.search(r"<script[^>]*\bsrc\s*=|\bimport\s*\(|document\.write", js):
+                        warn(
+                            i, el, "javascriptCode 含外部載入或 document.write——JS 階梯鐵則：vanilla、自包含、不動全域"
+                        )
+                if exec_on and has_body:
+                    warn(
+                        i,
+                        el,
+                        "可執行 code 元素（動態階梯第 4 層）——確認階梯 1–3 表達不了才用；渲染對照必實測 JS 有跑（Bricks code execution／簽章可能擋）",
+                    )
 
     # ---- 3. 圖完整性 ----------------------------------------------------
     def is_root(p):
