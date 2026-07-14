@@ -177,6 +177,13 @@ RWD 逐斷點把同一套迴圈再走一遍 → 全頁總檢。
      （落 `.browser/tmp/behavior-<區>.json`），加上全局普查掛到本區的項目＝該區行為清單；
      hover 效果再用真實指標 `browser_hover` 實測補證（`browser_evaluate` 派發合成
      mouseover **不會**觸發 CSS `:hover`，量了等於沒量）＋捲動觀察入場動畫/sticky。
+   - **hover-sweep（實案教訓：靜掃漏掉 mega menu）**：behavior.js 的 interactive 盤點
+     只是候選名單——該區**每一類可點/可 hover 元素（cursor:pointer、aria-expanded/
+     haspopup、button、含子面板的 a/li）都要用真實指標掃過一遍**（同類同樣式簽名的
+     取代表一個），hover 前後對比：新面板出現（display 翻轉/新節點 mount）、
+     `open`/`is-active` 類 class 變化、aria-expanded 翻轉、transform/陰影變化——
+     每個命中都是一條 dynamic_test。SPA 常「殼預渲染、料 hover 才灌」：
+     面板內容要在 hover 當下讀，靜態 DOM 讀到的是上一次 hover 的殘留。
 2. **區塊 plan 初稿**（補進 plan.json 的該 section；**初稿非鐵則**，渲染實測後隨時改）：
    - Bricks 目標結構＝**極簡樹**——在這裡完成「DOM → Bricks」的重組（鐵律 1–5），
      不是把 DOM 抄下來。
@@ -233,6 +240,12 @@ RWD 逐斷點把同一套迴圈再走一遍 → 全頁總檢。
         即時資料…）：本 skill 產的是前端複刻，後端行為以 UI 狀態模擬或明列不做；
         純前端行為走不到這層。
 4. **渲染對照（原站分頁 ↔ 渲染分頁，同一區並排看差異）**：
+   > **鐵則（實案教訓，違者必翻車）**：只要動到一個區的**結構或 settings**——換元素
+   > 型別、重寫 settings、增刪子元素——該區 a/b/c **全套重驗，絕不准只驗 c（操作）**。
+   > 功能測試全過 ≠ 畫面沒壞：換型別時 settings 重寫漏掉版面鍵（block/div 預設
+   > `flex-direction: column`，橫排群組必須明寫 `_direction:"row"`）不會讓任何行為
+   > 測試 fail，但整條版面直接撐爆。回報「完成」前，至少把本輪動過的每一區
+   > 截圖跟原站並排看過一眼。
    - **a. 視覺**：兩邊該區各截圖、**並排判讀**——版型、色塊、陰影、角度、間距；
      `dynamic: true` 的區只驗結構佈局、不做像素級比對。
    - **b. 程式碼**：渲染頁 `browser_evaluate` 讀該區——HTML：`#brxe-*` 深度/wrapper

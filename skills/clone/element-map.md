@@ -97,6 +97,18 @@ Phase 2 第 2 步（區塊 plan 初稿）做「DOM → Bricks」重組時**必�
 `section`（頁面級橫帶）→ `container`（釘 content_width 的置中欄）→
 `block`（要分欄或帶 surface 的群組）→ `div`（無語意的最小包裝，能塌則塌）。
 
+## 換型別（remap）鐵則
+
+既有元素換型別＝重寫 settings，這一步最容易翻車：
+
+1. **版面鍵不許憑空消失**：舊元素（或其父層）的 `_direction`／`_display`／寬高／
+   間距鍵要逐一交代去向。block/div 預設 `flex-direction: column`——
+   橫排群組必須**明寫** `_direction:"row"`，漏了整條變直排。
+2. **樣式繼承要重查**：HTML 字串裡的 inline style（顏色、字級）不會自動跟到
+   新元素——深色底上的 text-link 沒帶 `_typography` 就是黑字，換完逐項補。
+3. **換完必重跑該區視覺對照**（SKILL Phase 2 第 4 步鐵則）——功能測試
+   抓不到版面回歸。
+
 ## 反選錯三律（違反任何一條＝選型不合格）
 
 1. **靜態複刻禁用 QUERY／WORDPRESS／SINGLE／WooCommerce 類元素**——
