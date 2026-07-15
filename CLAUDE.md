@@ -4,8 +4,9 @@
 
 **AutoBricks**：Claude Code plugin（本 repo 同時是 plugin 與自己的 marketplace），把網頁複刻成
 Bricks Builder 模板。**分析與生成由 skills 在 Claude session 內完成**（CDP 接管真 Chrome），
-程式碼只有兩塊確定性工具：量測器（`skills/clone/measure.js`）與驗證 gate（`src/validate_template.py`）。
-**沒有 TS、沒有 server、沒有 webui**。
+程式碼只有三塊確定性工具：量測器（`skills/clone/measure.js`，量「長什麼樣」）、
+行為普查器（`skills/clone/behavior.js`，量「會做什麼」——動畫/互動/程式庫指紋/Mutation 熱點）
+與驗證 gate（`src/validate_template.py`）。**沒有 TS、沒有 server、沒有 webui**。
 
 - 清單：`.claude-plugin/plugin.json` + `marketplace.json`；skills 在 **`skills/<name>/SKILL.md`**：
   `clone`（全局分析→逐區塊實作並即時渲染對照原站→RWD 逐斷點，一條龍；
@@ -54,6 +55,10 @@ uv run ruff format . && uv run ruff check --fix .  # lint/format（手動跑）
   一律用真實 `#brxe-<id>`，且在元素 id 定案後才寫。
 - id：6 碼 `[a-z0-9]` 且含數字；一個 kit zip 恰好一個 `.json`。
 - 圖片釘 `_width` ＋ id-scoped `aspect-ratio`，絕不固定 `_height`；間距用實測值不吸附。
+- **行為（動態/互動）不是加分項**：clone skill 走五層階梯——原生元素 → `_interactions` →
+  CSS → **自訂 JS（`code` 元素：`javascriptCode`＋`executeCode`；vanilla、自包含、
+  鎖 `#brxe-<id>`）** → unsupported（只准是真後端功能）。code 元素前台執行受 Bricks
+  code execution 權限／簽章管制（版本相關）——實測沒跑就查 theme 原始碼定案，不猜。
 - **WordPress 寫入**走 `docker exec … php`（`wp_set_current_user(admin)` + `wp_slash()`），
   Git Bash 一律加 `MSYS_NO_PATHCONV=1` 前綴；**絕不用瀏覽器登入後台**。
 

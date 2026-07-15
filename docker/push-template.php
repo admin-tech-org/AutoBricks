@@ -63,6 +63,17 @@ if (!empty($tpl['customCss'])) {
   update_post_meta($page_id, '_bricks_page_settings', wp_slash($settings));
 }
 
+// 可執行 code 元素（clone skill 動態階梯第 4 層）點名：Bricks 有 code execution 權限與
+// 程式碼簽章機制（版本相關）——前台 JS 沒跑時，從這份名單開始查，勿當作推送成功＝會動。
+$exec_ids = [];
+foreach ($tpl['content'] as $el) {
+  if (($el['name'] ?? '') === 'code' && !empty($el['settings']['executeCode'])) $exec_ids[] = $el['id'] ?? '?';
+}
+if ($exec_ids) {
+  echo 'NOTICE: executable code elements: ' . implode(', ', $exec_ids)
+     . " —— 前台若沒執行，檢查 Bricks code execution 設定與簽章（查 theme 原始碼定案）\n";
+}
+
 $content = get_post_meta($page_id, '_bricks_page_content_2', true);
 $n       = is_array($content) ? count($content) : 0;
 echo "PAGE_ID: $page_id\n";
