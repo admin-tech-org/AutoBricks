@@ -7,7 +7,7 @@
 /autobricks:clone    網址 → 一條龍：CDP 真 Chrome 全局分析（數字全實測）→ 逐區塊
                      「實作 → 推本機 WP 渲染 → 與原站並排對照 → 微調」一區收斂才下一區
                      → RWD 逐斷點把同一套迴圈再走一遍（驗證 gate 全程把關）
-/autobricks:setup    環境一鍵備好（uv、Node、CDP 瀏覽器、選配 WP 環境、權限預核准）
+/autobricks:setup    環境一鍵備好（uv、Node、CDP 瀏覽器、WP 驗證環境、權限預核准）
 ```
 
 分析與生成由 **Claude 在 session 內完成**（skills）；程式碼只有兩塊確定性工具：
@@ -28,7 +28,8 @@
 
 - Google Chrome（真瀏覽器＝無自動化指紋，防爬蟲嚴的網站也能分析）
 - Node ≥ 20（Playwright MCP 走 `npx`）與 [uv](https://docs.astral.sh/uv/)——`setup` 會為使用者安裝
-- （選配）Docker Desktop ＋ 已授權的 Bricks theme（解壓進 `docker/wp/wp-content/themes/bricks/`）——實測階段用，見 [docker/README.md](docker/README.md)
+- Docker Desktop ＋ 已授權的 Bricks theme（解壓進 `docker/wp/wp-content/themes/bricks/`）——
+  **必備**：clone 的逐區渲染對照靠這套環境，見 [docker/README.md](docker/README.md)
 
 ## 結構
 

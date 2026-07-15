@@ -46,11 +46,12 @@ RWD 逐斷點把同一套迴圈再走一遍 → 全頁總檢。
    有回應→直接接管；連不上→跑 `.browser/` 啟動腳本（Windows
    `cmd //c "$(pwd)/.browser/launch-chrome-cdp.bat"`；mac/Linux `bash …sh`；腳本不在就從
    `<PLUGIN_DIR>/templates/` 複製過去）。目標網站要登入就請使用者在該視窗登一次。
-2. **WP 靶場（本流程的核心依賴——每個區塊都要渲染對照）**：`docker ps` 找
+2. **WP 靶場（必備——每個區塊都要渲染對照，沒有它就沒有品質）**：`docker ps` 找
    `autobricks-wp`；沒起 → `docker compose -f "<PLUGIN_DIR>/docker/docker-compose.yml" up -d`；
    全新環境先跑 `bash "<PLUGIN_DIR>/docker/init-wp.sh"`（Bricks theme 解壓進
-   `docker/wp/wp-content/themes/bricks/`）。**docker 起不來 → 退化為批次模式**
-   （逐區生成、只做靜態 gate、無渲染對照），明確告知使用者驗證受限，別卡死。
+   `docker/wp/wp-content/themes/bricks/`）。**docker 起不來 → 停下來請使用者啟動
+   Docker Desktop（或跑 `/autobricks:setup`），確認起來後才開工**——不做無渲染
+   對照的半成品複刻。
 3. **viewport 校準（量測與驗證共用的尺，歪了全盤皆歪）**：版面是視口寬度的函數——
    寬度不同就是在看「另一個版本的頁面」。`browser_resize` 到目標寬（桌機基準 1440）後，
    **必驗 `window.innerWidth` 是否等於目標**——Windows 顯示縮放（如 125%）會讓實際值
