@@ -184,6 +184,13 @@ RWD 逐斷點把同一套迴圈再走一遍 → 全頁總檢。
      `open`/`is-active` 類 class 變化、aria-expanded 翻轉、transform/陰影變化——
      每個命中都是一條 dynamic_test。SPA 常「殼預渲染、料 hover 才灌」：
      面板內容要在 hover 當下讀，靜態 DOM 讀到的是上一次 hover 的殘留。
+   - **click-sweep（hover 掃不到的另一半）**：帶 toggle 指示的元素（▾/▲ caret、
+     aria-haspopup、select 樣式膠囊）hover 不會開——**必須真實點擊**再量
+     （實案：搜尋框「全站」範圍選單就是 click-only，hover-sweep 全程漏掉）。
+     點擊型面板還要多測三件事：選項點下去後**觸發器文字/active 是否更新**、
+     面板是否關閉、**點外部是否關閉**。真實滑鼠自動化兩個坑：導航後第一下
+     click 會被 Chromium 吞掉（先對中性點打一下暖身）；CDP input 進的是
+     **視窗目前顯示的分頁**（互動前先 bringToFront）。
 2. **區塊 plan 初稿**（補進 plan.json 的該 section；**初稿非鐵則**，渲染實測後隨時改）：
    - Bricks 目標結構＝**極簡樹**——在這裡完成「DOM → Bricks」的重組（鐵律 1–5），
      不是把 DOM 抄下來。
