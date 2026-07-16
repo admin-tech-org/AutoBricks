@@ -96,7 +96,7 @@
 
     // 4) 全域 JS 程式庫指紋（原站怎麼實作＝我方選階梯層的線索：有 Swiper→slider-nested、有 AOS→_interactions…）
     const LIB_NAMES = ["Swiper", "Splide", "Glide", "Flickity", "gsap", "ScrollTrigger", "AOS",
-      "Alpine", "jQuery", "lottie", "CountUp", "Lenis", "barba", "anime"];
+      "Alpine", "jQuery", "lottie", "CountUp", "Lenis", "LocomotiveScroll", "barba", "anime"];
     const libs = LIB_NAMES.filter((n) => typeof window[n] !== "undefined");
 
     // 5) 自主動態熱點：觀測 ~2 秒，無互動也在變的節點（輪播自動播放、跑馬燈、倒數、計數器）

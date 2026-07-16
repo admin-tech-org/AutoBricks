@@ -84,6 +84,14 @@ RWD 逐斷點把同一套迴圈再走一遍 → 全頁總檢。
    抓漏網）。命中結果按區塊掛回工作清單（`dynamic` 標記＋行為摘要）——**清單上每一項
    行為之後都要有下落**（主迴圈登錄成 dynamic_tests 實作並實測，或明列 excluded／
    unsupported＋理由），不許無聲消失。
+   普查完，**逐區判定互動模型並記進工作清單**（`interaction` 欄）：`static`（純靜態）／
+   `scroll-driven`（內容隨捲動位置改變：pinned 區、IntersectionObserver 切換、視差）／
+   `click-driven`（tabs／手風琴／點擊切換）／`auto`（自動輪播、跑馬燈、計數器）。
+   scroll-driven 與 click-driven 在截圖上長得一模一樣，但 Bricks 結構與階梯選層完全
+   不同——**判錯互動模型是整條流程最貴的錯誤**（實作到一半才發現＝該區打掉重做）。
+   判定法：**先捲再點**——慢捲通過該區看內容會不會自己換，會換＝scroll-driven，
+   先別急著當 tabs 做；指紋有 `Lenis`／`ScrollTrigger`／`LocomotiveScroll` ＝
+   整站大概率 scroll-driven。
 5. **原始碼分析（全局層；宣告真相與量測互補，缺一不可）**：computed style 只給
    「結果值」，讀不到設計意圖——rotate 常量出 `none`、hover 效果完全不在 computed 裡、
    斷點行為看不見。所以：
@@ -121,8 +129,8 @@ RWD 逐斷點把同一套迴圈再走一遍 → 全頁總檢。
   "classes": [ { "name": "neo-card", "desc": "白底+4px黑框+8px硬陰影", "hover": "浮起：translate(-4,-4)+陰影加深" } ],
   "assets": [ { "name": "", "url": "", "kind": "image", "used_in": "" } ],
   "sections": [
-    { "label": "頂部跑馬燈", "selector": "body > div.ticker", "dynamic": true, "status": "todo" },
-    { "label": "主視覺", "selector": "main > section:nth-child(1)", "dynamic": false, "status": "todo" }
+    { "label": "頂部跑馬燈", "selector": "body > div.ticker", "dynamic": true, "interaction": "auto", "status": "todo" },
+    { "label": "主視覺", "selector": "main > section:nth-child(1)", "dynamic": false, "interaction": "static", "status": "todo" }
   ],
   "responsive": { "status": { "tablet": "todo", "mobile": "todo" } }
 }
@@ -192,6 +200,12 @@ RWD 逐斷點把同一套迴圈再走一遍 → 全頁總檢。
      面板是否關閉、**點外部是否關閉**。真實滑鼠自動化兩個坑：導航後第一下
      click 會被 Chromium 吞掉（先對中性點打一下暖身）；CDP input 進的是
      **視窗目前顯示的分頁**（互動前先 bringToFront）。
+   - **scroll-sweep（hover/click 之外的第三種掃法；`scroll-driven` 區必做，其餘區
+     至少快掃一遍）**：在該區慢捲 2–3 個停點，每個停點取證並與前一停點相減——
+     nav/區塊的 class 翻轉（`is-stuck`、shrink、變底色）、同一元素在兩個捲動位置
+     的 transform 不同（＝視差）、區塊在捲動中定住不動（pinned／scroll-snap）、
+     入場動畫的觸發點。每個命中＝一條 dynamic_test（expect 寫「捲到某處時 X 應…」）。
+     掃出「內容隨捲動自己換」＝該區互動模型判定要改成 scroll-driven，回頭修工作清單。
 2. **區塊 plan 初稿**（補進 plan.json 的該 section；**初稿非鐵則**，渲染實測後隨時改）：
    - Bricks 目標結構＝**極簡樹**——在這裡完成「DOM → Bricks」的重組（鐵律 1–5），
      不是把 DOM 抄下來。
@@ -200,6 +214,13 @@ RWD 逐斷點把同一套迴圈再走一遍 → 全頁總檢。
      兩難時選設計部在 builder 裡改得動的那個；候選定案前查 live schema 確認存在，
      查無＝記 fallback 策略，絕不發明。**靜態複刻禁用 QUERY／WORDPRESS／SINGLE／
      WooCommerce 類元素**（吃 WP 資料庫的動態元素；細節與簽章對照表見 element-map）。
+   - **選型必須對齊該區已判定的互動模型**（工作清單 `interaction` 欄）：scroll-driven
+     的區照 tabs 做（或反過來）＝結構整個選錯，做完才發現就是打掉重做。模型存疑
+     就回第 1 步補量（先捲再點），不憑截圖猜。
+   - **複雜度預算（拆區規則）**：一個區的 plan 若大到單輪收斂不完——結構＋
+     dynamic_tests 多到一眼顧不住（如 hero 兼輪播兼 mega menu）——**當場拆成
+     子區塊**加回工作清單，每個子區各走完整的「分析→實作→對照→微調」，
+     不硬撐著把大雜燴區一輪做完。
    - measured 用實測原值（不吸附、不湊整）；文字內容**逐字照抄**。
    - **`dynamic_tests`（該區的動態測試合約）**：以**行為普查清單為底稿逐項過帳**——
      每個互動/動態行為（hover、點擊展開、輪播、sticky、表單、入場動畫…）登錄成
