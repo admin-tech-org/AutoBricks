@@ -61,6 +61,8 @@ def load_elements(path):
         content = data.get("content")
         if isinstance(content, list):
             gc = data.get("globalClasses")
+            if not isinstance(gc, list):
+                gc = data.get("global_classes")  # Bricks UI 匯入/匯出的官方鍵名（蛇形；1.12.5 templates.php）
             return content, gc if isinstance(gc, list) else []
         raise ValueError('JSON 是物件但沒有 "content" 陣列')
     raise ValueError("JSON 頂層必須是陣列或含 content 的物件")

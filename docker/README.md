@@ -29,10 +29,10 @@ docker compose -f docker/docker-compose.yml down -v       # 停＋清 db（./wp 
 docker compose -f docker/docker-compose.yml run --rm wpcli <wp 指令>   # wp-cli
 ```
 
-## 推模板（push skill 的底層流程）
+## 推模板（clone skill 主迴圈的底層流程）
 
 ```bash
-MSYS_NO_PATHCONV=1 docker cp data/templates/<id>/template.json autobricks-wp:/tmp/template.json
+MSYS_NO_PATHCONV=1 docker cp data/<id>/template.json autobricks-wp:/tmp/template.json
 MSYS_NO_PATHCONV=1 docker cp docker/push-template.php autobricks-wp:/tmp/
 MSYS_NO_PATHCONV=1 docker exec -e TEMPLATE=/tmp/template.json -e TITLE="測試頁" \
   autobricks-wp php /tmp/push-template.php

@@ -1,6 +1,6 @@
 <?php
 /**
- * 把 Bricks template JSON 寫進 WordPress 頁面（於容器內執行；push skill 會呼叫）。
+ * 把 Bricks template JSON 寫進 WordPress 頁面（於容器內執行；clone skill 主迴圈會呼叫）。
  *
  * 用法（host 端）：
  *   MSYS_NO_PATHCONV=1 docker cp template.json autobricks-wp:/tmp/template.json
@@ -46,14 +46,16 @@ update_post_meta($page_id, '_bricks_page_content_2', wp_slash($tpl['content']));
 update_post_meta($page_id, '_bricks_editor_mode', 'bricks');
 
 // template 頂層 globalClasses（樣式元件）→ 合併寫入全站 option（以 id 去重、後者覆蓋）
-if (!empty($tpl['globalClasses']) && is_array($tpl['globalClasses'])) {
+// 鍵名相容：globalClasses（本 plugin 慣用駝峰）與 global_classes（Bricks UI 匯入/匯出的官方蛇形）
+$gcs = !empty($tpl['globalClasses']) ? $tpl['globalClasses'] : ($tpl['global_classes'] ?? null);
+if (!empty($gcs) && is_array($gcs)) {
   $existing = get_option('bricks_global_classes', []);
   if (!is_array($existing)) $existing = [];
   $by_id = [];
   foreach ($existing as $c) { if (isset($c['id'])) $by_id[$c['id']] = $c; }
-  foreach ($tpl['globalClasses'] as $c) { if (isset($c['id'])) $by_id[$c['id']] = $c; }
+  foreach ($gcs as $c) { if (isset($c['id'])) $by_id[$c['id']] = $c; }
   update_option('bricks_global_classes', array_values($by_id));
-  echo 'global classes merged: ' . count($tpl['globalClasses']) . "\n";
+  echo 'global classes merged: ' . count($gcs) . "\n";
 }
 
 if (!empty($tpl['customCss'])) {

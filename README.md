@@ -10,10 +10,12 @@
 /autobricks:setup    環境一鍵備好（uv、Node、CDP 瀏覽器、WP 驗證環境、權限預核准）
 ```
 
-分析與生成由 **Claude 在 session 內完成**（skills）；程式碼只有三塊確定性工具：
-量測器（`skills/clone/measure.js`，量外觀）、行為普查器（`skills/clone/behavior.js`，
-量動畫與互動——普查結果逐項變成測試合約，行為與外觀一樣要驗收）與驗證 gate
-（`src/validate_template.py`）。動態實作走五層階梯（原生元素 → `_interactions` → CSS →
+分析與生成由 **Claude 在 session 內完成**（skills）；程式碼只有四塊確定性工具：
+量測器（`skills/clone/measure.js`，量外觀）、行為普查器（`skills/clone/behavior.js`＋
+載入前注入的 `spy.js` 執行期記帳，量動畫與互動——普查結果逐項變成測試合約，
+行為與外觀一樣要驗收）、離線 CSS 普查器
+（`skills/clone/parse_css.py`，解析落檔 stylesheet 全文，補 CSSOM 讀不到跨網域 CSS
+的 CORS 盲區）與驗證 gate（`src/validate_template.py`）。動態實作走五層階梯（原生元素 → `_interactions` → CSS →
 自訂 JS（`code` 元素）→ unsupported），原生表達不了的行為由 JS 補齊、不再只是複刻外觀。
 
 ## 安裝（marketplace）
@@ -25,7 +27,7 @@
 
 安裝完成後，使用者在**自己的專案**跑 `/autobricks:setup`。之後使用者專案只會多三樣東西：
 `.claude/settings.local.json`（權限）、`.browser/`（CDP Chrome 腳本＋profile，使用者需自行 gitignore）、
-`data/`（每次複刻一個資料夾：plan、模板、前後截圖）。plugin 目錄全程唯讀。
+`data/`（每次複刻一個資料夾：plan、模板、前後截圖、原站 HTML/CSS 快照）。plugin 目錄全程唯讀。
 
 ## 需求
 
@@ -37,9 +39,9 @@
 ## 結構
 
 ```text
-.claude-plugin/   plugin.json + marketplace.json（發版 bump version、合進 main）
-.mcp.json         內建 Playwright MCP（接管 CDP 9222，不自啟瀏覽器）
-skills/           clone（一條龍，含 measure.js 量外觀、behavior.js 普查行為）· setup
+.claude-plugin/   plugin.json + marketplace.json（發版 bump version、合進預設分支 master）
+.mcp.json         內建 Playwright MCP（接管 CDP Chrome，埠取 PLAYWRIGHT_CDP_URL、預設 9222；不自啟瀏覽器）
+skills/           clone（一條龍，含 measure.js 量外觀、behavior.js＋spy.js＋parse_css.py 普查行為）· setup
 src/              validate_template.py（驗證 gate）· extract_bricks_schema.py
                   （從使用者 theme 原始碼抽 schema、版本自動對齊，驗證與生成共用）
 templates/        launch-chrome-cdp.{bat,sh} —— setup 複製到使用者專案 .browser/

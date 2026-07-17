@@ -40,7 +40,8 @@ uv sync --project "<PLUGIN_DIR>"
 
 ### 5. 備 CDP 瀏覽器（分析環境的核心）
 `clone` 靠 plugin **內建的 Playwright MCP**（`.mcp.json` 隨安裝自動註冊）接管一台
-「帶 9222 除錯埠的**真 Chrome**」——真 profile、無自動化指紋，防爬蟲較嚴的網站也能正常渲染。
+「帶 CDP 除錯埠的**真 Chrome**」（埠預設 9222、可自訂）——真 profile、無自動化指紋，
+防爬蟲較嚴的網站也能正常渲染。
 
 1. **把啟動腳本放進「使用者專案」的 `.browser/`**（profile／登入態是使用者資產、不放 plugin 內）：
    ```bash

@@ -21,7 +21,9 @@ Phase 2 第 2 步（區塊 plan 初稿）做「DOM → Bricks」重組時**必�
 
 - **行為型**（accordion / tabs / slider / counter / countdown / animated-typing / form /
   nav-nested / offcanvas / dropdown / toggle）：**優先採用**——JS 行為自帶，
-  自己重造既費工又難維護。
+  自己重造既費工又難維護。**nested 類元素首次使用時**：required 子結構（哪層包哪層、
+  少了什麼不會動）查 theme 原始碼或在 builder 手拉一顆匯出觀察，**結構配方記進
+  bricks-gotchas.local.md**——這是版本綁定知識，不寫進本表。
 - **視覺型複合**（icon-box / pricing-tables / team-members / testimonials / alert /
   rating / pie-chart）：markup 與樣式是**固定意見**——原站版型吻合才用；
   差得多就用基本元素拼裝，更忠實也更好編輯。別為了「有現成的」硬套。
