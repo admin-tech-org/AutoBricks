@@ -15,9 +15,15 @@ description: 高保真把任一網頁複刻成 Bricks Builder 頁面。方法：
 > - **渲染頁**：生成的 Bricks 頁，跑在本機 WordPress（`http://localhost:8080/?page_id=<編號>`）。
 > - **dump**：把原站某一區「每個元素 × 每個屬性」全部量下來存成的檔案。
 >   **幾百個屬性全記、不挑**——挑幾十個「看起來重要的」就是在賭你猜中了，漏掉的那個之後查不到。
->   dump 是唯一的真相來源：**Bricks JSON 裡每個數字都要能在 dump 裡找到出處。**
+>   dump 是唯一的真相來源：**Bricks JSON 裡每個數字都要能溯源到 dump**——直接相等，
+>   或寫明「從 dump 值推回設計值」的推導（見鐵律 2：量到 0.666667px、寫 1px 的那類）。
 > - **建**＝改 `tmp/build_template.py` 產 `data/<id>/template.json`；**推**＝docker 送進 WP；
 >   **收斂**＝修到差異清空（照噪音規則與門檻）。
+> - **誰做**：「host」與「subagent」都是 Claude——host＝主對話裡負責調度與驗收的 Claude，
+>   subagent＝被派去做一個單元、context 全新的 Claude；文中的「你」＝正在執行那一步的 Claude。
+>   **使用者**只負責：開 Docker Desktop、需要登入的網站自己登入
+>   （CDP Chrome 由 Claude 跑啟動腳本；跑不起來才請使用者開）。
+> - **設計部**：交付之後在 Bricks 編輯器裡改這頁的人——「好編輯」（鐵律 6）以他們為準。
 
 ## 為什麼零內建分析程式（最重要的一條）
 
@@ -38,8 +44,8 @@ description: 高保真把任一網頁複刻成 Bricks Builder 頁面。方法：
 | **③ 數值 diff** | 精確度——每個元素的每個屬性 | **渲染頁量到的值 − dump 記的值**，逐屬性相減、修到清空 |
 | **④ 視覺把關** | 整區長相——程式抽不到的東西 | 先把原站截圖**用文字逐項描述成清單**，再拿清單去核渲染截圖；像素比對用**門檻**、不用 0 |
 
-- ③ 比的對象是 dump——不是印象、不是 CSS 原始碼。
-- ④ 為什麼用門檻不用 0：**0 分不出「做錯了」和「環境不一樣」**。真的錯（位移、少東西、顏色錯）
+- 帳③ 比的對象是 dump——不是印象、不是 CSS 原始碼。
+- 帳④ 為什麼用門檻不用 0：**0 分不出「做錯了」和「環境不一樣」**。真的錯（位移、少東西、顏色錯）
   差距都很大，門檻照樣抓到；只差 1、2 階的幾乎都是瀏覽器內部細節（文字邊緣的處理方式、小數捨入），
   人眼看不見也修不動——去追它，時間就燒在 Chrome 身上而不是網頁身上。
   **門檻由 host 設一次（預設：色版差 ≤8 不算差異），band 拿到的仍是「過／不過」；
@@ -49,7 +55,8 @@ description: 高保真把任一網頁複刻成 Bricks Builder 頁面。方法：
 
 1. **plugin 目錄唯讀**；分析工具、build 腳本住 `tmp/`；產物寫 `data/<id>/`；瀏覽器暫存 `.browser/tmp/`。
    收尾清空、專案根不留垃圾。
-2. **不准猜數字。** 所有數值來自實測；Bricks JSON 裡每個值都要能在 dump 裡找到（機器可驗）。
+2. **不准猜數字。** 所有數值來自實測；Bricks JSON 裡每個值都要能溯源到 dump——
+   直接相等，或附上推導（機器可驗）。
    **但——「量到的值」不等於「設計值」。** `getComputedStyle` 給的是**這個元素在此刻的用值**；
    照抄用值會把「關係」寫死成「數字」，而**這種錯不會報錯、只會靜靜壞掉**：
    - **可繼承又跟自身相關的屬性**：`line-height` 若是 unitless（如 `1.5`），computed 在每一層都回報
@@ -58,6 +65,11 @@ description: 高保真把任一網頁複刻成 Bricks Builder 頁面。方法：
    - **會被裝置柵格吸附的屬性**：`border-width` 這類會被吸附到整數裝置像素
      （`used = floor(authored × dpr) / dpr`）→ 量到 `0.666667px` 的，authored 其實是 `1px`。
      **注意 `devicePixelRatio` 在有裝置模擬時會騙人**（回報 1.0 但實體是 1.5），要用探針反推。
+   - **查 authored 值的地方是 stylesheet 裡的實際規則，不是 class 名**——編譯器會最佳化改寫
+     （class 名裡寫的角度、色標，出貨的規則裡可能整組被拿掉；照 class 名寫，diff 當場現形）。
+   - **unitless 值的小數位數要夠**：寫短了會被版面格線吸附、盒高悄悄短一截，而 computed
+     對錯的寫法照樣回報漂亮的整數——**只有量盒高看得見**。能抄 authored 的分數就照抄原式，
+     寫完量一次盒高驗證。
 
    **驗法：改輸入，看輸出跟不跟。** 塞一個字級不同的子孫進去量（行高會跟著變＝unitless）、
    用幾個不同的 authored 值反推吸附公式。**分不出來就先探，不要照抄。**
@@ -76,29 +88,69 @@ description: 高保真把任一網頁複刻成 Bricks Builder 頁面。方法：
      字體的決定性驗法：**把宣告的字體真的載進來，看頁面動不動**——載入成功、頁面紋絲不動＝死碼。
      另外用**字寬探針**（同一段字換字族量寬度）確認實際生效的字體：stack 裡 `ui-*` 這類關鍵字
      瀏覽器不一定認得、會靜靜跳到下一個，computed 卻照樣回報你寫的那串——只有量字寬拆得穿。
+
+   **反過來也一樣危險：判「這宣告沒作用」要逐作用判——一個宣告常有不只一個作用。**
+   疊層用的 `z-index` 同時決定**繪製順序**；`filter: blur(0px)` 對像素無作用、對**合成**有
+   （強制另開繪製面）。砍掉「看似沒用」的宣告，最常在合成層炸開——而合成類差異
+   computed／盒 diff 全看不見，**只有像素比對抓得到**（查因工具：CDP `LayerTree` 的
+   `compositingReasons`，一次告訴你什麼被合成、為什麼、繪製順序在哪）。
+   **拿不準一個宣告是不是真的沒用，就照抄原站——不要替它做決定。**
+
+   前後兩半不衝突，管的是兩件事：**效果不補**（原站沒發生的行為，不做）；**宣告不砍**
+   （原站寫了的宣告，拿不準就照抄）。**兩邊的預設都是「跟著原站」，只有實測證據才能推翻。**
 4. **先捲再點。** 動手前先判斷這區的互動模型（static｜click｜scroll｜time，可複合）：
    先不要點，慢慢捲過去，看有沒有東西**自己**在變。判錯＝整區重做，不是改幾個數值能救的。
 5. **量一次不算數。** 截圖、量測都做兩次、結果一致才能用。單張截圖可能是還沒畫完的畫面——
    拿它下結論，會得到一個「看起來很合理但根本不存在」的現象，然後花幾小時去解釋它。
 6. **好編輯 > 還原 DOM。** Bricks 元素樹是給設計部編輯的：純包裝層塌掉、重複的做成一個元件＋資料、
-   每層給中文 label。像不像由 ③④ 把關，不靠照抄 DOM 層次。
+   每層給中文 label。像不像由帳③④ 把關，不靠照抄 DOM 層次。
 
 ## 三軸量測：怎麼保證沒漏
 
 | 軸 | 方法 | 完整性 |
 |---|---|---|
 | **結構＋樣式** | 走訪每個元素＋`getComputedStyle` **全部屬性** | `走訪＋略過 == 節點總數`（機器驗） |
-| **狀態** | CDP `CSS.forcePseudoState` 一個一個逼出來再量，只記跟基準不同的 | 狀態就固定七種：hover/focus/active/focus-within/focus-visible/visited/target |
+| **狀態** | CDP `CSS.forcePseudoState` 逐態逼出再量，只記跟基準不同的（**一支腳本迴圈跑完全部節點×七態，不逐一呼叫**——見下方「量得快」） | 狀態就固定七種：hover/focus/active/focus-within/focus-visible/visited/target |
 | **動畫** | `getAnimations()` | 一次列冊（名稱/時長/easing/keyframes/目標） |
 | **互動** | **只能探**：`cursor:pointer` 的元素、原生互動元素（a/button/summary/details/input）、動畫的目標 | ❌ 沒有窮舉法——React 這類框架把監聽器全掛在根節點，問個別元素問不到。**探完記下「探了哪些」，別假裝完整** |
 
 - `getComputedStyle` 給的是瀏覽器**算完的最終值**（層疊、媒體查詢、繼承全套用完了）
-  → **完全不用讀 CSS 檔**，也沒有跨網域讀不到的問題。
+  → **解析層疊不用讀 CSS 檔**，跨網域也沒有讀不到的問題。
+  讀 stylesheet 的唯一時機是鐵律 2——computed 拿不準「設計值」時，去查作者實際寫了什麼。
 - **走訪的死角要另外處理**：文字節點（只走元素會漏掉字！）、偽元素（`getComputedStyle(el,'::before')`，
   先看 `content` 是不是 `'none'`）、SVG（是圖形內容，整段抽 markup）、shadow DOM／iframe（要明確鑽進去）、
   點了才長出來的 DOM（靠互動探測補）。
 - **設計 token 不一定在 `:root`**——可能是 inline style 寫在某個根 div 上；`:root` 撈到的一大串
   很可能全是框架預設值。以「實際被引用的變數」為準。
+- **狀態軸的轉場陷阱**：有 `transition` 的元素，`forcePseudoState` 讀到的是**轉場起始格**
+  （兩次掃描還會拿到不同值）——這種元素改**真滑鼠＋等轉場走完**再讀。真滑鼠 hover 前先把目標
+  **捲進視口**、用 `elementFromPoint` 驗證真的命中——視口外的 hover 會回報「0 變化」，
+  看起來像死碼，其實是根本沒碰到。
+- **動畫軸的隱形區**：`getAnimations()` 只看得到**正在跑**的——進場動畫在穩定頁面上完全隱形，
+  線索是 dump 裡的 inline `opacity:1; transform:none` 殘留（跑完的痕跡）。要驗就開新分頁、
+  **導航前**就掛好**事件式**監聽（MutationObserver＋`animationstart`）；用逐格取樣的話，
+  第一格必然落後幾百 ms，剛好錯過進場時段。
+
+### 量得準，也要量得快——一趟來回抵一百趟
+
+慢的不是分析、不是建置，是**瀏覽器來回的次數**：每次 `browser_*` 呼叫都是一趟數百 ms 到數秒的
+MCP 來回，一區累積上百趟就是一小時。三條紀律直接砍掉大部分：
+
+1. **凡是「對 N 個東西做同一件事」，一律批成一支注入腳本、回傳陣列——絕不逐一發呼叫。**
+   狀態軸（`forcePseudoState` × 每個節點 × 七態）、盒尺寸批量、hover 掃描、rAF 取樣：
+   全部在**一支 `browser_run_code_unsafe` 裡迴圈跑完**（`newCDPSession` 拿 CDP、逐項改狀態再讀 computed、
+   只收「跟基準不同」的），最後回傳一包資料。上百次逐一呼叫 → 1 趟。
+   （跟鐵律 5「做兩次」不衝突：批次腳本跑兩次＝兩趟來回，仍然便宜。）
+   > 腳本**臨場寫在 `tmp/`**（每個網站的節點結構不同，寫死必爆）；同一次跑、同一個網站，
+   > 後面的 band **沿用並適配**前面那支，不要每區從零重寫。
+2. **量一次、量全，再對著檔案建**：一支綜合量測腳本把「結構＋樣式＋全狀態＋動畫＋盒＋文字 run」
+   一次抽完落檔，之後**對著檔案推理、對著檔案建**——目標是「一次建好、一次推、一次驗」。
+   別「量一點→建一點→推→發現不對→回頭重量」——那個回頭迴圈是呼叫翻倍的主因。
+   （這只能「減少」不能「歸零」：diff 對不上才現形的用值陷阱／死碼／合成問題，仍要回頭補量。）
+3. **computed diff 當快速內迴圈，像素截圖擺最後**：computed／盒 diff 便宜（一邊一次），
+   先跑到乾淨；截圖貴（要等穩、藏工具列、還得拍兩張），**留到最後做一次視覺把關**。
+   **但「擺最後」≠「省掉」**——合成／AA 那類 bug（`fill:both`、`z-index`、`backdrop-filter`）
+   只有像素看得見，最後那次不能跳；只是**不拿截圖來回逼近**（那是把網頁的問題換成 Chrome 的問題）。
 
 ## 執行模式：host 調度、subagent 幹活
 
@@ -166,7 +218,7 @@ subagent 只看得到自己那一區，各自優化＝各寫各的。**跨區一
    PORT=$(grep -s '^CDP_PORT=' .browser/cdp.env | head -1 | cut -d= -f2 | tr -d ' \r'); PORT=${PORT:-9222}
    curl -s "${PLAYWRIGHT_CDP_URL:-http://127.0.0.1:$PORT}/json/version"
    ```
-   連不上就跑 `.browser/` 的啟動腳本。
+   連不上就跑 `.browser/` 的啟動腳本；跑不起來 → 停下請使用者開。
 2. **WordPress 靶場**：`docker ps` 找 `autobricks-wp`；沒起就
    `docker compose -f "<PLUGIN_DIR>/docker/docker-compose.yml" up -d`；Docker 本身沒開→停下請使用者開。
 3. **⚠️ 分頁健康檢查（每個分頁都做、每次導航後重做）**：
@@ -189,7 +241,9 @@ subagent 只看得到自己那一區，各自優化＝各寫各的。**跨區一
 
 ## Phase 1 — 全站基礎（拆成小單元派工；host 只驗收）
 
-1. 導航 → 一屏一屏捲到底（把延遲載入的內容騙出來）→ 回頂。基準截圖 1440／768／375（守 fullPage 規矩）。
+1. 導航 → 一屏一屏捲到底（把延遲載入的內容騙出來）→ 回頂。基準截圖 1440／768／375——
+   **fullPage 用「用完即棄」的分頁拍**（另開分頁→捲一輪→拍→關掉），量測用的原站分頁不碰
+   （fullPage 會弄髒分頁，見 Phase 0 第 5 條）。
 2. **頁級三軸列冊**：`getAnimations()` 全頁一次；查 smooth-scroll 庫（`.lenis`／`.locomotive-scroll`）、
    `scroll-snap`、視差；**sticky／fixed 全列出來、逐一用「量位置法」驗真假**。
    每筆歸屬到區，寫進 `page_behaviors`。
@@ -220,23 +274,28 @@ subagent 只看得到自己那一區，各自優化＝各寫各的。**跨區一
 7. 寫 `data/<id>/plan.json`：區清單＋狀態、page_behaviors、tokens、資產清單、
    **環境數字（健檢結果——後面每個 band 動手前要對照）**、踩過的坑（給後面的 brief 用）。
 8. **建 build 骨架＋第一次推**：`tmp/build_template.py`（tokens／helpers／`main()` 依序掛各區的函式）＋
-   `tmp/push.sh`（build → validate → 推同一頁）。第一次推拿到 **PAGE_ID 馬上寫回 plan.json**。
+   `tmp/push.sh` 一條龍（build → validate → 推同一頁；validate＝
+   `uv run --project "<PLUGIN_DIR>" python "<PLUGIN_DIR>/src/validate_template.py" <template.json>`，
+   **error 不清零就中止、不推**）。第一次推拿到 **PAGE_ID 馬上寫回 plan.json**。
    開渲染分頁、校準、**移除 `#wpadminbar`**（它把整頁往下推 32px，量什麼都歪；
    reload 後會長回來，每次都要重拔）。
 
 ## Phase 2 — 一區一區做（一區＝一個 subagent；四本帳結清才收帳）
 
+**plan.json 的區塊描述是 Phase 1 的線索，不是規格**——Phase 1 只是掃過，整個子區塊沒寫進去、
+活的互動被寫成「無」都會發生。每一項都自己重量；欄位只當「別漏了這個」的提醒。
+
 **① 先判互動模型**（鐵律 4）→ 必填進 plan.json。
 
 **② 量三軸**（工具 `tmp/` 現寫）：
 - 本區子樹走訪＋computed **全量 dump** 落檔。**dump 不要讀進 context**——寫腳本處理、只讀摘要。
-- 狀態軸：`forcePseudoState` 逐態量、只記差異。有狀態的元件（tab／輪播）**逐個真點擊**，
-  記清楚「哪個內容屬於哪個狀態」。
-- 動畫軸：本區 `getAnimations()` 細目。
+- 狀態軸：`forcePseudoState` 逐態量、只記差異（**有轉場的元素改真滑鼠**——見三軸的轉場陷阱）。
+  有狀態的元件（tab／輪播）**逐個真點擊**，記清楚「哪個內容屬於哪個狀態」。
+- 動畫軸：本區 `getAnimations()` 細目（**進場動畫它看不到**——照三軸「隱形區」的事件式驗法補）。
 
 **③ 處置決定**：逐節點 build／collapse／repeat／skip＋理由，寫進 plan.json 該區。
 - **塌任何一層之前，查它有沒有視覺**：背景（含 background-image）、邊框、間距、overflow、
-  疊層效果（position/z-index/opacity/transform）、`flex-shrink`、`min-width:auto`。塌錯了 ③④ 會現形。
+  疊層效果（position/z-index/opacity/transform）、`flex-shrink`、`min-width:auto`。塌錯了帳③④ 會現形。
 - 重複 → 1 個元件＋資料列表；未處置必須＝0。
 
 **④ 建（直接堆 Bricks）**：在 `tmp/build_template.py` **只新增**自己的 `build_<band>()` 掛進 `main()`，
@@ -245,6 +304,12 @@ subagent 只看得到自己那一區，各自優化＝各寫各的。**跨區一
   `uv run --project "<PLUGIN_DIR>" python "<PLUGIN_DIR>/src/extract_bricks_schema.py"` 現抽）
   → `<PLUGIN_DIR>/bricks-schema/`（備用）。**查無＝沒有，絕不發明。**
   選型可參考 `<PLUGIN_DIR>/skills/clone/element-map.md`。
+- **設了就要驗它真的輸出**：Bricks 的欄位常掛條件閘門（依 display、元素型別才生效），
+  不滿足時**靜默不輸出、不報錯**，而 computed 又可能被繼承值遮著看起來沒事。
+  設完在渲染頁的 `document.styleSheets` 搜 `#brxe-<id>`，確認那條 CSS 真的存在。
+- **寫轉場的兩個靜默殺手**：`transition` 簡寫是逗號分隔的**獨立定義清單**——每一筆都要自帶時長
+  （時長只掛最後一筆＝前面全部 `0s`）；`transform` 的轉場**涵蓋不到**獨立的 `translate`／`rotate`／
+  `scale` 屬性，要各自列。兩種寫錯都不報錯、動畫直接消失。驗法：轉場期間 `getAnimations()` 應 ≥1。
 - **Bricks 硬規則**：id 6 碼 `[a-z0-9]` 且含數字；**`%root%` 在 `_cssCustom` 不會被替換**，
   一律寫真實 `#brxe-<id>`（id 定案後才寫）；圖片釘 `_width`＋id-scoped `aspect-ratio`、
   絕不固定 `_height`；頂層 `globalClasses`＋`global_classes` 兩個鍵都給＋`title`＋`type:"content"`；
@@ -256,25 +321,37 @@ subagent 只看得到自己那一區，各自優化＝各寫各的。**跨區一
   設計部才編得動（鐵律 6）。塞進 `_cssCustom` 的東西在 Bricks 介面上是一段程式碼，等於不能編。
   **每區統計「走 `_cssCustom` 的宣告數／總宣告數」回報 host**——這個比例＝交付物有多少比例不能編。
   host 跨區彙總，比例高就在收尾如實告訴使用者哪些部分只能改程式碼。
+  **這個比例是誠實回報，不是要優化的分數**——不准把樣式藏進不受統計的 pass-through 欄位來壓低它；
+  也存在「比例升高但更好編輯」的正確取捨（icon 用遮罩＋`currentColor`，顏色欄位才真的能改）。
+  指標服務鐵律 6，不是反過來。
 
-**⑤ 驗＋推**：`uv run --project "<PLUGIN_DIR>" python "<PLUGIN_DIR>/src/validate_template.py" "data/<id>/template.json"`
-error 清零 → `bash tmp/push.sh`（Windows 的 docker 指令一律加 `MSYS_NO_PATHCONV=1`；
-**絕不用瀏覽器登入 WP 後台**）。
+**⑤ 驗＋推**：`bash tmp/push.sh`——它一條龍做 build → validate → 推，validate 有 error 不會推出去
+（Windows 的 docker 指令一律加 `MSYS_NO_PATHCONV=1`；**絕不用瀏覽器登入 WP 後台**）。
+推完，已開著的渲染分頁要**重新導航**才拿得到新結果——忘了會誤判「設定沒生效」；
+reload 後 `#wpadminbar` 會長回來，每次重拔。
 
-**⑥ 對照（權威在這裡）**：
-- **③ 機器 diff**：本區每個 build 出來的元素（至少每種類型一顆代表），渲染頁 computed − dump，
-  逐屬性相減。**盒尺寸 w×h 也要比**。噪音規則（起點，臨場擴充）：
+**⑥ 對照（權威在這裡；「帳①～④」指四本帳，不是步驟編號）**：
+- **帳③ 機器 diff**：本區 build 出來的**每一顆**元素，渲染頁 computed − dump，逐屬性相減
+  （批次腳本一趟就能全比——見「量得快」，別退回抽樣）。**盒尺寸 w×h 也要比**。噪音規則（起點，臨場擴充）：
   兩邊 border-width 都是 0 → border 的 style/color 差異沒有意義；box-shadow 先剔掉全透明的疊層；
   `0px`≡`0`；max-width 的 `none`≡`100%`。渲染端對不上時，先查是哪條規則蓋的
   （主題或 Bricks 預設的干預），修法以實測為準。
-- **④ 視覺把關**：原站該區截圖 → **用文字逐項列清單**（底色/圖案/疊層/裝飾/每個元件）→
+- **帳④ 視覺把關**：原站該區截圖 → **用文字逐項列清單**（底色/圖案/疊層/裝飾/每個元件）→
   渲染截圖逐項核。像素比對用門檻。會動的先把兩邊停在同一時間點
   （`getAnimations()` 全部 pause＋設同一個 `currentTime`）。
-- **② 行為實測**：清冊逐筆用真滑鼠驗（hover 前後量、等輪播動、點了看展開），過的標 verified。
+  **兩型量測污染，處理方式都不是調門檻**：原站的第三方 fixed 覆蓋層（cookie 條、站台工具列）
+  **拍前用 JS 藏、拍完還原**；兩邊頁高不同時捲軸幾何也不同，**比對範圍排除捲軸欄**。
+- **帳② 行為實測**：清冊逐筆用真滑鼠驗（hover 前後量、等輪播動、點了看展開），過的標 verified。
 
-**⑦ 收帳四條件**：未處置=0（含祖先鏈）／清冊無 todo／③ 差異清空（或明列「Bricks 表達不了」＋理由——
-那是**可歸因的失真**，不是失敗）／④ 清單逐項核到。都過才在 plan.json 標 done。
+**⑦ 收帳四條件**：帳① 未處置=0（含祖先鏈）／帳② 清冊無 todo／帳③ 差異清空
+（或明列「Bricks 表達不了」＋理由——那是**可歸因的失真**，不是失敗）／帳④ 清單逐項核到。
+都過才在 plan.json 標 done。
 同一個問題修兩次沒改善 → 標 `manual` 待人工，先做下一區。
+
+**收帳也包括「還原現場」**：你動過的一切——動畫 `playState`、inline style、pseudo 強制、治具——
+收工前全部復原並驗證（原站分頁的動畫數、頁高要回到 plan.json 的基準）。
+**前一手沒還原，下一區就會把活的效果誤判成死碼**（暫停中的動畫看起來跟死碼一模一樣）。
+同理，**動手前先對基準**，別假設前一手是乾淨的。
 
 **區的順序＝頁面由上到下。** 渲染頁是往下長的，跳著做會讓每一區的 y 座標對不上、diff 沒得比。
 
@@ -282,6 +359,8 @@ error 清零 → `bash tmp/push.sh`（Windows 的 docker 指令一律加 `MSYS_N
 
 先 768 整輪、再 375 整輪；兩個分頁都 resize＋重新健檢。量原站在該寬度的變化，寫成**斷點後綴設定**
 （Bricks 是桌機優先——後綴＝該寬以下才生效，方向跟 Tailwind 相反）。**只加後綴、不動桌機的基準值。**
+**原站的切換寬度幾乎不會跟 Bricks 的預設斷點一樣**——先實測原站版面在哪個寬度跳
+（縮視窗逐段量），對不上就自訂 Bricks 斷點或用 `@media`，別把原站的變化硬塞進錯的斷點。
 一樣走 ⑥ 對照到收斂＋確認沒有水平捲軸。
 
 ## Phase 4 — 收尾（host）
