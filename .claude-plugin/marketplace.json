@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "autobricks",
-      "description": "CDP 接管真 Chrome 全局分析 → 逐區塊生成、即時渲染與原站對照微調 → RWD 逐斷點（驗證 gate、結構極簡好編輯），一條龍。skills：clone / setup。",
+      "description": "CDP 接管真 Chrome 全局分析 → 逐區塊生成、即時渲染與原站對照微調 → RWD 逐斷點（驗證 gate、結構極簡好編輯），一條龍。skills：replica / setup。",
       "source": "./"
     }
   ]

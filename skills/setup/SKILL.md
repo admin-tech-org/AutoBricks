@@ -1,6 +1,6 @@
 ---
 name: setup
-description: 安裝/設定 AutoBricks（網頁→Bricks 模板複刻）的執行環境，一次把「分析＋生成＋實測」需要的都備好：經套件管理器（macOS Homebrew / Windows Scoop）確認 uv 與 Node（Playwright MCP 需要 npx）→ uv sync → 備 CDP 瀏覽器（複製啟動腳本到 .browser/）→ 預核准常用工具權限（免每次跳框）→ Docker WordPress + Bricks 驗證環境（必備——clone 的逐區渲染對照靠它）。觸發詞（含口語與失敗情境）：「幫我設定環境 / 安裝 / 裝環境 / 初始化 / 環境準備 / 第一次使用要準備什麼 / 我要開始用 / 怎麼開始 / 怎麼跑起來 / setup / install」；以及遇到「缺 uv / 缺 Node 或 npx / MCP 連不到瀏覽器 / clone 說 9222 連不上或 docker 沒起來」等狀況時，也觸發本 skill。
+description: 安裝/設定 AutoBricks（網頁→Bricks 模板複刻）的執行環境，一次把「分析＋生成＋實測」需要的都備好：經套件管理器（macOS Homebrew / Windows Scoop）確認 uv 與 Node（Playwright MCP 需要 npx）→ uv sync → 備 CDP 瀏覽器（複製啟動腳本到 .browser/）→ 預核准常用工具權限（免每次跳框）→ Docker WordPress + Bricks 驗證環境（必備——replica 的逐區渲染對照靠它）。觸發詞（含口語與失敗情境）：「幫我設定環境 / 安裝 / 裝環境 / 初始化 / 環境準備 / 第一次使用要準備什麼 / 我要開始用 / 怎麼開始 / 怎麼跑起來 / setup / install」；以及遇到「缺 uv / 缺 Node 或 npx / MCP 連不到瀏覽器 / replica 說 9222 連不上或 docker 沒起來」等狀況時，也觸發本 skill。
 disable-model-invocation: true
 ---
 
@@ -39,7 +39,7 @@ uv sync --project "<PLUGIN_DIR>"
 ```
 
 ### 5. 備 CDP 瀏覽器（分析環境的核心）
-`clone` 靠 plugin **內建的 Playwright MCP**（`.mcp.json` 隨安裝自動註冊）接管一台
+`replica` 靠 plugin **內建的 Playwright MCP**（`.mcp.json` 隨安裝自動註冊）接管一台
 「帶 CDP 除錯埠的**真 Chrome**」（埠預設 9222、可自訂）——真 profile、無自動化指紋，
 防爬蟲較嚴的網站也能正常渲染。
 
@@ -57,16 +57,19 @@ uv sync --project "<PLUGIN_DIR>"
    `.chrome_cdp-<port>` profile（同一 profile 只能跑一個 Chrome 實例，已防呆），
    且步驟 7 寫 settings 時要**一併寫入** `"env": {"PLAYWRIGHT_CDP_URL":
    "http://127.0.0.1:<port>"}`，內建 MCP 啟動時自動吃到、免手設。
+   **基準埠連同 +1..+4 共 5 格保留給 replica 的分身瀏覽器隊**（replica skill
+   「一之二、併行」；平時只開基準台，跑併行時才逐台加開，同一支腳本埠當參數）——
+   選埠時避免這 5 格跟別的服務相撞；自訂埠時步驟 7 會一併寫 `PLAYWRIGHT_CDP_URL_2..5`。
 3. **由 Claude 啟動那台 Chrome**（不必使用者手動雙擊）：
    - Windows：`cmd //c "$(pwd)/.browser/launch-chrome-cdp.bat"`
    - macOS／Linux：`bash "$(pwd)/.browser/launch-chrome-cdp.sh"`
    等 ~2 秒後 `curl -s http://127.0.0.1:<port>/json/version` 確認埠起來了。
 4. 一般公開網站**不需要登入**即可分析；目標網站若需要會員/登入，請使用者在那個視窗登一次
-   （profile 會記住）。之後跑 `clone` 時 Claude 會自己探埠、沒開就自己啟動。
+   （profile 會記住）。之後跑 `replica` 時 Claude 會自己探埠、沒開就自己啟動。
 5. MCP 是用到瀏覽器工具的當下才連 CDP（lazy），Chrome 後開也接得上、**不必重啟 Claude Code**。
 
 ### 6. Docker WordPress + Bricks 驗證環境（必備）
-`clone` 的核心是「逐區推 WP 渲染、與原站並排對照」——**沒有這套環境，複刻品質會大幅
+`replica` 的核心是「逐區推 WP 渲染、與原站並排對照」——**沒有這套環境，複刻品質會大幅
 下降，所以它是必備、不是選配**。本機要有一套 WordPress + Bricks（使用者自備已授權 theme）：
 
 1. **先確認 Docker Desktop 已啟動**（`docker version` 有 Server 段即是）。沒啟動 →
@@ -81,7 +84,7 @@ uv sync --project "<PLUGIN_DIR>"
    完成後：站台 http://localhost:8080、後台 admin/admin。細節見 `<PLUGIN_DIR>/docker/README.md`。
 
 ### 7. 預核准常用工具（免每次跳權限框）
-`clone` 會頻繁用到內建 playwright MCP 工具與少數 Bash 指令，預設每個動作都問一次。
+`replica` 會頻繁用到內建 playwright MCP 工具與少數 Bash 指令，預設每個動作都問一次。
 **徵得使用者同意後**，合併寫入使用者專案的 `.claude/settings.local.json`（本機級、不進版控；只 append、不覆蓋別人的設定）：
 
 步驟 5 若選了自訂 port，把下面指令開頭的 `AB_CDP_PORT` 換成該 port（用預設 9222 就
@@ -96,25 +99,37 @@ cfg = {}
 if os.path.isfile(p):
     try: cfg = json.load(open(p, encoding="utf-8"))
     except Exception: cfg = {}
+srv = cfg.setdefault("enabledMcpjsonServers", [])
+for x in ["playwright", "playwright2", "playwright3", "playwright4", "playwright5"]:
+    if x not in srv: srv.append(x)
 perms = cfg.setdefault("permissions", {})
 allow = perms.setdefault("allow", []); ask = perms.setdefault("ask", [])
-for x in ["mcp__plugin_autobricks_playwright",
-          "Bash(uv run:*)", "Bash(uv sync:*)", "Bash(curl:*)", "Bash(mkdir:*)", "Bash(ls:*)", "Bash(date:*)", "Bash(cmd:*)",
-          "Write(data/**)", "Edit(data/**)", "Read(data/**)"]:
+fleet = ["", "2", "3", "4", "5"]  # 5 組 playwright MCP（replica 分身瀏覽器隊）
+for x in (["mcp__plugin_autobricks_playwright" + n for n in fleet]
+          + ["mcp__playwright" + n for n in fleet if n]
+          + ["Bash(uv run:*)", "Bash(uv sync:*)", "Bash(curl:*)", "Bash(mkdir:*)", "Bash(ls:*)", "Bash(date:*)", "Bash(cmd:*)",
+             "Write(data/**)", "Edit(data/**)", "Read(data/**)"]):
     if x not in allow: allow.append(x)
-for x in ["mcp__plugin_autobricks_playwright__browser_run_code_unsafe"]:
+for x in ["mcp__plugin_autobricks_playwright%s__browser_run_code_unsafe" % n for n in fleet]:
     if x not in ask: ask.append(x)
 port = os.environ.get("AB_CDP_PORT")
 if port and port != "9222":
-    cfg.setdefault("env", {})["PLAYWRIGHT_CDP_URL"] = f"http://127.0.0.1:{port}"
+    env = cfg.setdefault("env", {})
+    env["PLAYWRIGHT_CDP_URL"] = f"http://127.0.0.1:{port}"
+    for i in range(2, 6):  # 分身埠＝基準 +1..+4
+        env[f"PLAYWRIGHT_CDP_URL_{i}"] = f"http://127.0.0.1:{int(port) + i - 1}"
 tmp = p + ".tmp"; json.dump(cfg, open(tmp, "w", encoding="utf-8"), ensure_ascii=False, indent=2); os.replace(tmp, p)
 print("[ok] merged into", p, "(env:", cfg.get("env", {}), ")")
 PY
 ```
-- allow 整個 `mcp__plugin_autobricks_playwright` server；`browser_run_code_unsafe` 留在 ask（ask 蓋 allow）。
+- allow 整個 playwright server ×5 組（`mcp__plugin_autobricks_playwright`＋`playwright2..5`；
+  replica 分身瀏覽器隊）；`browser_run_code_unsafe` 留在 ask（ask 蓋 allow）。
+  `enabledMcpjsonServers` 同步放行 5 組，免逐一跳「要不要啟用這個 MCP」。
 - **破壞性的 `rm`／`taskkill`／`docker` 刻意不預核准**，每次問過再做。
 - 設定（含 env）在**新 session 才生效**（本 session 還會問屬正常，重啟後即免）。
 
 ### 8. 回報
 環境就緒後回報各項狀態（uv、Node、venv、CDP 瀏覽器、WP 環境有無、權限），並列出可用指令：
-- `/autobricks:clone` —— 給一個網址，一條龍：分析 → plan → 生成模板（驗證 gate）→ 推本機 WP 實測對照
+- `/autobricks:replica` —— 給一個網址，一條龍：分析 → 逐區生成與對照收斂 → RWD
+  （預設標準精度；使用者點名「pixel 級」才逐屬性收斂到 0-diff。
+  併行分身瀏覽器隊用基準埠 +1..+4，setup 已保留）

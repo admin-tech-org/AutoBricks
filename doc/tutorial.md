@@ -182,7 +182,7 @@ MSYS_NO_PATHCONV=1 docker compose run --rm wpcli post meta get <page_id> _bricks
 | 結構面板上每顆元素的顯示名稱 | `label`（選填；沒填就顯示元素型別名，見 §6e） |
 | 設定面板的每個欄位 | `settings` 的一個 key |
 
-**AutoBricks 的 clone skill 產出的 `template.json` 就是這種 JSON**——等於把「手拉頁面」
+**AutoBricks 的 replica skill 產出的 `template.json` 就是這種 JSON**——等於把「手拉頁面」
 自動化，直接生成存檔結果，再由 `docker/push-template.php` 寫進資料庫。
 
 細節注意：空的 `settings` Bricks 存成 `[]`（不是 `{}`）；元素 id 是 6 碼小寫英數。
@@ -213,7 +213,7 @@ MSYS_NO_PATHCONV=1 docker compose run --rm wpcli post meta get <page_id> _bricks
 所以本專案的規矩（CLAUDE.md 鐵律）：
 
 1. **不用 `%root%`，直接寫死真實 selector**：`#brxe-a3k9x2 { … }`。
-2. **元素 id 定案後才寫**——selector 是寫死的字串，指向特定 id。clone 流程用
+2. **元素 id 定案後才寫**——selector 是寫死的字串，指向特定 id。replica 流程用
    build script 反覆重建 template，id 還會變動時就把 `#brxe-xxx` 寫進 CSS，
    重建後 id 一換，CSS 就指到不存在的元素、又是無聲失效
    （build script 固定 random seed、每次重建 id 不變，就是在配合這件事）。
@@ -222,7 +222,7 @@ MSYS_NO_PATHCONV=1 docker compose run --rm wpcli post meta get <page_id> _bricks
 
 ### 6b. code 元素的 JS 為什麼不一定會跑：程式碼執行權限與簽章
 
-clone 的動態階梯（見 §6g）第 4 層是把自訂 JS 放進 **code 元素**（`javascriptCode` +
+replica 的動態階梯（見 §6g）第 4 層是把自訂 JS 放進 **code 元素**（`javascriptCode` +
 `executeCode: true`）。但「推送成功」≠「前台會跑」——Bricks 在中間設了兩道閘：
 
 1. **總開關**：後台 Bricks → 設定 → 自訂程式碼，「允許執行程式碼」**預設關閉**。
@@ -288,7 +288,7 @@ JSON **全域字串替換**（舊 id 字串出現的每處換成新 id）。字�
    | 人理解這組樣式是什麼 | **Global Class 的名字**（`neo-card`…） |
 
 **`label` 是自訂的**：不填，結構面板顯示元素型別名（一整排 Block 分不出誰是誰）；
-有填，顯示你給的名字，設計部隨時可改、改了不影響任何引用。clone skill 生成時
+有填，顯示你給的名字，設計部隨時可改、改了不影響任何引用。replica skill 生成時
 每個結構層都寫 zh-TW label（「主視覺」「三欄卡片」）——這是結構鐵律。
 
 **設計師怎麼找元件**：主要靠**右側結構面板的樹＋label 認路**（點中央畫布的元素、
@@ -325,7 +325,7 @@ live schema 的結構就是照這個分的：`extract_bricks_schema.py` 把 `bas
 | Global Class（用 `_cssGlobalClasses` 掛） | 掛它的每一顆 | 共用樣式包——改一次 class 全站連動 |
 | Theme Styles（全站設定） | 全站該型別元素 | 預設值（如「所有 section 上下 padding 80」） |
 
-clone 的分工規則：**重複樣式提成 Global Class**（三張卡片長一樣 → `neo-card`），
+replica 的分工規則：**重複樣式提成 Global Class**（三張卡片長一樣 → `neo-card`），
 元素 settings 只放「這顆獨有」的值。
 
 **後綴語法**：同一格欄位在不同情境的值，用冒號後綴表達——
@@ -335,7 +335,7 @@ clone 的分工規則：**重複樣式提成 Global Class**（三張卡片長一
 
 ### 6g. 動態行為的五層階梯：由上往下找，落越上層越好
 
-原站量到一個動態/互動行為（hover、輪播、手風琴、入場動畫…）後，clone skill
+原站量到一個動態/互動行為（hover、輪播、手風琴、入場動畫…）後，replica skill
 從第 1 層往下逐層問「這層做得到嗎？」：
 
 1. **原生元素**：Bricks 內建「行為自帶」的積木——`slider-nested`（輪播）、
@@ -407,7 +407,7 @@ excluded／unsupported），缺效果＝沒做完，不許無聲消失。
 | 94 顆各自把樣式寫進自己的 settings | 想把字改 15px → 改 94 次 |
 | 樣式提成 `pch-prod`，94 顆各掛一行引用 | 改一次 class → 94 顆同時變 |
 
-這就是 clone 分工規則（§6f）的實際產出：重複樣式提成 Global Class，元素自己的
+這就是 replica 分工規則（§6f）的實際產出：重複樣式提成 Global Class，元素自己的
 settings 只放「這顆獨有」的值。**最終長相 = 穿的衣服 ＋ 自己的 settings**
 （自己的優先——某張卡價格是紅字，紅色寫在它自己的 `_typography` 蓋過 class）。
 class 的 settings 同樣支援斷點/狀態後綴（`_padding:mobile_portrait`），
@@ -652,7 +652,7 @@ WordPress 載進來直接呼叫內部函式寫資料庫——就是 §7d wp-cli 
    改寫後容器裡根本沒這個檔。這個環境變數關掉自動改寫。
 
 **為什麼絕不用瀏覽器登入後台**：同樣的事理論上可以開瀏覽器登 wp-admin 在 UI 上點
-——但慢、脆（UI 自動化隨版面變動而壞），而且 clone 流程的 CDP Chrome 是留給
+——但慢、脆（UI 自動化隨版面變動而壞），而且 replica 流程的 CDP Chrome 是留給
 「分析原站＋對照渲染頁」用的，拿去操作後台會污染截圖與分頁狀態。程式門做的是
 一模一樣的事（§7e：同一批 WP 函式、同一顆資料庫），沒有理由走 UI。
 
@@ -661,7 +661,7 @@ WordPress 載進來直接呼叫內部函式寫資料庫——就是 §7d wp-cli 
 `template.json` 要變成訪客看得到的頁面，有兩條路，**終點不一樣**：
 
 **路一：push（AutoBricks 自動化路）**——`push-template.php` 直接把 JSON 寫進
-**某個頁面**的 `_bricks_page_content_2`。推完該頁立刻能看，clone 的逐區渲染對照
+**某個頁面**的 `_bricks_page_content_2`。推完該頁立刻能看，replica 的逐區渲染對照
 走的就是這條。不經過範本系統。
 
 **路二：手動匯入（後台 Bricks → 範本 → 匯入）**——餵它 `template.json` 或

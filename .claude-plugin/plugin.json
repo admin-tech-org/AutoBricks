@@ -1,6 +1,6 @@
 {
   "name": "autobricks",
-  "description": "把任一網頁複刻成「設計部好編輯」的 Bricks Builder 模板（clone，一條龍）：CDP 接管真 Chrome 全局分析（HTML/CSS/JS 動態）→ 逐區塊生成、即時推本機 Docker WP 渲染、與原站並排對照微調（一區收斂才下一區）→ RWD 逐斷點同法（驗證 gate 全程把關、結構極簡不照翻 DOM）；附環境安裝（setup）。",
+  "description": "把網頁複刻成「設計部好編輯」的 Bricks Builder 模板。skills：replica（一條龍：CDP 接管真 Chrome 全屬性量測 → 併行工人逐區生成、推本機 Docker WP 渲染對照收斂 → RWD；預設標準精度、點名才 pixel 級；四本帳驗收）、setup（環境安裝）。驗證 gate 全程把關、結構極簡不照翻 DOM。",
   "version": "0.1.0",
   "author": {
     "name": "Allen Chen"
@@ -8,5 +8,6 @@
   "license": "MIT",
   "category": "web-development",
   "tags": ["bricks-builder", "wordpress", "website-clone", "cdp", "web-design"],
-  "skills": "./skills"
+  "skills": "./skills",
+  "agents": "./agents"
 }

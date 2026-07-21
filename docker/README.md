@@ -1,6 +1,6 @@
 # docker/ — 本機 Bricks 驗證環境
 
-`clone` 實測階段的靶場：WordPress + MariaDB + Bricks（使用者自備 theme），跑在 http://localhost:8080。
+`replica` 實測階段的靶場：WordPress + MariaDB + Bricks（使用者自備 theme），跑在 http://localhost:8080。
 
 **掛載策略**：WordPress 檔案 bind mount 在 `docker/wp/`（看得到、theme 直接丟）；
 資料庫用 named volume（MariaDB 在 Windows bind mount 有鎖檔/損毀地雷，且 db 檔不會手動讀）。
@@ -29,7 +29,7 @@ docker compose -f docker/docker-compose.yml down -v       # 停＋清 db（./wp 
 docker compose -f docker/docker-compose.yml run --rm wpcli <wp 指令>   # wp-cli
 ```
 
-## 推模板（clone skill 主迴圈的底層流程）
+## 推模板（replica skill 主迴圈的底層流程）
 
 ```bash
 MSYS_NO_PATHCONV=1 docker cp data/<id>/template.json autobricks-wp:/tmp/template.json

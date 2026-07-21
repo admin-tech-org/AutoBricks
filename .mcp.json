@@ -2,12 +2,23 @@
   "mcpServers": {
     "playwright": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@playwright/mcp@latest",
-        "--cdp-endpoint", "${PLAYWRIGHT_CDP_URL:-http://127.0.0.1:9222}",
-        "--output-dir", "${CLAUDE_PROJECT_DIR:-.}/.browser/out"
-      ]
+      "args": ["-y", "@playwright/mcp@latest", "--cdp-endpoint", "${PLAYWRIGHT_CDP_URL:-http://127.0.0.1:9222}", "--output-dir", "${CLAUDE_PROJECT_DIR:-.}/.browser/out"]
+    },
+    "playwright2": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest", "--cdp-endpoint", "${PLAYWRIGHT_CDP_URL_2:-http://127.0.0.1:9223}", "--output-dir", "${CLAUDE_PROJECT_DIR:-.}/.browser/out2"]
+    },
+    "playwright3": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest", "--cdp-endpoint", "${PLAYWRIGHT_CDP_URL_3:-http://127.0.0.1:9224}", "--output-dir", "${CLAUDE_PROJECT_DIR:-.}/.browser/out3"]
+    },
+    "playwright4": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest", "--cdp-endpoint", "${PLAYWRIGHT_CDP_URL_4:-http://127.0.0.1:9225}", "--output-dir", "${CLAUDE_PROJECT_DIR:-.}/.browser/out4"]
+    },
+    "playwright5": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest", "--cdp-endpoint", "${PLAYWRIGHT_CDP_URL_5:-http://127.0.0.1:9226}", "--output-dir", "${CLAUDE_PROJECT_DIR:-.}/.browser/out5"]
     }
   }
 }
