@@ -17,8 +17,11 @@
   Claude 依當站現場寫在使用者專案的 `tmp/toolkit/`（一站寫一套，併行工人共用）。
 - **併行施工**：預設 5 個工人分區同時做（每工人一台 CDP Chrome＋一個獨立渲染頁），
   工人的 subagent 定義在 `agents/`。
-- **四本帳驗收**：處置帳（原站每個節點的去向）／行為清冊（每個會動的效果逐筆實測）／
-  數值 diff（渲染值 − 量測值）／視覺把關（截圖逐項核對）。
+- **四本帳驗收**：
+  - 處置帳（原站每個節點的去向）
+  - 行為清冊（每個會動的效果逐筆實測）
+  - 數值 diff（渲染值 − 量測值）
+  - 視覺把關（截圖逐項核對）。
 - **驗證 gate** `src/validate_template.py`——模板推送前 error 不清零就不放行。
 
 動態（互動／動畫）走五層階梯實作：原生元素 → `_interactions` → CSS → 自訂 JS（`code` 元素）→
@@ -32,8 +35,11 @@ unsupported（只准是真後端功能）。行為與外觀一樣要驗收，不
 ```
 
 安裝完成後，使用者在**自己的專案**跑 `/autobricks:setup`。之後使用者專案只會多三樣東西：
-`.claude/settings.local.json`（權限與埠設定）、`.browser/`（CDP Chrome 啟動腳本＋profile，
-請自行 gitignore）、`data/`（每次複刻一個資料夾：plan、模板、截圖、資產）。
+- `.claude/settings.local.json`（權限與埠設定）
+- `.browser/`（CDP Chrome 啟動腳本＋profile，
+請自行 gitignore）
+- `data/`（每次複刻一個資料夾：plan、模板、截圖、資產）。
+
 plugin 目錄全程唯讀。
 
 ## 需求
@@ -56,14 +62,13 @@ src/              validate_template.py（驗證 gate）· extract_bricks_schema.
 templates/        launch-chrome-cdp.{bat,sh} —— setup 複製到使用者專案 .browser/
 docker/           WP+Bricks 驗證環境（compose / init-wp.sh / push-template.php）
 doc/              tutorial.md —— 從 Docker 到第一個 Bricks 頁面的完整教學
-bricks-schema/    官方 Bricks schema v2.3 本地副本（live schema 不可用時的 fallback）
 ```
 
 ## Bricks 版本與經驗知識
 
 plugin **不鎖定 Bricks 版本**：元素／欄位存在性由 `src/extract_bricks_schema.py` 直接從
-使用者裝的 theme 原始碼現抽（`data/bricks-schema-live.json`，版本自動對齊）；`bricks-schema/`
-只是 live 不可用時的 fallback。使用經驗（設定值形狀、渲染地雷）**不隨 plugin 發佈**——
+使用者裝的 theme 原始碼現抽（`data/bricks-schema-live.json`，版本自動對齊）；沒有 live schema
+就以渲染實測為準。使用經驗（設定值形狀、渲染地雷）**不隨 plugin 發佈**——
 累積在使用者專案的 `bricks-gotchas.local.md`，skill 讀取時以它為最優先依據、新教訓也回寫它。
 
 ## 法律注意事項

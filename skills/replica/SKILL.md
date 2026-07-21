@@ -393,8 +393,8 @@ subagent 只看得到自己那一區，各自優化＝各寫各的。**跨區一
 **④ 建（直接堆 Bricks）**：在 `tmp/build_template.py` **只新增**自己的 `build_<band>()` 掛進 `main()`，
 不動別人的函式。數值全部取自 dump。
 - **元素／欄位存不存在，查了才算**：live schema（`data/bricks-schema-live.json`；沒有就跑
-  `uv run --project "<PLUGIN_DIR>" python "<PLUGIN_DIR>/src/extract_bricks_schema.py"` 現抽）
-  → `<PLUGIN_DIR>/bricks-schema/`（備用）。**查無＝沒有，絕不發明。**
+  `uv run --project "<PLUGIN_DIR>" python "<PLUGIN_DIR>/src/extract_bricks_schema.py"` 從使用者
+  theme 原始碼現抽）。沒有 live schema 就以渲染實測為準——**查無＝沒有，絕不發明。**
   選型可參考 `<PLUGIN_DIR>/skills/replica/element-map.md`。
 - **設了就要驗它真的輸出**：Bricks 的欄位常掛條件閘門（依 display、元素型別才生效），
   不滿足時**靜默不輸出、不報錯**，而 computed 又可能被繼承值遮著看起來沒事。

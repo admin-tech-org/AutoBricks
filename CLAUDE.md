@@ -58,9 +58,9 @@ uv run ruff format . && uv run ruff check --fix .  # lint/format（手動跑）
 
 - **plugin 不鎖定 Bricks 版本、不內建版本經驗**。真相來源順序：使用者專案的
   `bricks-gotchas.local.md`（實證經驗，隨專案成長；gitignored、不隨 plugin 發佈）→
-  live schema（`src/extract_bricks_schema.py` 從使用者裝的 theme 原始碼現抽，
-  欄位存在性的最高權威）→ `bricks-schema/`（官方 v2.3、對應 2.x，fallback）。
-  **版本經驗絕不寫進 plugin 目錄**（marketplace 更新會整包覆蓋，也污染通用性）。
+  live schema（`src/extract_bricks_schema.py` 從使用者裝的 theme 原始碼現抽 →
+  `data/bricks-schema-live.json`，欄位存在性的最高權威）。沒有 live schema 就以渲染實測為準，
+  絕不發明欄位。**版本經驗絕不寫進 plugin 目錄**（marketplace 更新會整包覆蓋，也污染通用性）。
 - **`%root%` 在 `_cssCustom` 不會被替換**，會原樣輸出成無效 selector——
   一律用真實 `#brxe-<id>`，且在元素 id 定案後才寫。
 - 元素 id：6 碼 `[a-z0-9]` 且含數字；一個 kit zip 恰好一個 `.json`。

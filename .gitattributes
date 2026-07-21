@@ -38,6 +38,3 @@ uv.lock     text eol=lf linguist-generated=true
 *.woff2     binary
 *.ttf       binary
 *.pdf       binary
-
-# --- 官方 schema 副本：不算進語言統計 ---
-bricks-schema/** linguist-vendored

@@ -1,14 +1,14 @@
 """AutoBricks 驗證 gate — 檢查 Bricks Builder 模板 JSON 是否可安全匯入 Bricks。
 
-clone skill 產出 template.json 後必須跑本腳本並修到 PASS 才交付。
+replica skill 產出 template.json 後必須跑本腳本並修到 PASS 才交付。
 只用標準函式庫。檢查層次：
 
   1. 信封：{id, name, parent, children, settings}（component 實例以 cid 識別、放寬 name）
   2. id：格式 ^[a-z0-9]{6}$、唯一；警告不含數字（匯入 id 全域字串替換的踩雷防護）
   3. 圖：parent/children 互相一致、無懸空引用、無環、皆可從根到達
-  4. element name 與 settings 欄位：優先對照 data/bricks-schema-live.json
+  4. element name 與 settings 欄位：對照 data/bricks-schema-live.json
      （extract_bricks_schema.py 從使用者 theme 原始碼抽出、版本自動對齊——含逐鍵檢查）；
-     沒有 live schema 才退官方 bricks-schema/（2.3，只查 element 名）
+     沒有 live schema 就跳過 element name 檢查（先跑 extract_bricks_schema.py 生成）
   5. 已知形狀（實機驗證於 1.12.x；經驗明細在使用者專案的 bricks-gotchas.local.md）：
      _boxShadow 必須 object、_gradient 必須 object、_background 不可是字串、
      _cssCustom 含 %root% 直接判 error（1.12.x 實證不替換）、font-family 帶逗號警告、
@@ -85,21 +85,10 @@ def load_live_schema(path):
         return None
 
 
-def known_element_names(schema_dir):
-    eldir = os.path.join(schema_dir, "elements")
-    if not os.path.isdir(eldir):
-        return None
-    names = set()
-    for fn in os.listdir(eldir):
-        if fn.endswith(".json"):
-            names.add(fn[:-5])
-    return names or None
-
-
 def check(elements, schema_names, global_classes=None, live=None):
     errors, warnings = [], []
     global_classes = global_classes or []
-    if live:  # live schema（使用者環境的真版本）優先於官方 2.3 目錄
+    if live:  # element name 名冊全部來自 live schema
         schema_names = live["names"]
 
     # ---- 0. Global Classes（樣式元件）---------------------------------
@@ -161,8 +150,7 @@ def check(elements, schema_names, global_classes=None, live=None):
         # ---- 4. element name 對 schema --------------------------------
         name = el.get("name")
         if name and schema_names is not None and name not in schema_names:
-            src = f"Bricks {live['version']} 原始碼（live schema）" if live else "bricks-schema/elements/"
-            err(i, el, f"element name {name!r} 不在 {src}（不存在的元素或拼錯）")
+            err(i, el, f"element name {name!r} 不在 Bricks {live['version']} 原始碼（live schema）（不存在的元素或拼錯）")
         if live and name in live["controls"] and isinstance(settings, dict):
             ctrls = live["controls"][name]
             for skey in settings:
@@ -309,7 +297,6 @@ def check(elements, schema_names, global_classes=None, live=None):
 def main():
     ap = argparse.ArgumentParser(description="Bricks 模板 JSON 驗證 gate")
     ap.add_argument("template", help="template.json 路徑（裸陣列或含 content 的物件皆可）")
-    ap.add_argument("--schema-dir", default=None, help="bricks-schema 目錄（預設：本腳本上層的 bricks-schema/）")
     ap.add_argument(
         "--live-schema",
         default=os.path.join("data", "bricks-schema-live.json"),
@@ -319,15 +306,14 @@ def main():
     ap.add_argument("--json", action="store_true", dest="as_json", help="機器可讀輸出")
     args = ap.parse_args()
 
-    schema_dir = args.schema_dir or os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "bricks-schema")
     try:
         elements, global_classes = load_elements(args.template)
     except (OSError, ValueError, json.JSONDecodeError) as e:
         print(f"[x] 讀取失敗: {e}", file=sys.stderr)
         sys.exit(2)
 
-    schema_names = known_element_names(schema_dir)
     live = load_live_schema(args.live_schema)
+    schema_names = None  # element name 名冊由 live schema 提供（check 內設定）
     errors, warnings = check(elements, schema_names, global_classes, live)
     ok = not errors and not (args.strict and warnings)
 
@@ -344,8 +330,8 @@ def main():
             f"elements: {len(elements)}  global classes: {len(global_classes)}"
             + (f"  [live schema: Bricks {live['version']}]" if live else "")
         )
-        if schema_names is None:
-            print("[!] 找不到 bricks-schema/elements —— 跳過 element name 檢查")
+        if live is None:
+            print("[!] 沒有 live schema（data/bricks-schema-live.json）—— 跳過 element name 檢查；先跑 src/extract_bricks_schema.py 生成")
         for msg in errors:
             print(f"[error] {msg}")
         for msg in warnings:
