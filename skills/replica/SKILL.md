@@ -190,10 +190,12 @@ host 有四項職責，**驗收是其中最重的一項**。
   ⑤**★這次執行一路踩到的坑——host 要一路累積、每次注入，這是 brief 裡最值錢的部分**。
 - **給資料要給檔案路徑，不要憑記憶轉述**——轉述必然摻錯。
 - **模型按區的難易配（host 派工時定）**：
-  **靜態／簡單區 → Sonnet**；**動態／複雜區 → Opus**（有 slideshow／輪播／tabs／大量節點／
-  行為清冊很長的區）。判斷依據現成的：plan.json 每區的互動模型（static｜click｜scroll｜time)
-  ＋節點數。**host 自己（驗收／整合／全局）一律最強模型**——它是抓錯的最後防線。
-  **reasoning effort 一律開 max，不分模型**——按區配省的是單價，不是思考深度；
+  **靜態／簡單區 → Sonnet 5**（`claude-sonnet-5`）；**動態／複雜區 → Opus 4.8**
+  （`claude-opus-4-8`——有 slideshow／輪播／tabs／大量節點／行為清冊很長的區）。
+  判斷依據現成的：plan.json 每區的互動模型（static｜click｜scroll｜time）＋節點數。
+  **host 自己（驗收／整合／全局）一律 Opus 4.8**——它是抓錯的最後防線。
+  **reasoning effort 一律開 max，不分模型**（agents/replica-band.md 已設 `effort: max`，
+  派 Sonnet 區時只覆寫 `model`、不動 effort）——按區配省的是單價，不是思考深度；
   工人的價值在「清單外的疑點也抓得到」，effort 砍了等於把這個砍了。
   接棒制下**同一條接棒串配同級的區**（Sonnet 工人接棒串全是簡單區，別讓它中途接到複雜區）。
 
