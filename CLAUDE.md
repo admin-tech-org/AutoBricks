@@ -10,8 +10,9 @@
   RWD 併入各區工人。**預設標準精度**（盒與可見樣式對齊即收帳），使用者點名「pixel 級」
   才開 0-diff 精修。**零內建分析程式**——量測工具由 Claude 臨場寫在使用者專案的
   `tmp/toolkit/`（一站寫一套、工人共用）；四本帳驗收；預設 5 個併行工人＋接棒制。
-  工人的 subagent 定義在 **`agents/replica-band.md`**（plugin 元件，隨安裝發佈；
-  host 派工時依區的難易指定模型）。
+  工人的 subagent 定義在 **`agents/replica-band.md`**（effort max）與
+  **`replica-band-high.md`**（effort high）——plugin 元件，隨安裝發佈；
+  **全員 Opus 4.8**，host 依區難易選 effort 檔（靜態→high、動態→max）。
 - **setup**——環境安裝，使用者手動觸發。
 
 驗證 gate＝`src/validate_template.py`（模板推送前 error 不清零就不放行）。
