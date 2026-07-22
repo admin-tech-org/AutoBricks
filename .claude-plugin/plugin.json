@@ -5,9 +5,5 @@
   "author": {
     "name": "Allen Chen"
   },
-  "license": "MIT",
-  "category": "web-development",
-  "tags": ["bricks-builder", "wordpress", "website-clone", "cdp", "web-design"],
-  "skills": "./skills",
-  "agents": "./agents"
+  "license": "MIT"
 }
