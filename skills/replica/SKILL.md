@@ -518,7 +518,7 @@ subagent 只看得到自己那一區，各自優化＝各寫各的。**跨區一
 - **元素／欄位存不存在，查了才算**：live schema（`data/bricks-schema-live.json`；沒有就跑
   `uv run --project "<PLUGIN_DIR>" python "<PLUGIN_DIR>/src/extract_bricks_schema.py"` 從使用者
   theme 原始碼現抽）。沒有 live schema 就以渲染實測為準——**查無＝沒有，絕不發明。**
-  選型可參考 `<PLUGIN_DIR>/skills/replica/element-map.md`。
+  選型不靠對照表、當下決策：看行為證據配元素，live schema 一票否決。
 - **設了就要驗它真的輸出**：Bricks 的欄位常掛條件閘門（依 display、元素型別才生效），
   不滿足時**靜默不輸出、不報錯**，而 computed 又可能被繼承值遮著看起來沒事。
   設完在渲染頁的 `document.styleSheets` 搜 `#brxe-<id>`，確認那條 CSS 真的存在。

@@ -55,7 +55,7 @@ plugin 目錄全程唯讀。
 .claude-plugin/   plugin.json + marketplace.json（發版：bump version、合進預設分支 master）
 .mcp.json         內建 Playwright MCP ×5 組（接管 CDP Chrome；埠取 PLAYWRIGHT_CDP_URL[_N]，
                   預設 9222..9226；不自啟瀏覽器）
-skills/           replica（複刻主力，含 element-map.md 選型參考）· setup（環境）
+skills/           replica（複刻主力）· setup（環境）
 agents/           replica-band.md —— replica 併行工人的 subagent 定義
 src/              validate_template.py（驗證 gate）· extract_bricks_schema.py
                   （從使用者裝的 theme 原始碼現抽 schema，驗證與生成共用）
