@@ -1,79 +1,61 @@
 # AutoBricks
 
-**Claude Code plugin：把任一網頁複刻成可匯入的 Bricks Builder 模板。**
-給設計部「先 copy 一版、再動手改」用——取代照著參考網站手拉 Bricks 的苦工。
+將參考網頁重建成可匯入、可編輯的 WordPress Bricks JSON，供設計師接手修改。
+
+先看網站，再依當站選擇量測、轉換與驗證方式。可重用原站 CSS 和既有工具，保留 RWD、主要互動及可編輯內容；交付前驗證 JSON、正常匯入後的頁面與素材身分。
+
+## 工作入口
+
+- 共用原則：[AGENTS.md](AGENTS.md)。`CLAUDE.md` 透過 `@AGENTS.md` 載入同一份規則。
+- Codex skill：[web-to-bricks](.agents/skills/web-to-bricks/SKILL.md)。
+- Claude skill：[/autobricks:replica](skills/replica/SKILL.md)，與 Codex 版本內容相同，只保留原有 `replica` 指令名稱；匯入備忘也一併複製。
+- 環境安裝：[/autobricks:setup](skills/setup/SKILL.md)，需要安裝時手動呼叫。
+
+這次同步不指定模型、推理強度、工人數或固定分區流程。先前兩個綁定 Opus 4.8 的工人定義已從 plugin 移除，原文保存在 Git。
+
+## 本機比較
+
+在本 repo 開新的 Claude Code session，載入這份本機 plugin：
 
 ```text
-/autobricks:replica   給一個網址，一條龍：CDP 真 Chrome 全局分析（數字全實測）→
-                      逐區「生成 Bricks JSON → 推本機 WP 渲染 → 與原站並排對照 → 收斂」→
-                      RWD 逐斷點（驗證 gate 全程把關）。
-                      預設標準精度；使用者點名「pixel 級」才逐屬性收斂到 0-diff。
-/autobricks:setup     環境一鍵備好（uv、Node、CDP 瀏覽器、WP 驗證環境、權限預核准）
+claude --plugin-dir .
+/autobricks:replica <參考網頁網址>
 ```
 
-分析與生成由 **Claude 在 session 內完成**（skill 只給方法與要點）：
+使用你要比較的模型，給相同網址與精度要求，分別記錄首版時間、完整驗證時間、可編輯程度和剩餘差異。不要沿用已載入舊流程的對話。這次已完成指令同步，Fable 的實際重建結果仍待測試。
 
-- **零內建分析程式**：網站千變萬化，預先寫死的工具總會遇到沒料到的情況——量測工具由
-  Claude 依當站現場寫在使用者專案的 `tmp/toolkit/`（一站寫一套，併行工人共用）。
-- **併行施工**：預設 5 個工人分區同時做（每工人一台 CDP Chrome＋一個獨立渲染頁），
-  工人的 subagent 定義在 `agents/`。
-- **四本帳驗收**：
-  - 處置帳（原站每個節點的去向）
-  - 行為清冊（每個會動的效果逐筆實測）
-  - 數值 diff（渲染值 − 量測值）
-  - 視覺把關（截圖逐項核對）。
-- **驗證 gate** `src/validate_template.py`——模板推送前 error 不清零就不放行。
+此比較以本 repo 為工作目錄。Plugin 根目錄的 `CLAUDE.md` 不會自動成為其他專案的指令；若在另一個專案測，需另外帶入共用的 `AGENTS.md` 與引用它的 `CLAUDE.md`。引用方式見 [Claude Code 官方說明](https://code.claude.com/docs/en/memory#agentsmd)。
 
-動態（互動／動畫）走五層階梯實作：原生元素 → `_interactions` → CSS → 自訂 JS（`code` 元素）→
-unsupported（只准是真後端功能）。行為與外觀一樣要驗收，不是加分項。
+環境使用 [uv](https://docs.astral.sh/uv/)、Chrome CDP、Docker WordPress 與已授權的 Bricks theme；本機預覽網址是 `http://localhost:8080`。安裝細節見 [Docker 說明](docker/README.md) 與 [教學](doc/tutorial.md)。
 
-## 安裝（marketplace）
+## 工具與產物
+
+- `src/validate_template.py`：`uv run python src/validate_template.py <template.json>`。
+- `src/extract_bricks_schema.py`：需要時從已安裝的 Bricks theme 查欄位。
+- `.codex/tools/browser.mjs`：可重用的 CDP 小工具，Node 22+；用法見 [.codex/README.md](.codex/README.md)。
+- `docker/`：測試環境與推送工具；`templates/`：Chrome 啟動範本。
+- `.mcp.json`：保留既有 5 組 CDP 連線能力，按需使用。
+- `data/<run>/`：各次 JSON、素材、量測和截圖；`.browser/`：瀏覽器 profile。執行產物、登入資料與商業 theme 不納入 Git。
+
+Bricks 欄位以已安裝版本與實際渲染為準。版本相關經驗按需查 [匯入備忘](skills/replica/references/bricks-import.md)，不要直接外推至其他版本。
+
+## 實驗紀錄與還原點
+
+- [Cyberpunk 重建](doc/codex-cyberpunk-experiment.md)
+- [牛耳心境莊園重建](doc/codex-newer-art-experiment.md)
+- [既有流程效能分析](doc/performance-review-20260914.md)
+- `d68bd9b`：同步前完整現況，包含舊 Claude skill、工人定義與 Codex 實驗成果。
+- [舊流程設計理由](doc/replica-rationale.md) 僅供查歷史，不是現行執行規則。
+
+## Marketplace 安裝
 
 ```text
-/plugin marketplace add <帳號>/<repo>     # 或本機路徑
+/plugin marketplace add <帳號>/<repo>
 /plugin install autobricks@autobricks
 ```
 
-安裝完成後，使用者在**自己的專案**跑 `/autobricks:setup`。之後使用者專案只會多三樣東西：
-- `.claude/settings.local.json`（權限與埠設定）
-- `.browser/`（CDP Chrome 啟動腳本＋profile，
-請自行 gitignore）
-- `data/`（每次複刻一個資料夾：plan、模板、截圖、資產）。
+本次為本機策略比較，未發佈新版 marketplace。需要測這次的修改時，使用上方本機 plugin 指令。
 
-plugin 目錄全程唯讀。
+## 使用範圍
 
-## 需求
-
-- Google Chrome（真瀏覽器＝無自動化指紋，防爬蟲嚴的網站也能分析）
-- Node ≥ 20（Playwright MCP 走 `npx`）與 [uv](https://docs.astral.sh/uv/)——`setup` 會為使用者安裝
-- Docker Desktop ＋ 已授權的 Bricks theme（解壓進 `docker/wp/wp-content/themes/bricks/`）——
-  **必備**：逐區渲染對照靠這套環境，見 [docker/README.md](docker/README.md)
-
-## 結構
-
-```text
-.claude-plugin/   plugin.json + marketplace.json（發版：bump version、合進預設分支 master）
-.mcp.json         內建 Playwright MCP ×5 組（接管 CDP Chrome；埠取 PLAYWRIGHT_CDP_URL[_N]，
-                  預設 9222..9226；不自啟瀏覽器）
-skills/           replica（複刻主力）· setup（環境）
-agents/           replica-band.md · replica-band-high.md —— replica 併行工人的 subagent 定義
-                  （內文相同，effort max／high 兩檔，host 依區難易派）
-src/              validate_template.py（驗證 gate）· extract_bricks_schema.py
-                  （從使用者裝的 theme 原始碼現抽 schema，驗證與生成共用）
-templates/        launch-chrome-cdp.{bat,sh} —— setup 複製到使用者專案 .browser/
-docker/           WP+Bricks 驗證環境（compose / init-wp.sh / push-template.php）
-doc/              tutorial.md —— 從 Docker 到第一個 Bricks 頁面的完整教學
-                  replica-rationale.md —— replica 規則的設計理由與事故記錄（改 SKILL.md 前必讀；
-                  跑複刻不用讀，執行需要的都在 SKILL.md）
-```
-
-## Bricks 版本與經驗知識
-
-plugin **不鎖定 Bricks 版本**：元素／欄位存在性由 `src/extract_bricks_schema.py` 直接從
-使用者裝的 theme 原始碼現抽（`data/bricks-schema-live.json`，版本自動對齊）；沒有 live schema
-就以渲染實測為準。使用經驗（設定值形狀、渲染地雷）**不隨 plugin 發佈**——
-累積在使用者專案的 `bricks-gotchas.local.md`，skill 讀取時以它為最優先依據、新教訓也回寫它。
-
-## 法律注意事項
-
-僅可用於使用者自有網站／已授權的客戶網站／內部重建／學習用途。
+用於使用者自有網站、已授權的客戶網站、內部重建或學習用途。
