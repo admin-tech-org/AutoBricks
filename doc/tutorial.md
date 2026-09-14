@@ -4,6 +4,8 @@
 並理解「頁面 = JSON」這件事（AutoBricks 的核心原理）。全程在 Windows Git Bash 操作
 （指令都是 bash，macOS/Linux 用內建終端機照跑即可）。
 
+本文供使用者查閱本機環境操作與 Bricks 1.12.5 的資料結構。「Agent 產品」指 Claude Code、Codex 等可使用工具執行任務的 AI 助理軟體；「使用者」指提出需求並操作環境的人。Agent 產品執行重建時，以 [共用工作規則](../AGENTS.md) 與 [重建 skill](../skills/web-to-bricks/SKILL.md) 為準，依當次原站與環境選擇方法；本文不是固定執行流程。
+
 ---
 
 ## 1. 前置需求
@@ -41,7 +43,7 @@ bash docker/init-wp.sh
    docker/wp/wp-content/themes/bricks/
    ```
    ⚠️ **套娃陷阱**：確認 `style.css` 直接位於 `themes/bricks/` 底下。解壓常會多一層
-   （變成 `themes/bricks/bricks/style.css`）——多這一層 WordPress 就當它不存在。
+   （變成 `themes/bricks/bricks/style.css`）——多這一層會讓 WordPress 無法辨識 Bricks theme。
    驗證：`ls docker/wp/wp-content/themes/bricks/style.css` 有檔案就對了。
 2. 再跑一次 `bash docker/init-wp.sh`——前面步驟自動跳過，只做 `theme activate bricks`。
 
@@ -76,15 +78,15 @@ root 跑；後台 UI 那條路沒這個問題。）
 ### 4c. 開放「頁面」使用 Bricks 編輯器（必做，手動決定）
 
 Bricks 依內容型別逐一開放 builder——這是刻意設計：用 Bricks 編輯的內容存進 Bricks
-專屬的 JSON（換 theme 就沒人渲染它，格式綁定），所以哪些型別交給 builder、哪些留給
-原生編輯器，由站點自己決定（典型分工：頁面用 Bricks、部落格文章用原生編輯器）。
+專屬的 JSON（其他 theme 不一定支援渲染 Bricks JSON），所以哪些型別交給 builder、哪些留給
+原生編輯器，由使用者決定（典型分工：頁面用 Bricks、部落格文章用原生編輯器）。
 本環境**刻意不自動設定**，由使用者自行決定開放範圍。
 （注意：這個開關只管「誰能用 Bricks **編輯**」，不影響範本**渲染**——文章不開放
-編輯，套用條件對得上的範本照樣渲染它，見 §7m。）
+編輯，套用條件相符的範本仍可渲染文章，見 §7m。）
 
 **注意：新環境點「Edit with Bricks」會被踢走**——因為「哪些型別可以用 Bricks
 編輯」這個設定，新裝好的站是**空的＝全部不准**。正常人手動裝 WP 會點進 Bricks
-設定頁順手勾一勾；但本環境是腳本自動裝的，沒有人去過那個設定頁，所以它一直是空的。
+設定頁順手勾一勾；本環境的初始化腳本沒有設定可編輯的文章類型，因此該設定仍為空。
 
 解法：把「頁面」勾起來，兩條路挑一條，效果一模一樣：
 
@@ -94,7 +96,7 @@ Bricks 依內容型別逐一開放 builder——這是刻意設計：用 Bricks 
   MSYS_NO_PATHCONV=1 docker compose run --rm wpcli option update bricks_global_settings '{"postTypes":["page"]}' --format=json
   ```
 
-為什麼兩條路等效？你在後台按下儲存時，WordPress 做的事就是**往資料庫寫一筆資料**
+為什麼兩條路等效？使用者在後台按下儲存時，WordPress 會**往資料庫寫一筆資料**
 （`wp_options` 表裡叫 `bricks_global_settings` 的那筆）；wp-cli 那行指令做的事：
 **直接寫同一筆資料**。
 
@@ -139,7 +141,7 @@ MSYS_NO_PATHCONV=1 docker compose run --rm wpcli post create --post_type=page --
 
 ## 6. 核心觀念：頁面 = JSON（AutoBricks 的原理）
 
-在編輯器拉的一切，存檔後都是資料庫裡的一筆 JSON。自己驗證：
+使用者在編輯器建立的內容，存檔後會存為資料庫裡的 JSON。使用者或 Agent 產品可執行以下指令查看：
 
 ```bash
 MSYS_NO_PATHCONV=1 docker compose run --rm wpcli post meta get <page_id> _bricks_page_content_2 --format=json
@@ -182,7 +184,7 @@ MSYS_NO_PATHCONV=1 docker compose run --rm wpcli post meta get <page_id> _bricks
 | 結構面板上每顆元素的顯示名稱 | `label`（選填；沒填就顯示元素型別名，見 §6e） |
 | 設定面板的每個欄位 | `settings` 的一個 key |
 
-**AutoBricks 的 replica skill 產出的 `template.json` 就是這種 JSON**——等於把「手拉頁面」
+**AutoBricks 的 web-to-bricks skill 產出的 `template.json` 就是這種 JSON**——等於把「手拉頁面」
 自動化，直接生成存檔結果，再由 `docker/push-template.php` 寫進資料庫。
 
 細節注意：空的 `settings` Bricks 存成 `[]`（不是 `{}`）；元素 id 是 6 碼小寫英數。
@@ -194,11 +196,11 @@ MSYS_NO_PATHCONV=1 docker compose run --rm wpcli post meta get <page_id> _bricks
 `settings` 裡有一個特殊的 key：`_cssCustom`——元素的「Custom CSS」欄位，
 放原生設定表達不了的手寫 CSS（keyframes、偽元素、特殊 pattern）。
 
-寫這段 CSS 需要指到「這顆元素自己」。Bricks 官方提供佔位符 `%root%`，
+這段 CSS 需要指定目前編輯的元素。Bricks 官方提供佔位符 `%root%`，
 **理論上**輸出時會替換成該元素的真實 selector：
 
 ```css
-/* 你寫的 */                      /* 期望前台輸出 */
+/* 輸入的 CSS */                   /* 期望前台輸出 */
 %root% { border: 4px solid #000; }   #brxe-a3k9x2 { border: 4px solid #000; }
 %root%:hover { … }                   #brxe-a3k9x2:hover { … }
 ```
@@ -210,10 +212,10 @@ MSYS_NO_PATHCONV=1 docker compose run --rm wpcli post meta get <page_id> _bricks
 `%root% { … }`。而 `%root%` 不是合法的 CSS selector，瀏覽器直接忽略整條規則。
 結果是**樣式無聲消失**：不報錯、builder 裡可能看起來正常，前台就是沒效果，非常難查。
 
-所以本專案的規矩（CLAUDE.md 鐵律）：
+因此，本專案輸出自訂 CSS 時採用以下做法：
 
 1. **不用 `%root%`，直接寫死真實 selector**：`#brxe-a3k9x2 { … }`。
-2. **元素 id 定案後才寫**——selector 是寫死的字串，指向特定 id。replica 流程用
+2. **元素 id 定案後才寫**——selector 是寫死的字串，指向特定 id。Agent 產品若使用
    build script 反覆重建 template，id 還會變動時就把 `#brxe-xxx` 寫進 CSS，
    重建後 id 一換，CSS 就指到不存在的元素、又是無聲失效
    （build script 固定 random seed、每次重建 id 不變，就是在配合這件事）。
@@ -222,7 +224,7 @@ MSYS_NO_PATHCONV=1 docker compose run --rm wpcli post meta get <page_id> _bricks
 
 ### 6b. code 元素的 JS 為什麼不一定會跑：程式碼執行權限與簽章
 
-replica 的動態階梯（見 §6g）第 4 層是把自訂 JS 放進 **code 元素**（`javascriptCode` +
+本文 §6g 介紹的其中一種做法是把自訂 JS 放進 **code 元素**（`javascriptCode` +
 `executeCode: true`）。但「推送成功」≠「前台會跑」——Bricks 在中間設了兩道閘：
 
 1. **總開關**：後台 Bricks → 設定 → 自訂程式碼，「允許執行程式碼」**預設關閉**。
@@ -233,7 +235,7 @@ replica 的動態階梯（見 §6g）第 4 層是把自訂 JS 放進 **code 元�
 **為什麼搞這麼複雜**：「存在資料庫裡的程式碼會被執行」是 WordPress 被入侵的經典劇本
 ——駭客只要找到任何能改資料庫的縫（爛外掛漏洞、被盜的小編帳號），就能把惡意 JS
 塞進頁面，之後每個訪客打開都執行（偷 cookie、跳轉釣魚頁）。這叫 **Stored XSS**
-（儲存型 XSS：攻擊者的程式碼在受害者瀏覽器裡執行；順帶區分：CSRF 是冒你的名義
+（儲存型 XSS：攻擊者的程式碼在受害者瀏覽器裡執行；順帶區分：CSRF 是冒用受害者身分
 發請求、利用瀏覽器自動帶 cookie，全程沒有攻擊者的 JS 在跑）。簽章把「資料庫裡的
 內容」和「可以執行的程式碼」切開——駭客能改資料庫，但算不出章。
 
@@ -277,7 +279,7 @@ JSON **全域字串替換**（舊 id 字串出現的每處換成新 id）。字�
    文件一人從頭寫到尾；builder 裡元素不斷被複製、匯入、跨站搬——複製一次「hero 區」
    就兩顆 `#hero` 撞號。隨機碼永不撞號。
 2. **有意義反而是 bug 來源**：§6c 的匯入全域字串替換——id 若是 `header`、`button`
-   這種人話單字，替換會誤傷內文與 CSS。「id 長得越像人話越危險」，我們的
+   這種人話單字，替換會誤傷內文與 CSS。「id 長得越像人話越危險」，本專案的
    「至少含一個數字」規則就是把 id 推得離人話更遠。
 3. **意義另有存放處**——這是關鍵分工：
 
@@ -288,8 +290,7 @@ JSON **全域字串替換**（舊 id 字串出現的每處換成新 id）。字�
    | 人理解這組樣式是什麼 | **Global Class 的名字**（`neo-card`…） |
 
 **`label` 是自訂的**：不填，結構面板顯示元素型別名（一整排 Block 分不出誰是誰）；
-有填，顯示你給的名字，設計部隨時可改、改了不影響任何引用。replica skill 生成時
-每個結構層都寫 zh-TW label（「主視覺」「三欄卡片」）——這是結構鐵律。
+有填，結構面板顯示指定的名稱；使用者修改 label 不影響元素引用。Agent 產品可使用容易辨識的 label（如「主視覺」「三欄卡片」），方便使用者後續編輯。
 
 **設計師怎麼找元件**：主要靠**右側結構面板的樹＋label 認路**（點中央畫布的元素、
 結構面板也會同步高亮，兩邊連動）；id 只在設定面板頂端露臉，幾乎不會拿來找東西。
@@ -303,7 +304,7 @@ id 是免洗的、匯入就換一批；label 才是跟著模板走的資產。�
 
 ### 6f. settings 解剖：三種欄位、一個作用範圍
 
-**settings 就是「左側面板的存檔」**——你在面板上填的每一格，存檔後就是 settings
+**settings 就是「左側面板的存檔」**——使用者在面板上填的每一格，存檔後就是 settings
 裡的一個 key。key 分三種（順帶：`name` 是「哪種積木」、`tag`/`customTag` 是
 「渲染成什麼 HTML 標籤」，跟 `label` 三個名字很像的欄位各管各的，別混）：
 
@@ -314,19 +315,19 @@ id 是免洗的、匯入就換一批；label 才是跟著模板走的資產。�
 | **底線 meta 類** | `_cssGlobalClasses`、`_interactions`、`_conditions` | 也是大家都有，但管的不是外觀，而是「掛哪些 class／有什麼互動／何時顯示」這類行為與關聯 |
 
 live schema 的結構就是照這個分的：`extract_bricks_schema.py` 把 `base.php` 抽成
-`__base__`（共通底線欄位全在那），各元素只列自己特有的 controls。
+`__base__`（共通底線欄位存於此處），各元素只列該元素型別特有的 controls。
 
-**作用範圍**：元素 settings 裡填的值**只影響這一顆**（Bricks 產 CSS 時鎖在它的
+**作用範圍**：元素 settings 裡填的值**只影響該元素**（Bricks 產 CSS 時限定在該元素的
 `#brxe-<id>` 上）。要跨元素共用，就往上一層放：
 
 | 填在哪 | 影響範圍 | 用途 |
 |---|---|---|
-| 元素自己的 settings | 只有這一顆 | 這顆獨有的值 |
-| Global Class（用 `_cssGlobalClasses` 掛） | 掛它的每一顆 | 共用樣式包——改一次 class 全站連動 |
+| 元素的 settings | 該元素 | 該元素獨有的值 |
+| Global Class（用 `_cssGlobalClasses` 掛） | 引用該 class 的所有元素 | 共用樣式包——改一次 class 全站連動 |
 | Theme Styles（全站設定） | 全站該型別元素 | 預設值（如「所有 section 上下 padding 80」） |
 
-replica 的分工規則：**重複樣式提成 Global Class**（三張卡片長一樣 → `neo-card`），
-元素 settings 只放「這顆獨有」的值。
+Agent 產品可將**重複樣式提成 Global Class**（三張卡片長一樣 → `neo-card`），
+並在元素 settings 保留個別元素的差異。
 
 **後綴語法**：同一格欄位在不同情境的值，用冒號後綴表達——
 `_padding:tablet_portrait`（斷點）、`_background:hover`（狀態），可疊加
@@ -335,13 +336,12 @@ replica 的分工規則：**重複樣式提成 Global Class**（三張卡片長�
 
 ### 6g. 動態行為的五層階梯：由上往下找，落越上層越好
 
-原站量到一個動態/互動行為（hover、輪播、手風琴、入場動畫…）後，replica skill
-從第 1 層往下逐層問「這層做得到嗎？」：
+原站的動態／互動行為（hover、輪播、手風琴、入場動畫…）可用以下方式實作。
+Agent 產品依原站行為與使用者的編輯需求選擇適合的方式：
 
 1. **原生元素**：Bricks 內建「行為自帶」的積木——`slider-nested`（輪播）、
    `accordion-nested`（FAQ 手風琴）、`tabs-nested`、`counter`、`countdown`、
-   `animated-typing`、`nav-nested`、`offcanvas`、`dropdown`…。選了它，JS 一行
-   不用寫（`-nested` 後綴＝可巢狀：slide/panel 是開放容器，內容自由組裝，
+   `animated-typing`、`nav-nested`、`offcanvas`、`dropdown`…。內建行為符合需求時，Agent 產品不必另寫互動 JS（`-nested` 後綴＝可巢狀：slide/panel 是開放容器，內容自由組裝，
    優於內容表單式的舊版同名元素）。
 2. **`_interactions`**：§6f 的 meta 欄位——「捲入視口淡入」「點 A 顯示 B」這類
    觸發→動作，面板下拉選單就能設。
@@ -361,8 +361,8 @@ replica 的分工規則：**重複樣式提成 Global Class**（三張卡片長�
 「這層接得住嗎？」，接得住就停、後面的層根本不看；接不住才往下掉：
 
 ```
-「FAQ 點問題展開答案」→ 第 1 層有現成積木（accordion-nested）→ 用它，結束。
-「卡片 hover 浮起」   → 第 1 層沒這種積木 → 第 2 層不是它的菜
+「FAQ 點問題展開答案」→ 第 1 層有現成積木 → 使用 accordion-nested。
+「卡片 hover 浮起」   → 第 1 層沒有對應積木 → 第 2 層互動設定不適用此例
                        → 第 3 層 CSS 做得到（:hover 後綴＋transform）→ 結束。
 「商品列表點分類篩選」→ 1–3 層都表達不了 → 落第 4 層，寫一顆 code 元素 JS。
 「加入購物車」        → 真後端功能 → 第 5 層，明列不做。
@@ -391,7 +391,7 @@ excluded／unsupported），缺效果＝沒做完，不許無聲消失。
 }
 ```
 
-它不屬於任何元素；元素要用，就在自己的 settings 掛一行**引用**：
+Global Class 的定義獨立於元素；Agent 產品在需要套用樣式的元素 settings 加入一行**引用**：
 
 ```json
 "_cssGlobalClasses": ["q7t8vw"]     ← 這顆元素穿上這件衣服（陣列＝可疊穿多件）
@@ -404,12 +404,10 @@ excluded／unsupported），缺效果＝沒做完，不許無聲消失。
 
 | 寫法 | 後果 |
 |---|---|
-| 94 顆各自把樣式寫進自己的 settings | 想把字改 15px → 改 94 次 |
+| 94 顆元素各自將樣式寫進元素 settings | 想把字改 15px → 改 94 次 |
 | 樣式提成 `pch-prod`，94 顆各掛一行引用 | 改一次 class → 94 顆同時變 |
 
-這就是 replica 分工規則（§6f）的實際產出：重複樣式提成 Global Class，元素自己的
-settings 只放「這顆獨有」的值。**最終長相 = 穿的衣服 ＋ 自己的 settings**
-（自己的優先——某張卡價格是紅字，紅色寫在它自己的 `_typography` 蓋過 class）。
+Agent 產品可將重複樣式提成 Global Class，元素 settings 只放該元素獨有的值。**最終樣式由共用 class 與元素 settings 組合而成**（例如某張卡片的價格需要紅字，可在價格元素的 `_typography` 覆寫共用 class 的字色）。
 class 的 settings 同樣支援斷點/狀態後綴（`_padding:mobile_portrait`），
 所以共用樣式的 RWD 行為也寫在 class 裡、全站一起變。
 
@@ -431,7 +429,7 @@ class 的 settings 同樣支援斷點/狀態後綴（`_padding:mobile_portrait`�
 叫一個「**格子**」。settings 的每個 key 對應一個格子，而**格子是官方定義的、有限的**
 ——Bricks 原始碼 `$this->controls['key']` 定義了哪些，就只有哪些
 （live schema 抽的正是這份清單；gate 對查無的 key 發警告——**發明一個不存在的
-格子，Bricks 不會理它**，樣式無聲消失）。於是樣式分成兩個世界：
+格子，Bricks 不會套用該設定**，樣式無聲消失）。於是樣式分成兩個世界：
 
 - **格子有的** → 填 settings（單顆）或 Global Class（共用）——Global Class 的
   settings 跟元素同格式，**同樣只能裝官方格子**。設計師滑鼠可改。
@@ -441,8 +439,8 @@ class 的 settings 同樣支援斷點/狀態後綴（`_padding:mobile_portrait`�
 **什麼東西格子裝不下**（實例來自 pchome 複刻）：
 
 ```css
-.pch-prodcard:hover img { transform: scale(1.04) }    /* hover 我 → 改我裡面的小孩：
-.pch-prodcard:hover .pch-prodname { color: #ea1717 }     面板 hover 只能「hover 誰改誰自己」*/
+.pch-prodcard:hover img { transform: scale(1.04) }    /* 卡片 hover 時修改子元素；
+.pch-prodcard:hover .pch-prodname { color: #ea1717 }     元素面板的 hover 樣式套用於該元素 */
 .pch-prodname { -webkit-line-clamp: 2; … }            /* 文字截兩行：沒這個格子 */
 body { background: #f2f2f2 }                          /* body 不是元素，沒地方掛 */
 ```
@@ -454,11 +452,11 @@ body { background: #f2f2f2 }                          /* body 不是元素，沒
 **手寫 CSS 的兩個要點**：
 
 1. **寄放位置與作用範圍無關**：`_cssCustom` 只是「一段 stylesheet 文字掛在
-   這顆元素身上一起輸出」，影響誰由每條規則自己的 selector 決定（同段裡的
+   該元素上一起輸出」，作用對象由每條規則的 selector 決定（同段裡的
    `body{…}` 影響整頁就是證據）。共用規則慣例寄放在第一個 section——為了
    **可攜性**：元素身上的 CSS 跟著 content JSON 走，匯到任何站都不掉
    （寫進 Bricks 全站設定的 Custom CSS 就不在 template.json 裡了）。
-2. **為什麼不把手寫 CSS 放在 Global Class 身上**：class 不是單一元素、沒有自己的
+2. **為什麼不把手寫 CSS 放在 Global Class 身上**：class 不是單一元素、沒有專屬的
    `#brxe-<id>`，官方語法得用 `%root%`——而 `%root%` 在 1.12.x 壞掉（§6a）。
    所以走「寄放＋名牌」pattern：規則用明確的 `.pch-prodcard` selector，
    目標元素 `_cssClasses` 貼名牌讓 selector 認人。
@@ -474,7 +472,7 @@ CSS loading：external file（有快取，§8 那條地雷）或 inline `<style>
 
 ### 7a. WordPress 不是「跑著的程式」
 
-WordPress 本身沒有常駐 process——它只是**一堆 PHP 檔案 ＋ 一個資料庫**。
+WordPress 本身沒有常駐 process；WordPress 由 **PHP 檔案與資料庫**組成。
 所有持久狀態（文章、設定、Bricks 頁面 JSON）都在資料庫；PHP 這邊什麼都留不住。
 
 ### 7b. 一個 HTTP 請求的完整旅程
@@ -486,8 +484,8 @@ WordPress 本身沒有常駐 process——它只是**一堆 PHP 檔案 ＋ 一�
    │   .htaccess rewrite：WordPress 把幾乎所有網址都導向同一支 index.php
    │   （front controller 模式）
 2) 副檔名 .php → Apache 交給「內嵌在 worker 裡」的 PHP 引擎（mod_php）執行
-   │   （Apache 的工作到此為止，它不知道 wp-load 是什麼）
-3) PHP 執行 index.php → WordPress 自己的 require 接力：
+   │   （Apache 不負責判斷何時載入 wp-load.php）
+3) PHP 執行 index.php → WordPress 入口檔透過 require 依序載入：
        index.php:            require 'wp-blog-header.php';
        wp-blog-header.php:   require 'wp-load.php';   ← 開機點：
                              讀 wp-config → 連 DB → 載入全部外掛 → 載入 theme
@@ -519,10 +517,9 @@ WordPress 本身沒有常駐 process——它只是**一堆 PHP 檔案 ＋ 一�
 
 - 一支**獨立的 PHP 命令列程式**（本環境中甚至是獨立容器）；WordPress 端**零安裝**——
   不需要外掛、API、agent。
-- 它控制 WP 的方式不是「連線到網站」，而是**自己 `require wp-load.php` 把 WordPress
-  載進自己的 process 開機**，然後直接呼叫 WP 內部函式（`wp_insert_post()`、
+- wp-cli 透過 **`require wp-load.php` 將 WordPress 載入 CLI 的 PHP process**，然後直接呼叫 WP 內部函式（`wp_insert_post()`、
   `update_option()`…）寫同一顆資料庫。每條指令＝開機→做事→結束，不常駐。
-- 所以它只需要三樣東西：PHP、WP 的檔案、資料庫連線——這正是 compose 裡 wpcli 服務
+- 所以 wp-cli 需要三樣東西：PHP、WP 的檔案、資料庫連線——這正是 compose 裡 wpcli 服務
   要掛同一個 `./wp` bind mount、給同一組 `WORDPRESS_DB_*` 環境變數的原因。
 - Python 對照：`import django; django.setup()` 之後直接用 ORM 操作資料庫——
   `manage.py shell` 的模式。
@@ -542,7 +539,7 @@ push-template.php ───────────┘
 
 ### 7f. WordPress 的世界觀：內容與長相徹底分離（前端直覺的最大地雷）
 
-WP 的用詞跟前端直覺是打架的——**「頁面（Page）」不是 view，它也是內容（資料）**。
+WP 的**「頁面（Page）」指內容資料**，不能直接等同於前端的 view。
 用 MVC / Flask 對照：
 
 | 前端直覺 | WordPress 的實際對應 |
@@ -555,7 +552,7 @@ WP 的用詞跟前端直覺是打架的——**「頁面（Page）」不是 view
   （不會寫程式的人改內容不用碰 view）。
 - **Bricks 是一張白畫布 theme**：一般 theme 的後備模板自帶頁首/頁尾/樣式；Bricks 的
   哲學是「一切由使用者用 builder 蓋」，還沒蓋任何模板前，首頁等預設畫面幾近裸奔的
-  HTML——**白底不是壞掉，是它在等人開工**。
+  HTML；**使用者建立並套用模板後，Bricks 才會呈現模板版型**。
 - 全新站台的「Hello world!」文章、範例留言、Sample Page 都是 WordPress 安裝程式
   自動塞的預設內容，可直接刪除。
 
@@ -566,7 +563,7 @@ WP 的用詞跟前端直覺是打架的——**「頁面（Page）」不是 view
 | | 文章（post） | 頁面（page） |
 |---|---|---|
 | 性質 | 時間流內容（部落格文、公告） | 恆常獨立內容（關於我們、landing page） |
-| 出現在 | 最新文章列表、RSS、彙整頁 | 都不出現，只活在自己的網址上 |
+| 出現在 | 最新文章列表、RSS、彙整頁 | 不列入上述列表，透過頁面網址存取 |
 | 分類/標籤 | 有 | 無（改為可有父子頁面層級） |
 
 類比：文章＝粉專貼文（被時間流卷走）；頁面＝粉專「關於」分頁（固定門面）。
@@ -584,7 +581,7 @@ WP 的用詞跟前端直覺是打架的——**「頁面（Page）」不是 view
   「網址對不到實體檔案的，一律轉進 index.php」。
 - 這個「全站單一入口＋內部路由」的模式叫 **front controller**——Flask 本身就是這個
   模式（所有請求進同一個 app，`@app.route` 內部分發），沒有人為每個 route 開一個
-  獨立入口檔。WP 的 `index.php` ＝ app 入口，`wp()` ＝ 路由分發器（只是它的路由表
+  獨立入口檔。WP 的 `index.php` ＝ app 入口，`wp()` ＝ 路由分發器（WordPress 的路由資料來源
   是資料庫）。對面的反例是上古 PHP 的多入口式：`/about.php`、`/contact.php`
   一網址一檔案、各自為政。
 
@@ -596,7 +593,7 @@ WP 的用詞跟前端直覺是打架的——**「頁面（Page）」不是 view
 全站框架層   header / footer / 全站字體配色    ← Bricks 範本 + Theme Styles（統一管理）
              │
 內容區層     ├── 文章、商品等「量產型內容」     ← 套 Bricks 範本，本體只有文字（原生編輯器）
-             └── landing page 等「獨一無二頁」  ← 該頁自己的 Bricks JSON（逐頁 builder）
+             └── landing page 等「獨一無二頁」  ← 該頁專屬的 Bricks JSON（逐頁 builder）
 ```
 
 - **套範本模式**（後台 → Bricks → 範本）：用 builder 刻一個版型（內容用「動態資料」
@@ -617,11 +614,11 @@ WP 的用詞跟前端直覺是打架的——**「頁面（Page）」不是 view
 
 ```text
 _bricks_page_header_2    ← 頁首（通常來自 Bricks 範本，全站/依條件套用）
-_bricks_page_content_2   ← 中間內容區（每頁自己的；AutoBricks 推送寫的就是它）
+_bricks_page_content_2   ← 各頁的中間內容區；AutoBricks 推送腳本寫入此欄位
 _bricks_page_footer_2    ← 頁尾（同 header，來自範本）
 ```
 
-- 建範本時選「範本類型」（頁首／頁尾／單篇／彙整…）就是決定它掛到哪個位置或情境。
+- 使用者建立範本時選擇「範本類型」（頁首／頁尾／單篇／彙整…），決定範本套用的位置或情境。
 - 本測試環境沒建任何 header/footer 範本，所以推送的頁面上下空空——只渲染 content
   那一段，屬正常現象。要複刻整頁含頁首頁尾，就是把對應區塊建成 header/footer
   範本的事。
@@ -645,29 +642,25 @@ WordPress 載進來直接呼叫內部函式寫資料庫——就是 §7d wp-cli 
 2. **`wp_slash()`——防「剝引號」**：歷史包袱——WP 的寫入 API（`update_post_meta`
    等）預期收到「加過反斜線」的資料，內部會先 `wp_unslash` 一次再存。餵原始資料，
    這次 unslash 就會剝掉內容裡真實的引號和反斜線——模板 JSON 全是引號，剝一輪
-   直接爛掉。寫入前先 `wp_slash()` 補一層，讓它剝的是你補的那層。
+   直接損壞。推送腳本在寫入前先以 `wp_slash()` 補一層跳脫，讓 WordPress 的 unslash 移除補上的跳脫層。
 3. **`MSYS_NO_PATHCONV=1`——防 Git Bash 亂改路徑**：Windows 的 Git Bash 看到
    長得像 POSIX 路徑的參數（`/tmp/template.json`）會自動改寫成 Windows 路徑
    （`C:/Program Files/Git/tmp/...`）再傳給指令——但這路徑是給**容器內**用的，
    改寫後容器裡根本沒這個檔。這個環境變數關掉自動改寫。
 
-**為什麼絕不用瀏覽器登入後台**：同樣的事理論上可以開瀏覽器登 wp-admin 在 UI 上點
-——但慢、脆（UI 自動化隨版面變動而壞），而且 replica 流程的 CDP Chrome 是留給
-「分析原站＋對照渲染頁」用的，拿去操作後台會污染截圖與分頁狀態。程式門做的是
-一模一樣的事（§7e：同一批 WP 函式、同一顆資料庫），沒有理由走 UI。
+**選擇操作方式**：Agent 產品可用推送工具快速更新開發預覽；正式匯入仍需驗證 Bricks 匯入器的結果。需要操作 wp-admin 時，Agent 產品使用獨立分頁，避免影響原站觀察與成品截圖。
 
 ### 7l. 範本 vs 頁面：template.json 的兩條上站路
 
 `template.json` 要變成訪客看得到的頁面，有兩條路，**終點不一樣**：
 
 **路一：push（AutoBricks 自動化路）**——`push-template.php` 直接把 JSON 寫進
-**某個頁面**的 `_bricks_page_content_2`。推完該頁立刻能看，replica 的逐區渲染對照
-走的就是這條。不經過範本系統。
+**指定頁面**的 `_bricks_page_content_2`。Agent 產品可立即開啟頁面檢查渲染結果；此路徑不經過範本匯入器，因此不能替代正式匯入驗證。
 
-**路二：手動匯入（後台 Bricks → 範本 → 匯入）**——餵它 `template.json` 或
-zip（一包恰好一個 JSON，見 §6c）。注意：**匯入後得到的是「範本」，不是「頁面」**
+**路二：手動匯入（後台 Bricks → 範本 → 匯入）**——使用者將 `template.json` 或
+zip 交給 Bricks 匯入器（一包恰好一個 JSON，見 §6c）。注意：**匯入後得到的是「範本」，不是「頁面」**
 ——模板進的是範本庫（存成 `bricks_template` 這個自訂文章類型的一筆資料，
-§7f 的世界觀：它也是內容），只是躺在庫裡，還不會出現在任何頁面上。要落地，二選一：
+§7f 說明的內容資料之一），尚未套用至頁面。使用者可依用途選擇以下方式：
 
 1. **插進某個頁面**：開任一頁的 Bricks 編輯器，從範本庫插入——內容被**複製**進
    該頁的 JSON，之後跟範本脫鉤、各改各的（一次性 landing page 走這條）。
@@ -700,8 +693,7 @@ push 則是直接寫頁面、跳過範本庫的快速道。
 1. **專用元素（版面骨架）**：元素面板的 WordPress 類——**Post Title**（標題）、
    **Post Content**（內文）、**Featured Image**（精選圖）、**Post Meta**
    （日期/作者/分類）…像一般積木一樣拖進畫布排版。
-   （這批 WORDPRESS 類元素在**靜態複刻**裡是禁區——它們吃 WP 資料庫、複刻一用就空白；
-   **範本才是它們的正確用途**：接真的 WP 資料。）
+   （這批 WORDPRESS 類元素讀取 WP 資料庫。Agent 產品重建靜態頁面時，需確認測試站具有對應資料；缺少資料可能顯示空白。建立動態範本時，使用者可用這些元素呈現 WP 內容。）
 2. **動態資料標籤（零碎處）**：任何內容欄位旁的**閃電 ⚡ 圖示**→ 插
    `{post_title}`、`{post_date}`、`{author_name}`…，可與固定文字混寫
    （heading 填「`{post_title}` ｜ 官方部落格」）。專用元素其實就是

@@ -6,6 +6,7 @@ __pycache__/
 
 # 使用者側執行期（在本 repo 內開發/測試 plugin 時會產生）
 .browser/
+.autobricks/
 tmp/
 data/
 bricks-gotchas.local.md

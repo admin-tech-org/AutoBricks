@@ -1,18 +1,17 @@
 # docker/ — 本機 Bricks 驗證環境
 
-`replica` 實測階段的靶場：WordPress + MariaDB + Bricks（使用者自備 theme），跑在 http://localhost:8080。
+Agent 產品使用本機 WordPress + MariaDB + Bricks 渲染重建頁面，檢查模板匯入、外觀、RWD、互動與素材。使用者提供已授權的 Bricks theme，預設站台為 http://localhost:8080。
 
-**掛載策略**：WordPress 檔案 bind mount 在 `docker/wp/`（看得到、theme 直接丟）；
-資料庫用 named volume（MariaDB 在 Windows bind mount 有鎖檔/損毀地雷，且 db 檔不會手動讀）。
+**掛載策略**：WordPress 檔案以 bind mount 放在 `docker/wp/`，供使用者或 Agent 產品存取 theme 與素材；MariaDB 資料使用 named volume，避免透過 Windows 檔案分享層存取資料庫檔案。
 
 ## 一鍵建置
 
-1. 啟動 Docker Desktop。
-2. ```bash
+1. 使用者或已取得啟動授權的 Agent 產品啟動 Docker Desktop。
+2. Agent 產品在 repo 根目錄執行：
+   ```bash
    bash docker/init-wp.sh
    ```
-3. 把**已授權的 Bricks theme 解壓**到 `docker/wp/wp-content/themes/bricks/`
-   （商業軟體——`docker/wp/` 已 gitignore，**絕不 commit**），再跑一次 `init-wp.sh` 即啟用。
+3. 使用者提供 theme 後，Agent 產品將**已授權的 Bricks theme 解壓**到 `docker/wp/wp-content/themes/bricks/`，再執行 `init-wp.sh` 啟用。`docker/wp/` 已由 Git 忽略，商業 theme 不納入版控。
 
 完成後：站台 http://localhost:8080、後台 `admin` / `admin`。冪等、可重跑。
 
@@ -29,7 +28,9 @@ docker compose -f docker/docker-compose.yml down -v       # 停＋清 db（./wp 
 docker compose -f docker/docker-compose.yml run --rm wpcli <wp 指令>   # wp-cli
 ```
 
-## 推模板（replica skill 主迴圈的底層流程）
+## 將模板寫入測試頁
+
+Agent 產品可透過 `push-template.php` 直接將 JSON 寫入 WP 頁面，以便檢查瀏覽器畫面。以下為 Bash 指令範例；Agent 產品需替換當次檔案路徑，並記錄腳本回傳的 PAGE_ID。後續修改只指定該次頁號。
 
 ```bash
 MSYS_NO_PATHCONV=1 docker cp data/<id>/template.json autobricks-wp:/tmp/template.json
@@ -39,13 +40,13 @@ MSYS_NO_PATHCONV=1 docker exec -e TEMPLATE=/tmp/template.json -e TITLE="測試�
 # → 印出 PAGE_ID 與 permalink；加 -e PAGE_ID=<n> 才會覆寫既有頁
 ```
 
-## 地雷
+直接寫入頁面可供開發預覽；交付前，Agent 產品仍需確認模板經 Bricks 匯入器匯入後的內容、樣式與素材，詳見 [匯入備忘](../skills/web-to-bricks/references/bricks-import.md)。
+
+## 操作注意
 
 - **Windows（Git Bash）跑 `docker exec`／`docker cp` 一律加 `MSYS_NO_PATHCONV=1`**，
   否則 `/tmp/...` 會被改寫成 Windows 路徑。
-- 寫入走 `wp_set_current_user(admin)` + `wp_slash()`（否則 WP 靜默丟棄／剝引號）——
-  **絕不用瀏覽器登入後台代替**。
-- Bricks 會快取產出的 CSS：重複推同一頁樣式沒更新時，後台重存該頁一次，或把
-  Bricks 設定的 CSS loading 改 inline（本機環境建議 inline）。
+- 推送腳本透過 `wp_set_current_user(admin)` 設定執行帳號，並以 `wp_slash()` 處理寫入資料；瀏覽器的後台登入狀態不會授權容器中的 PHP 行程。
+- Bricks 會快取產出的 CSS。Agent 產品重複推送同一頁後若未看到樣式更新，可在後台重存該頁，或依使用者授權將 Bricks 的 CSS loading 改為 inline。
 - admin/admin 只適用本機測試環境，**不要對外開放 8080**。
-- Windows bind mount 較慢屬正常（檔案分享層）；資料庫刻意不 bind mount，別改。
+- Agent 產品調查 Windows 檔案存取效能時，需區分 WordPress 的 bind mount 與資料庫的 named volume，不能將兩者視為相同的儲存方式。

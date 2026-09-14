@@ -2,7 +2,7 @@
 
 > 2026-09-14：Claude 的重建 skill 已同步為 Codex 的精簡版本。本文保留舊流程的設計背景，
 > 不再是現行操作或修改 skill 的前置要求；以下「必讀」、四本帳及派工規則均屬舊版。
-> 切換前完整版本保存在 commit `d68bd9b`，現行入口為 `AGENTS.md` 與 `skills/replica/SKILL.md`。
+> 切換前完整版本保存在 commit `d68bd9b`，現行入口為 `AGENTS.md` 與 `skills/web-to-bricks/SKILL.md`。
 
 > 這裡收 `skills/replica/SKILL.md` 各條規則**背後的完整論證與事故記錄**——多半是精簡
 > SKILL.md 時從正文移出的原文。SKILL.md 只留規則本體＋一句話理由，**跑複刻不需要讀本文**

@@ -4,13 +4,13 @@
     "name": "Allen Chen"
   },
   "metadata": {
-    "description": "AutoBricks — 網頁 → Bricks Builder 模板複刻（設計部先 copy 再改）",
+    "description": "AutoBricks — Agent 產品共用的網頁重建策略與 Bricks 模板工具，供使用者匯入及修改成品",
     "version": "0.1.0"
   },
   "plugins": [
     {
       "name": "autobricks",
-      "description": "將參考網頁重建成可編輯的 Bricks JSON，包含 RWD、互動與本機 WordPress 驗證；依網站選擇做法。skills：replica / setup。",
+      "description": "Agent 產品將使用者指定的原站內容與版型轉為可編輯的 Bricks JSON，並在本機 WordPress 比對外觀、RWD、互動與素材。skills：web-to-bricks / setup。",
       "source": "./"
     }
   ]
