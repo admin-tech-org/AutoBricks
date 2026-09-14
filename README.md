@@ -56,12 +56,15 @@ plugin 目錄全程唯讀。
 .mcp.json         內建 Playwright MCP ×5 組（接管 CDP Chrome；埠取 PLAYWRIGHT_CDP_URL[_N]，
                   預設 9222..9226；不自啟瀏覽器）
 skills/           replica（複刻主力）· setup（環境）
-agents/           replica-band.md —— replica 併行工人的 subagent 定義
+agents/           replica-band.md · replica-band-high.md —— replica 併行工人的 subagent 定義
+                  （內文相同，effort max／high 兩檔，host 依區難易派）
 src/              validate_template.py（驗證 gate）· extract_bricks_schema.py
                   （從使用者裝的 theme 原始碼現抽 schema，驗證與生成共用）
 templates/        launch-chrome-cdp.{bat,sh} —— setup 複製到使用者專案 .browser/
 docker/           WP+Bricks 驗證環境（compose / init-wp.sh / push-template.php）
 doc/              tutorial.md —— 從 Docker 到第一個 Bricks 頁面的完整教學
+                  replica-rationale.md —— replica 規則的設計理由與事故記錄（改 SKILL.md 前必讀；
+                  跑複刻不用讀，執行需要的都在 SKILL.md）
 ```
 
 ## Bricks 版本與經驗知識

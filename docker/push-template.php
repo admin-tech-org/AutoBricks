@@ -23,7 +23,9 @@ if (!$tpl || empty($tpl['content']) || !is_array($tpl['content'])) {
   fwrite(STDERR, "BAD TEMPLATE JSON: $path\n"); exit(1);
 }
 
-$title   = getenv('TITLE') ?: ('AutoBricks ' . date('Y-m-d H:i'));
+// 標題來源優先序：TITLE env → 模板自帶 title（正確 UTF-8，避開 docker exec -e 的 Windows argv
+// 編碼雷）→ 日期預設。（env 傳中文在 Git Bash→docker 會被 mangle，故模板 title 才是可靠來源。）
+$title   = getenv('TITLE') ?: ($tpl['title'] ?? ('AutoBricks ' . date('Y-m-d H:i')));
 $page_id = getenv('PAGE_ID');
 
 if ($page_id) {

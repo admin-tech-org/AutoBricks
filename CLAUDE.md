@@ -51,6 +51,8 @@ uv run ruff format . && uv run ruff check --fix .  # lint/format（手動跑）
 ## Plugin 開發／測試／發版
 
 - 開發：`claude --plugin-dir .`（skills 變 `/autobricks:*`）。
+- **改 `skills/replica/SKILL.md` 前先讀 `doc/replica-rationale.md`**（各規則的完整設計理由與
+  事故記錄，精簡時移出的原文）——別把實測換來的門檻與禁令改回事故版；規則改了理由也要跟著更新。
 - 真安裝驗證：`/plugin marketplace add <本機路徑或 repo>` → `/plugin install autobricks@autobricks`。
 - **發版**：bump `.claude-plugin/plugin.json` 的 `version`，**合進預設分支 `master`** 並 push
   （只推個人分支不會被 marketplace 抓到；`marketplace.json` 的 version 是純標籤）。

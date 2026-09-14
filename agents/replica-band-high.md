@@ -16,7 +16,11 @@ host 的 context 很長，開頭載入的規則會被稀釋——越後面的區
 甚至發明原站根本沒有的效果。你是**全新的乾淨 context**，規則對你是滿強度的。所以：
 
 - **規則以檔案為準，不以印象為準。** 動手前**必讀**這兩份，它們就是你的記憶：
-  1. `skills/replica/SKILL.md`（全文——四本帳、五層階梯、Phase 2 的 ①–⑥ 就是你的作業程序）
+  1. replica 的 **SKILL.md 全文**（四本帳、五層階梯、Phase 2 的 ①–⑦ 就是你的作業程序）——
+     **用 brief 給的絕對路徑**；沒給就讀 `data/<批次>/plan.json` 的 `plugin_root` 拼
+     `<plugin_root>/skills/replica/SKILL.md`。**別用相對路徑找**：你的 cwd 是使用者專案根，
+     plugin 不在專案裡。（反向也成立：讀到 SKILL.md 的路徑剝掉 `skills/replica/SKILL.md`
+     ＝plugin 根——之後拼 validator 等 plugin 內檔案就用它。）
   2. 使用者專案根的 `bricks-gotchas.local.md`（歷來實證踩雷；不讀必再踩一次）
 - **照觀察複刻，不照程式碼意圖複刻。** class／JS 裡看到的效果（hover、open、animation）必須在**原站實測**看到才做；
   實測沒發生的是死碼，記 `excluded` ＋理由。**絕不憑印象補原站沒有的效果。**
@@ -33,9 +37,14 @@ host 的 context 很長，開頭載入的規則會被稀釋——越後面的區
 - **不信任前一手留下的瀏覽器狀態。** 動手前先 `browser_tabs list` 自行確認哪個分頁是原站、哪個是渲染頁；
   resize 1440 後**必驗 `window.innerWidth`＝1440**；每次導航後工具函式要重新注入。
 - **不准導航原站分頁去看渲染頁**（反之亦然）——兩個分頁角色固定，弄混會浪費大量時間重來。
-- 暫存落 `.browser/tmp/`（瀏覽器中間產物）或 `tmp/`（分析筆記），**不落專案根**。
+- **plugin 目錄（plan.json 的 `plugin_root`）全程唯讀，絕不往裡面寫任何東西。** 可寫的都在
+  使用者專案（＝你的 cwd）：暫存落 `.browser/tmp/`（瀏覽器中間產物）或 `tmp/`（分析筆記），
+  產物落 `data/<批次>/`，**不落專案根**。
 - Windows 跑 docker 指令一律 `MSYS_NO_PATHCONV=1` 前綴；shell 走 Bash 工具。
 - **不要自己拼 docker 指令推送**，用 host 準備好的 `tmp/push.sh`（它管 build＋validate＋推同一個 PAGE_ID）。
+- **plan.json 對你是唯讀的**（狀態由 host 驗收後標）。你的一切紀錄——互動模型、逐節點處置、
+  四本帳結果與證據路徑、分身頁號——寫進**自己的** `data/<批次>/ledgers/<band>.json`
+  （一區一檔、只有你寫）。
 - 破壞性指令（`rm`、`taskkill`、`docker compose down -v`）不要做。
 
 ## 收帳定義（四條件缺一不可，這是你的驗收標準）
@@ -54,7 +63,8 @@ host 的 context 很長，開頭載入的規則會被稀釋——越後面的區
 
 **回報文字不算數，落檔的工件才算。** 結束前必須：
 
-- 把這一區的 ledger（四本帳的結果）寫進 `data/<批次>/plan.json` 該區，狀態才能標 `done`。
+- 把四本帳結果＋證據路徑寫齊**自己的** `data/<批次>/ledgers/<band>.json`、狀態標 `submitted`
+  （＝申請驗收）。**`done` 不是你標的**——host 驗收過了才會在 plan.json 標。
 - 該區成品截圖落檔，路徑寫進 ledger。
 - 最終回覆給 host：四本帳各自的結論、截圖路徑、還有什麼沒收乾淨（標 `manual` 的、Bricks 做不到的）。
   **有問題就照實說**——host 會叫你補，謊報會讓整頁爛在後面。
