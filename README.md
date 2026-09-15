@@ -115,7 +115,8 @@ Agent 產品從載入的 `SKILL.md` 位置向上辨識 AutoBricks 根目錄，�
 - `src/validate_template.py`：Agent 產品執行 `uv run python src/validate_template.py <template.json>`，檢查模板元素欄位與引用關係。
 - `src/extract_bricks_schema.py`：需要時從已安裝的 Bricks theme 查欄位。
 - `src/browser.mjs`：各 Agent 產品共用的 CDP 小工具，Node 22+；用法見 [doc/browser.md](doc/browser.md)。
-- `docker/`：測試環境與推送工具。
+- `docker/`：測試環境範本與推送工具。
+- `.autobricks/docker/`：工作專案的 Docker 設定與 WordPress 檔案，開發與安裝 plugin 時皆使用此位置。
 - `templates/`：Chrome 啟動範本。
 - `data/<run>/`：各次 JSON、素材、量測和截圖。
 - `.browser/`：瀏覽器 profile。

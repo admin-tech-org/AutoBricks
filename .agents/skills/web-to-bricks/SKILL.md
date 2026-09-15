@@ -17,7 +17,7 @@ Agent 產品將使用者指定的參考網頁重建成可匯入 WordPress Bricks
 - `<PLUGIN_ROOT>`：Agent 產品從當次 skill 的絕對路徑向上尋找，同時含 `pyproject.toml` 與 `docker/push-template.php` 的 AutoBricks 根目錄。共用工具與範本從此目錄取得，不依賴 Agent 產品專用的環境變數。
 - `<PROJECT_ROOT>`：使用者指定的工作專案根目錄，未另行指定時使用當前對話的工作專案。Agent 產品不以 skill 所在目錄推定此位置。開發 AutoBricks 時，兩個根目錄可以相同。
 - `<RUN_DIR>`：當次重建的 `<PROJECT_ROOT>/data/<run>/`。Agent 產品以日期與網站名稱等資訊建立不重複的批次名稱，續修時沿用當次目錄。
-- `<WP_DIR>`：既有 WordPress 測試環境的實際目錄。首次建置時使用 `<PROJECT_ROOT>/.autobricks/docker/`，沿用既有環境時保留原位置，例如本專案的 `docker/`。
+- `<WP_DIR>`：WordPress 測試環境目錄，預設為 `<PROJECT_ROOT>/.autobricks/docker/`，開發 AutoBricks 與安裝 plugin 時皆相同。`<PLUGIN_ROOT>/docker/` 只提供範本與工具，不能作為 WP 執行目錄。沿用其他既有環境前，Agent 產品需確認 Compose 設定與容器實際掛載確實屬於使用者指定的環境。
 
 | 資料 | 存放位置 |
 | --- | --- |
@@ -34,7 +34,7 @@ Agent 產品將使用者指定的參考網頁重建成可匯入 WordPress Bricks
 | MariaDB 資料 | Docker Compose 的 `db_data` named volume，由 Docker 保存，不是專案內的檔案目錄 |
 | 當前 Bricks 版本與匯入經驗 | `<PROJECT_ROOT>/bricks-import.md` |
 
-Agent 產品確保工作專案的 Git 忽略執行產物、瀏覽器登入資料、本機環境與版本筆記，既有 WP 的實際資料目錄也需排除。Agent 產品不得將上述資料寫入 plugin 安裝快取。需要建立環境時，由使用者明確要求後使用同來源的 `setup` 技能，將 Docker 範本複製到 `<WP_DIR>`，不覆蓋既有環境。
+Agent 產品確保工作專案的 Git 忽略執行產物、瀏覽器登入資料、本機環境與版本筆記，包含 `.autobricks/` 及既有 WP 的實際資料目錄。Agent 產品不得將上述資料寫入 plugin 安裝快取。需要建立環境時，由使用者明確要求後使用同來源的 `setup` 技能，將 `docker-compose.yml` 與 `init-wp.sh` 範本複製到 `<WP_DIR>`，不覆蓋既有環境。
 
 ## 先建立對網站的理解
 

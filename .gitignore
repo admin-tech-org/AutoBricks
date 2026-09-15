@@ -6,12 +6,13 @@ __pycache__/
 
 # 使用者側執行期（在本 repo 內開發/測試 plugin 時會產生）
 .browser/
+# 本機 Docker 設定、WordPress 檔案、環境備份與 Python 虛擬環境
 .autobricks/
 tmp/
 data/
 /bricks-import.md
 
-# Docker 本機環境：wp 是 bind mount（含商業的 Bricks theme，絕不進版控）
+# 防止舊位置或誤放的 WordPress 檔案與商業 theme 進入版控
 docker/wp/
 bricks_src/
 

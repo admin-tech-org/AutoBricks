@@ -9,8 +9,9 @@
 用法：
   uv run python src/extract_bricks_schema.py [--theme-dir DIR] [--out FILE]
 
-預設 theme-dir 依序嘗試：<plugin>/docker/wp/wp-content/themes/bricks、
-cwd 下同路徑。輸出預設 cwd 的 data/bricks-schema-live.json（使用者專案，gitignore 內）。
+預設 theme-dir 為 cwd 的 .autobricks/docker/wp/wp-content/themes/bricks，
+其他 WP 環境以 --theme-dir 指定，不從 plugin 安裝包尋找 theme。
+輸出預設 cwd 的 data/bricks-schema-live.json（使用者專案，gitignore 內）。
 只用標準函式庫。
 """
 
@@ -29,10 +30,8 @@ VERSION_RE = re.compile(r"^Version:\s*([\d.]+)", re.M)
 
 
 def candidates():
-    here = os.path.dirname(os.path.abspath(__file__))
     return [
-        os.path.join(here, "..", "docker", "wp", "wp-content", "themes", "bricks"),
-        os.path.join(os.getcwd(), "docker", "wp", "wp-content", "themes", "bricks"),
+        os.path.join(os.getcwd(), ".autobricks", "docker", "wp", "wp-content", "themes", "bricks"),
     ]
 
 

@@ -2,16 +2,23 @@
 
 Agent 產品使用本機 WordPress + MariaDB + Bricks 渲染重建頁面，檢查模板匯入、外觀、RWD、互動與素材。使用者提供已授權的 Bricks theme，預設站台為 http://localhost:8080。
 
-**掛載策略**：WordPress 檔案以 bind mount 放在 `docker/wp/`，供使用者或 Agent 產品存取 theme 與素材；MariaDB 資料使用 named volume，避免透過 Windows 檔案分享層存取資料庫檔案。
+`<PLUGIN_ROOT>/docker/` 提供範本與推送工具。實際環境放在使用者工作專案的 `<PROJECT_ROOT>/.autobricks/docker/`，以下以 `<WP_DIR>` 代稱。開發 AutoBricks 時也使用此位置。
+
+- WordPress 檔案以 bind mount 放在 `<WP_DIR>/wp/`，供使用者或 Agent 產品存取 theme 與素材。
+- MariaDB 資料使用 named volume，與 WordPress 檔案分開保存。
 
 ## 一鍵建置
 
 1. 使用者或已取得啟動授權的 Agent 產品啟動 Docker Desktop。
-2. Agent 產品在 repo 根目錄執行：
+2. 首次建置時，Agent 產品複製兩份範本後，確認掛載來源為 `<WP_DIR>/wp/` 再初始化。以下為 Bash 範例，需將佔位路徑替換為實際絕對路徑：
    ```bash
-   bash docker/init-wp.sh
+   mkdir -p "<WP_DIR>"
+   cp -n "<PLUGIN_ROOT>/docker/docker-compose.yml" "<PLUGIN_ROOT>/docker/init-wp.sh" "<WP_DIR>/"
+   docker compose -f "<WP_DIR>/docker-compose.yml" config
+   bash "<WP_DIR>/init-wp.sh"
    ```
-3. 使用者提供 theme 後，Agent 產品將**已授權的 Bricks theme 解壓**到 `docker/wp/wp-content/themes/bricks/`，再執行 `init-wp.sh` 啟用。`docker/wp/` 已由 Git 忽略，商業 theme 不納入版控。
+   既有環境先核對 Compose 設定、容器掛載與資料庫 volume，不重新複製或覆蓋設定。同名環境可能屬於其他專案，不能只因容器名稱相同就直接沿用。
+3. 使用者提供 theme 後，Agent 產品將**已授權的 Bricks theme 解壓**到 `<WP_DIR>/wp/wp-content/themes/bricks/`，再執行 `<WP_DIR>/init-wp.sh` 啟用。使用者工作專案的 `.gitignore` 需排除 `.autobricks/`，商業 theme 不納入版控。
 
 完成後：站台 http://localhost:8080、後台 `admin` / `admin`。冪等、可重跑。
 
@@ -20,11 +27,10 @@ Agent 產品使用本機 WordPress + MariaDB + Bricks 渲染重建頁面，檢�
 ## 常用操作
 
 ```bash
-docker compose -f docker/docker-compose.yml ps            # 狀態
-docker compose -f docker/docker-compose.yml logs -f wordpress
-docker compose -f docker/docker-compose.yml down          # 停（wp 檔案在 ./wp、db 在 volume，都留著）
-docker compose -f docker/docker-compose.yml down -v       # 停＋清 db（./wp 要重來就手動刪）
-docker compose -f docker/docker-compose.yml run --rm wpcli <wp 指令>   # wp-cli
+docker compose -f "<WP_DIR>/docker-compose.yml" ps            # 狀態
+docker compose -f "<WP_DIR>/docker-compose.yml" logs -f wordpress
+docker compose -f "<WP_DIR>/docker-compose.yml" down          # 停止環境，保留 wp 檔案與資料庫 volume
+docker compose -f "<WP_DIR>/docker-compose.yml" run --rm wpcli <wp 指令>   # wp-cli
 ```
 
 ## 將模板寫入測試頁
@@ -33,7 +39,7 @@ Agent 產品可透過 `push-template.php` 直接將 JSON 寫入 WP 頁面，以�
 
 ```bash
 MSYS_NO_PATHCONV=1 docker cp data/<id>/template.json autobricks-wp:/tmp/template.json
-MSYS_NO_PATHCONV=1 docker cp docker/push-template.php autobricks-wp:/tmp/
+MSYS_NO_PATHCONV=1 docker cp "<PLUGIN_ROOT>/docker/push-template.php" autobricks-wp:/tmp/
 MSYS_NO_PATHCONV=1 docker exec -e TEMPLATE=/tmp/template.json -e TITLE="測試頁" \
   autobricks-wp php /tmp/push-template.php
 # → 印出 PAGE_ID 與 permalink；加 -e PAGE_ID=<n> 才會覆寫既有頁

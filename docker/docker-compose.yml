@@ -1,5 +1,5 @@
 # AutoBricks 本機驗證環境：WordPress + MariaDB
-# 啟動：docker compose up -d（或直接跑 ./init-wp.sh 一鍵到位）
+# 與 init-wp.sh 一起複製至工作專案的 .autobricks/docker/ 後，再從該目錄啟動。
 # 站台 http://localhost:8080 · 後台 admin/admin（僅本機測試用，勿對外）
 #
 # 掛載策略：

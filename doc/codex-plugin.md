@@ -64,7 +64,7 @@ codex -C "C:\Users\USER\Desktop\github\AutoBricks"
 
 以下流程用於驗證完整 plugin 的安裝結果。使用者修改工作目錄中的 skill 後，重新啟動 Codex 並不會將修改同步到先前安裝的快照；使用者需先更新安裝來源與安裝副本。
 
-本機 CLI 安裝會複製來源內容；實測不會依 `.gitignore` 排除檔案。此 repo 含有 `docker/wp/`、`.browser/` 或 `data/` 時，使用者應從乾淨 Git checkout 安裝，避免將執行資料帶入 plugin 快取。
+本機 CLI 安裝會複製來源內容；實測不會依 `.gitignore` 排除檔案。此 repo 含有 `.autobricks/`、`.browser/` 或 `data/` 時，使用者應從乾淨 Git checkout 安裝，避免將執行資料帶入 plugin 快取。
 
 使用者提交修改後，可建立乾淨的本機來源；以下目的目錄需尚不存在：
 

@@ -7,8 +7,12 @@ description: 在使用者明確要求時，檢查、安裝或修復 AutoBricks �
 
 「Agent 產品」指 Claude Code、Codex 等可使用工具執行任務的 AI 助理軟體；「使用者」指提出需求並操作本機環境的人。
 
-使用者明確要求檢查、安裝或修復環境時，Agent 產品才使用本技能，準備觀察原站、生成 Bricks JSON 與檢查 WP 成品所需的環境。Agent 產品先檢查現有環境與使用者授權，僅補齊缺少的項目；需要安裝軟體且尚未取得授權時，才向使用者說明變更並取得同意。
-以下指令以 Bash 語法示範；Agent 產品依執行環境選擇 shell，在本專案的 Windows 環境使用 PowerShell，必要時轉寫指令或呼叫 Bash 腳本。權限行為以當前 Agent 產品的設定為準。
+- **使用時機**：使用者明確要求檢查、安裝或修復環境時，Agent 產品才使用本技能。
+- **準備目標**：Agent 產品準備觀察原站、生成 Bricks JSON 與檢查 WP 成品所需的環境。
+- **環境檢查**：Agent 產品先檢查現有環境與使用者授權，僅補齊缺少的項目。
+- **安裝授權**：需要安裝軟體且尚未取得授權時，Agent 產品才向使用者說明變更並取得同意。
+- **指令語法**：以下指令以 Bash 語法示範。Agent 產品依執行環境選擇 shell，在本專案的 Windows 環境使用 PowerShell，必要時轉寫指令或呼叫 Bash 腳本。
+- **執行權限**：權限行為以當前 Agent 產品的設定為準。
 
 ## 步驟
 
@@ -16,7 +20,7 @@ description: 在使用者明確要求時，檢查、安裝或修復 AutoBricks �
 - `<PLUGIN_ROOT>`：Agent 產品從目前載入的 skill 絕對路徑向上尋找，同時包含 `pyproject.toml` 與 `docker/push-template.php` 的 AutoBricks 根目錄，供取得工具與範本。
 - `<PROJECT_ROOT>`：使用者指定的工作專案根目錄，未另行指定時使用當前對話的工作專案，不以 skill 所在目錄推定。
 - 瀏覽器啟動腳本、`cdp.env` 與 profile 存在 `<PROJECT_ROOT>/.browser/`，Python 虛擬環境存在 `<PROJECT_ROOT>/.autobricks/venv/`。
-- 首次建置的 Docker 設定存在 `<PROJECT_ROOT>/.autobricks/docker/`，WordPress 檔案存在其中的 `wp/`。MariaDB 資料由 Docker 的 `db_data` named volume 保存。既有 WP 環境保留原位置，不搬移或覆蓋。
+- `<WP_DIR>`：WordPress 測試環境目錄，預設為 `<PROJECT_ROOT>/.autobricks/docker/`，開發 AutoBricks 與安裝 plugin 時皆相同。Docker 設定存在此目錄，WordPress 檔案存在其中的 `wp/`，MariaDB 資料由 Docker 的 `db_data` named volume 保存。
 - 重建成果、素材、量測、截圖與當次腳本存在 `<PROJECT_ROOT>/data/<run>/`，版本筆記存在 `<PROJECT_ROOT>/bricks-import.md`。環境與執行產物不得寫入 plugin 安裝快取。
 
 Agent 產品以載入檔案的位置辨識 plugin 根目錄，不依賴 Agent 產品專用的環境變數。直接使用專案 skill 或使用安裝副本時，均採用此方式。
@@ -69,11 +73,16 @@ Agent 產品透過 Chrome CDP 觀察原站或 WP 預覽的內容、排版與互�
 Agent 產品需要本機 WordPress + Bricks 實際渲染重建頁面，檢查模板匯入、外觀、RWD、互動與素材。使用者提供已授權的 Bricks theme。
 
 1. **Agent 產品確認 Docker Desktop 已啟動**（`docker version` 有 Server 段）。Docker 尚未可用時，Agent 產品依使用者授權協助啟動或安裝；需要使用者操作時，明確說明缺少的步驟，不能回報 WP 環境已就緒。
-2. Agent 產品沿用使用者工作目錄中既有的 WP 測試環境。首次建置時，先將 `<PLUGIN_ROOT>/docker/` 範本複製至 `<PROJECT_ROOT>/.autobricks/docker/`；該持久化目錄以 `<WP_DIR>` 代稱。Agent 產品不得在 plugin 快取中初始化 WP，亦不得用範本覆蓋既有環境。初始化指令為：
+2. Agent 產品先確認 `<WP_DIR>`。首次建置時，將 `<PLUGIN_ROOT>/docker/` 中的 `docker-compose.yml` 與 `init-wp.sh` 複製至 `<WP_DIR>`。`<PLUGIN_ROOT>/docker/` 只提供範本與工具，不能直接在其中初始化 WP，也不能將 WP 資料寫入 plugin 快取。
+
+   - 啟動前，Agent 產品以 `docker compose -f "<WP_DIR>/docker-compose.yml" config` 確認 WordPress 掛載來源為 `<WP_DIR>/wp/`。同名容器或 Compose 專案已存在時，需核對其實際掛載與資料庫 volume，不能接管其他工作專案的環境。
+   - 沿用既有環境時，Agent 產品確認環境屬於使用者指定的專案，不以範本覆蓋現有設定。需要搬遷時，先停止 WP 寫入並備份，再複製檔案、保留資料庫 volume，確認新掛載與既有頁面正常後才整理舊副本。
+
+   初始化指令為：
    ```bash
    bash "<WP_DIR>/init-wp.sh"
    ```
-3. 使用者提供已授權的 Bricks theme 後，Agent 產品將 theme 解壓至 `<WP_DIR>/wp/wp-content/themes/bricks/`，再執行該目錄中的 `init-wp.sh` 啟用。Agent 產品確認工作目錄的 Git 忽略 `.autobricks/`、`.browser/` 與執行產物，不將商業 theme 納入版控。
+3. 使用者提供已授權的 Bricks theme 後，Agent 產品將 theme 解壓至 `<WP_DIR>/wp/wp-content/themes/bricks/`，再執行 `<WP_DIR>/init-wp.sh` 啟用。Agent 產品確認工作目錄的 Git 忽略 `.autobricks/`、`.browser/` 與執行產物，不將商業 theme 納入版控。
    預設站台為 http://localhost:8080，後台帳號／密碼為 admin/admin，僅供本機測試。細節見 `<PLUGIN_ROOT>/docker/README.md`。
 
 ### 7. 回報

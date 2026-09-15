@@ -20,6 +20,8 @@ Agent 產品以原站的內容、版型、RWD、互動與動畫作為重建及�
 - Agent 產品依執行環境選擇合適的 shell 與指令語法。
 - Agent 產品將模板、素材與量測資料存入使用者工作目錄的 `data/<run>/`。
 - Agent 產品將瀏覽器 profile 存入使用者工作目錄的 `.browser/`。
+- Agent 產品預設將本機 WordPress 環境放在使用者工作目錄的 `.autobricks/docker/`，開發 AutoBricks 時亦同。AutoBricks 的 `docker/` 只提供範本與工具。
+- Agent 產品尚未熟悉 AutoBricks 的 Docker 環境時，操作前需先完整閱讀 [docker/README.md](docker/README.md)，了解操作方式與注意事項。
 - 安裝包提供工具與範本。Agent 產品不得將 WordPress 資料及其他執行產物寫入 plugin 快取。
 
 ## 測試與交付

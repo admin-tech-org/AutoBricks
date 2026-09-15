@@ -21,7 +21,7 @@
 - `<PLUGIN_ROOT>` 是當次載入的 AutoBricks 安裝包或原始碼目錄，提供 `src/` 工具及 `docker/`、`templates/` 範本。
 - `<PROJECT_ROOT>` 是使用者的工作專案根目錄，保存重建成果與本機環境。
 - `<RUN_DIR>` 是當次重建的 `<PROJECT_ROOT>/data/<run>/`。
-- `<WP_DIR>` 是實際使用的 WordPress 測試環境目錄。首次建置使用 `<PROJECT_ROOT>/.autobricks/docker/`，既有環境保留原位置。在 AutoBricks 原始碼專案內測試時，既有環境可能位於 `docker/`。
+- `<WP_DIR>` 是 WordPress 測試環境目錄，預設使用 `<PROJECT_ROOT>/.autobricks/docker/`，開發 AutoBricks 與安裝 plugin 時皆相同。`<PLUGIN_ROOT>/docker/` 只提供範本與工具。其他既有環境需先確認 Compose 設定與實際掛載再沿用。
 
 | 資料 | 存放位置 |
 | --- | --- |
@@ -41,7 +41,7 @@ Agent 產品將執行產物、登入資料、WordPress 資料及商業 theme 排
 
 重建需要 uv、Node 22+、可提供 CDP 連線的 Chrome、Docker，以及使用者提供的已授權 Bricks theme。Agent 產品依 `setup` 檢查現有環境，沿用可用的工具與 WordPress。
 
-首次建置時，Agent 產品依 `setup` 將 Docker 範本複製至 `<WP_DIR>`，再執行其中的 `init-wp.sh`。既有環境不需要重新複製範本。腳本使用 Bash，使用者或 Agent 產品需依當前 shell 選擇合適的呼叫方式。
+首次建置時，Agent 產品依 `setup` 將 `docker-compose.yml` 與 `init-wp.sh` 範本複製至 `<WP_DIR>`，確認 Compose 的 WordPress 掛載來源為 `<WP_DIR>/wp/`，再執行其中的 `init-wp.sh`。既有環境不需要重新複製範本。腳本使用 Bash，使用者或 Agent 產品需依當前 shell 選擇合適的呼叫方式。
 
 Bricks theme 解壓位置為 `<WP_DIR>/wp/wp-content/themes/bricks/`，`style.css` 應直接位於此目錄。Agent 產品執行初始化腳本後，需確認 WordPress 已啟動、theme 已啟用，以及編輯器可開啟。詳細操作見 [docker/README.md](../docker/README.md)。
 
