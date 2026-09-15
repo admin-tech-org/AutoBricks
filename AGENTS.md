@@ -3,7 +3,7 @@
 「Agent 產品」指 Claude Code、Codex 等可使用工具執行任務的 AI 助理軟體；「使用者」指提出需求、指定參考網頁並接收成品的人。
 
 目標：Agent 產品將使用者指定的參考網頁重建成外觀接近、結構清楚、可在 WordPress Bricks 編輯的 JSON。
-Agent 產品先檢視原站的內容、版型與互動，再依使用者的精度要求選擇做法；未指定時不追求像素零差異。
+Agent 產品以原站的內容、版型、RWD、互動與動畫作為重建及驗收依據，依網站特性選擇做法。
 
 - 本檔是各 Agent 產品共用的工作規則；Claude Code 透過 `CLAUDE.md` 引用本檔。
 - `skills/` 與 `.agents/skills/` 各提供同名、同內容的 `web-to-bricks` 與 `setup` 技能；維護者同步兩邊的技能與參考文件。Agent 產品執行網頁重建時載入當次來源的 `web-to-bricks`，使用者明確要求環境檢查或安裝時才載入 `setup`。

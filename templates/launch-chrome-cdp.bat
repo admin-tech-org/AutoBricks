@@ -1,9 +1,8 @@
 @echo off
 rem ===================================================================
-rem  Launch a real Chrome with a CDP remote-debugging port so the
-rem  Playwright MCP can take it over. A real Chrome profile = no
-rem  automation fingerprint. Log in once if a site needs it; the
-rem  session is kept in the profile dir (gitignored).
+rem  Launch Chrome with a CDP remote-debugging port for browser tools.
+rem  Log in once if a site needs it; the session is kept in this
+rem  project's separate profile directory (gitignored).
 rem
 rem  Config (both optional, arg wins over file):
 rem    1) cdp.env file next to this script, KEY=VALUE lines:
@@ -54,10 +53,9 @@ start "" "%CHROME%" --remote-debugging-port=%PORT% --user-data-dir="%PROFILE%"
 echo [ok] Chrome launched with CDP debug port %PORT%
 echo      profile: %PROFILE%
 echo.
-echo  Next: keep this Chrome open. The Playwright MCP attaches to
-echo        port %PORT% on demand (no restart needed). If the port is
-echo        not 9222, point the client at it (AutoBricks: set
-echo        PLAYWRIGHT_CDP_URL=http://127.0.0.1:%PORT%).
+echo  Next: keep Chrome running and connect the browser tool to
+echo        http://127.0.0.1:%PORT% . For AutoBricks browser.mjs,
+echo        set AUTOBRICKS_CDP to that URL before running Node.
 rem  Use ping instead of timeout: timeout fails when stdin is redirected
 rem  (e.g. launched non-interactively via cmd //c).
 ping -n 5 127.0.0.1 >nul

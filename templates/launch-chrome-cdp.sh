@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ===================================================================
-#  啟動一台「帶 CDP 遠端除錯埠」的真 Chrome / Chromium，供 Playwright MCP 接管。
-#  真 Chrome + 真 profile = 沒有自動化指紋。需要登入的網站在該視窗登一次即可。
+#  啟動帶 CDP 遠端除錯埠的 Chrome / Chromium，供瀏覽器工具連線。
+#  使用者可在該視窗登入網站；登入狀態保存在此工作專案的獨立 profile。
 #
 #  設定（都可省略，參數優先於設定檔）：
 #    1) 同層 cdp.env 檔，KEY=VALUE：
@@ -63,5 +63,5 @@ fi
 echo "[ok] Chrome launched with CDP debug port $PORT"
 echo "     profile: $PROFILE"
 echo
-echo " Next: 保持這台 Chrome 開著即可——Playwright MCP 用到時會自動接管。"
-echo "       port 非 9222 時記得指過去（AutoBricks：PLAYWRIGHT_CDP_URL=http://127.0.0.1:$PORT）。"
+echo " Next: 保持 Chrome 執行，將瀏覽器工具連到 http://127.0.0.1:$PORT 。"
+echo "       使用 AutoBricks browser.mjs 時，先設定 AUTOBRICKS_CDP=http://127.0.0.1:$PORT 再執行 Node。"

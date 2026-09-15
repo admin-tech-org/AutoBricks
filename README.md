@@ -4,13 +4,13 @@ AutoBricks 提供共用的網頁重建規則與工具，供 Agent 產品將使�
 
 「Agent 產品」指 Claude Code、Codex 等可使用工具執行任務的 AI 助理軟體；「使用者」指提出需求、指定參考網頁並接收成品的人。
 
-Agent 產品先在瀏覽器檢視原站，再依原站結構與使用者的精度要求選擇方法：
+Agent 產品先在瀏覽器檢視原站的內容、版型、RWD、互動與動畫，再依網站特性選擇重建方法：
 
-- **量測原站**：按需取得元素尺寸、位置、字型、間距，以及不同螢幕寬度和互動狀態下的變化，作為重建依據。
-- **轉換內容與版型**：將原站文字、圖片及容器結構轉為 Bricks 元素與設定，產生模板 JSON；原站 CSS 和既有工具可按需重用。
-- **驗證成品**：檢查 JSON 元素欄位、ID 與父子引用；將模板正常匯入 Bricks 後，在相同螢幕寬度下比對 WP 預覽與原站的內容、排版、RWD 和互動，並核對圖片實際使用的素材。
+- **量測原站**：取得元素尺寸、位置、字型、間距，以及不同螢幕寬度和互動狀態下的變化，作為重建依據。
+- **轉換內容與版型**：將原站文字、圖片及容器結構轉為 Bricks 元素與設定，產生模板 JSON；原站 CSS 和專案既有工具可按需重用，例如 `browser.mjs` 的 CDP 截圖與量測功能、`validate_template.py` 的 JSON 驗證功能。
+- **驗證成品**：檢查 JSON 元素欄位、ID 與父子引用；將模板正常匯入 Bricks 後，在相同螢幕寬度下比對 WP 預覽與原站的內容、排版、RWD、互動與動畫，並核對圖片實際使用的素材。
 
-Agent 產品交付可供使用者在 Bricks 修改文字、圖片與排版的成品，並說明仍由自訂 CSS 或程式碼控制的部分。
+Agent 產品交付可供使用者在 Bricks 修改文字、圖片與排版的成品。
 
 ## 使用 Claude Code
 
@@ -87,11 +87,11 @@ Codex 依指定的 [SKILL.md](.agents/skills/web-to-bricks/SKILL.md) 讀取重�
 
 兩種 Agent 產品使用同名、同內容的技能：`web-to-bricks` 負責網頁重建；`setup` 在使用者明確要求時檢查或安裝環境。維護者在 `skills/` 與 `.agents/skills/` 各保留一份，修改後同步技能與參考文件。
 
-Agent 產品從載入的 `SKILL.md` 位置向上辨識 AutoBricks 根目錄，再尋找共用工具。技能不依賴 Agent 產品專用的環境變數，也不修改 Agent 產品的 MCP 或工具權限設定。
+Agent 產品從載入的 `SKILL.md` 位置向上辨識 AutoBricks 根目錄，再尋找共用工具。技能不依賴 Agent 產品專用的環境變數，也不修改 Agent 產品的工具權限設定。Agent 產品可執行共用 Node 工具直接連線 Chrome CDP，並使用所用產品的圖片檢視工具查看截圖。
 
-使用者選擇模型、推理強度及成品精度要求；Agent 產品依原站的內容與版型決定量測方法、重建步驟，以及是否需要分工。AutoBricks 的共用規則不綁定特定模型或固定分工流程。
+使用者選擇模型與推理強度；Agent 產品依原站的內容、版型與動態行為決定量測方法、重建步驟，以及是否需要分工。AutoBricks 的共用規則不綁定特定模型或固定分工流程。
 
-使用者比較模型時，應在本專案開啟各 Agent 產品的新對話，使用相同版本的重建規則，並提供相同的參考網址與精度要求。Agent 產品記錄首版時間、完整驗證時間、可編輯程度和剩餘差異，供使用者比較成果。
+使用者比較模型時，應在本專案開啟各 Agent 產品的新對話，使用相同版本的重建規則，並提供相同的參考網址與重建範圍。Agent 產品記錄首版時間、完整驗證時間、可編輯程度和剩餘差異，供使用者比較成果。
 
 環境使用 [uv](https://docs.astral.sh/uv/)、Chrome CDP、Docker WordPress 與已授權的 Bricks theme；本機預覽網址是 `http://localhost:8080`。安裝細節見 [Docker 說明](docker/README.md) 與 [教學](doc/tutorial.md)。
 
@@ -101,10 +101,13 @@ Agent 產品從載入的 `SKILL.md` 位置向上辨識 AutoBricks 根目錄，�
 - `src/extract_bricks_schema.py`：需要時從已安裝的 Bricks theme 查欄位。
 - `.codex/tools/browser.mjs`：可重用的 CDP 小工具，Node 22+；用法見 [.codex/README.md](.codex/README.md)。
 - `docker/`：測試環境與推送工具；`templates/`：Chrome 啟動範本。
-- `.mcp.json`：Claude Code plugin 的 5 組 CDP 連線設定；Codex plugin 未載入這份設定，Codex 可使用上述 `browser.mjs` 工具。
 - `data/<run>/`：各次 JSON、素材、量測和截圖；`.browser/`：瀏覽器 profile。執行產物、登入資料與商業 theme 不納入 Git。
 
 Agent 產品應依目標環境已安裝的 Bricks 版本與實際渲染確認元素設定；版本相關經驗按需查 [匯入備忘](skills/web-to-bricks/references/bricks-import.md)，不能直接套用至其他版本。
+
+## 方法草稿
+
+[網頁觀察、轉換與驗收方法](doc/web-reconstruction-method.md) 說明 CDP 操作、截圖分析、RWD、動畫、Bricks 轉換及驗收時的判斷方式，供使用者檢閱與比較 Agent 產品。本文尚未併入 skill；實作時仍依當站情況選擇合適方法。
 
 ## 實驗紀錄與還原點
 

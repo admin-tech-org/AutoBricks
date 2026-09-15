@@ -58,7 +58,7 @@ Agent 產品透過 Chrome CDP 觀察原站或 WP 預覽的內容、排版與互�
    - macOS／Linux：`bash "<PROJECT_ROOT>/.browser/launch-chrome-cdp.sh"`
    Agent 產品以 `curl -s http://127.0.0.1:<port>/json/version` 確認 Chrome 已提供 CDP 連線。
 4. 目標網站需要登入時，由使用者在剛啟動的 Chrome 視窗完成登入；瀏覽器 profile 保存登入狀態。後續重建時，Agent 產品先檢查 CDP 連線，必要時再啟動瀏覽器。
-5. Agent 產品呼叫所用瀏覽器工具，確認工具能連線並讀取頁面；CDP 埠有回應不代表 MCP 或其他工具已正確連線。
+5. Agent 產品呼叫所用瀏覽器工具，確認工具能開啟頁面、讀取 DOM 及擷取截圖，再用所用產品的圖片檢視工具開啟截圖；CDP 埠有回應不代表完整的觀察流程已可用。
 
 ### 6. Docker WordPress + Bricks 驗證環境（必備）
 Agent 產品需要本機 WordPress + Bricks 實際渲染重建頁面，檢查模板匯入、外觀、RWD、互動與素材。使用者提供已授權的 Bricks theme。
@@ -74,4 +74,4 @@ Agent 產品需要本機 WordPress + Bricks 實際渲染重建頁面，檢查模
 ### 7. 回報
 Agent 產品向使用者回報 uv 與 Node 版本、Python 虛擬環境、CDP 連線位址、WP 預覽網址、Bricks 是否啟用，以及實際安裝或調整的環境項目。尚未完成的項目需分別列出。
 
-環境就緒後，使用者可呼叫 `web-to-bricks` 技能並提供參考網址。Agent 產品依該技能觀察原站、轉換內容與版型，再檢查 Bricks 成品；重建精度以使用者需求為準。
+環境就緒後，使用者可呼叫 `web-to-bricks` 技能並提供參考網址。Agent 產品依該技能觀察原站、轉換內容與版型，再檢查 Bricks 成品。
