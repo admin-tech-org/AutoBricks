@@ -7,11 +7,11 @@
 供 web-to-bricks skill 查欄位存在性、供 validate_template.py --live-schema 做逐鍵檢查。
 
 用法：
-  uv run python src/extract_bricks_schema.py [--theme-dir DIR] [--out FILE]
+  uv run python src/extract_bricks_schema.py [--theme-dir DIR] --out FILE
 
 預設 theme-dir 為 cwd 的 .autobricks/docker/wp/wp-content/themes/bricks，
 其他 WP 環境以 --theme-dir 指定，不從 plugin 安裝包尋找 theme。
-輸出預設 cwd 的 data/bricks-schema-live.json（使用者專案，gitignore 內）。
+Agent 產品以 --out 指定當次任務的 data/YYYYMMDD-agent_product-task_name/tmp/measurements/bricks-schema.json。
 只用標準函式庫。
 """
 
@@ -38,7 +38,7 @@ def candidates():
 def main():
     ap = argparse.ArgumentParser(description="從 Bricks theme 原始碼抽取 element/settings schema")
     ap.add_argument("--theme-dir", default=None, help="Bricks theme 目錄（含 style.css 與 includes/elements/）")
-    ap.add_argument("--out", default=os.path.join("data", "bricks-schema-live.json"))
+    ap.add_argument("--out", required=True, help="輸出檔案路徑，使用當次任務的 tmp/measurements/bricks-schema.json")
     args = ap.parse_args()
 
     theme = args.theme_dir

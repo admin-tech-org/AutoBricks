@@ -1,22 +1,24 @@
 # 共用瀏覽器工具
 
-[src/browser.mjs](../src/browser.mjs) 是直接連線 Chrome CDP 的 Node 工具，供 Claude Code、Codex 等 Agent 產品共用。需要 Node 22+，不需安裝 npm 套件、Playwright 或 MCP。
+`<PLUGIN_ROOT>/src/browser.mjs` 是直接連線 Chrome CDP 的 Node 工具，供 Claude Code、Codex 等 Agent 產品共用。需要 Node 22+，不需安裝 npm 套件、Playwright 或 MCP。
+
+`<PLUGIN_ROOT>`、`<PROJECT_ROOT>` 與 `<RUN_DIR>` 沿用當次技能確認的工具、專案與任務目錄。`<RUN_DIR>` 使用 `<PROJECT_ROOT>/data/YYYYMMDD-agent_product-task_name/`，瀏覽器工具的腳本及輸出放入其中的 `tmp/`。
 
 ## 連線與執行
 
-Agent 產品先以使用者工作目錄 `.browser/` 下的獨立 profile 啟動 Chrome remote debugging，再使用工具連線。Chrome 啟動範本位於 [Windows 範本](../templates/launch-chrome-cdp.bat) 與 [macOS／Linux 範本](../templates/launch-chrome-cdp.sh)。`open` 只會在已執行的 Chrome 建立分頁，不會啟動 Chrome 程式。
+Agent 產品先以 `<PROJECT_ROOT>/.browser/` 下的獨立 profile 啟動 Chrome remote debugging，再使用工具連線。Chrome 啟動範本位於 `<PLUGIN_ROOT>/templates/launch-chrome-cdp.bat`（Windows）與 `<PLUGIN_ROOT>/templates/launch-chrome-cdp.sh`（macOS／Linux）。`open` 只會在已執行的 Chrome 建立分頁，不會啟動 Chrome 程式。
 
 工具預設連線 `http://127.0.0.1:9444`；啟動範本預設使用 9222 埠。Agent 產品需確認兩端一致，可用 `AUTOBRICKS_CDP` 指定工具的連線位址。
 
-以下 PowerShell 範例在 AutoBricks 專案根目錄執行，假設 Chrome 已在 9222 埠提供 CDP：
+以下 PowerShell 範例假設 Chrome 已在 9222 埠提供 CDP，Agent 產品需將路徑佔位符替換為實際絕對路徑：
 
 ```powershell
 $env:AUTOBRICKS_CDP = 'http://127.0.0.1:9222'
-node src/browser.mjs list
-node src/browser.mjs open https://example.com data/example/source
+node "<PLUGIN_ROOT>/src/browser.mjs" list
+node "<PLUGIN_ROOT>/src/browser.mjs" open https://example.com "<RUN_DIR>/tmp/screenshots/source"
 ```
 
-使用 plugin 安裝副本時，Agent 產品以 `<PLUGIN_ROOT>/src/browser.mjs` 的絕對路徑執行工具，將輸出指向使用者工作目錄的 `data/<run>/`，不能將執行產物寫入 plugin 快取。`<PLUGIN_ROOT>` 依當次載入的 skill 位置辨識，不依賴 Agent 產品專用的環境變數。
+使用 plugin 安裝副本時，Agent 產品以 `<PLUGIN_ROOT>/src/browser.mjs` 的絕對路徑執行工具，將輸出指向 `<RUN_DIR>/tmp/`，不能將執行產物寫入 plugin 快取。`<PLUGIN_ROOT>` 依當次載入的 skill 位置辨識，不依賴 Agent 產品專用的環境變數。
 
 ## 指令
 

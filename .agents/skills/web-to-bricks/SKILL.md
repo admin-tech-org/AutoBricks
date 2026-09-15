@@ -16,23 +16,23 @@ Agent 產品將使用者指定的參考網頁重建成可匯入 WordPress Bricks
 
 - `<PLUGIN_ROOT>`：Agent 產品從當次 skill 的絕對路徑向上尋找，同時含 `pyproject.toml` 與 `docker/push-template.php` 的 AutoBricks 根目錄。共用工具與範本從此目錄取得，不依賴 Agent 產品專用的環境變數。
 - `<PROJECT_ROOT>`：使用者指定的工作專案根目錄，未另行指定時使用當前對話的工作專案。Agent 產品不以 skill 所在目錄推定此位置。開發 AutoBricks 時，兩個根目錄可以相同。
-- `<RUN_DIR>`：當次重建的 `<PROJECT_ROOT>/data/<run>/`。Agent 產品以日期與網站名稱等資訊建立不重複的批次名稱，續修時沿用當次目錄。
+- `<RUN_DIR>`：當次任務的 `<PROJECT_ROOT>/data/YYYYMMDD-agent_product-task_name/`。日期採任務開始時的本機日期，產品名與英文任務名使用小寫，多字以底線連接，例如 `20260914-codex-new_art_clone_web`、`20260914-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
 - `<WP_DIR>`：WordPress 測試環境目錄，預設為 `<PROJECT_ROOT>/.autobricks/docker/`，開發 AutoBricks 與安裝 plugin 時皆相同。`<PLUGIN_ROOT>/docker/` 只提供範本與工具，不能作為 WP 執行目錄。沿用其他既有環境前，Agent 產品需確認 Compose 設定與容器實際掛載確實屬於使用者指定的環境。
 
 | 資料 | 存放位置 |
 | --- | --- |
-| 可交付的 Bricks 模板 | `<RUN_DIR>/template.json` |
-| 圖片、SVG、字型與成品使用的 CSS／JavaScript | `<RUN_DIR>/assets/` |
-| 原站 HTML、CSS 與 DOM 等來源資料 | `<RUN_DIR>/source/` |
-| 元素尺寸、樣式、互動狀態及當次 Bricks schema | `<RUN_DIR>/measurements/` |
-| 原站與 WP 截圖、截圖的瀏覽器狀態資料 | `<RUN_DIR>/screenshots/source/`、`<RUN_DIR>/screenshots/wp/` |
-| 當次下載、量測、生成與驗證腳本 | `<RUN_DIR>/scripts/` |
-| 參考網址、觀察項目、頁號、耗時、驗證結果及剩餘差異 | `<RUN_DIR>/report.md` |
+| 可匯入的 Bricks 匯入包與交付所需素材 | `<RUN_DIR>/output/`，例如 `template.json` 與必要的 `assets/` |
+| 最終交付報告 | `<RUN_DIR>/output/report.md` |
+| 原站資料、下載素材、模板草稿 | `<RUN_DIR>/tmp/`，例如 `source/`、`assets/`、`template.json` |
+| 元素量測、當次 Bricks schema、原站與 WP 截圖 | `<RUN_DIR>/tmp/`，例如 `measurements/`、`screenshots/source/`、`screenshots/wp/` |
+| 臨時分析工具、下載／生成／驗證腳本、過程筆記與其他中間檔案 | `<RUN_DIR>/tmp/`，例如 `scripts/`、`notes.md` |
 | Chrome 啟動腳本、`cdp.env` 與瀏覽器 profile | `<PROJECT_ROOT>/.browser/`，profile 位於其中的 `.chrome_cdp*` 子目錄 |
 | Python 虛擬環境 | `<PROJECT_ROOT>/.autobricks/venv/` |
 | Docker 設定與 WordPress 檔案 | `<WP_DIR>/docker-compose.yml`、`<WP_DIR>/wp/`，theme 與上傳素材位於 `wp/wp-content/` |
 | MariaDB 資料 | Docker Compose 的 `db_data` named volume，由 Docker 保存，不是專案內的檔案目錄 |
 | 當前 Bricks 版本與匯入經驗 | `<PROJECT_ROOT>/bricks-import.md` |
+
+Agent 產品建立 `tmp/` 與 `output/`，所有當次中間檔案放入 `tmp/`，其中的子目錄依任務需要安排。交付匯入包所需的素材須一併整理至 `output/` 或部署到 WordPress，成品不能依賴 `tmp/` 內的檔案才能顯示。
 
 Agent 產品確保工作專案的 Git 忽略執行產物、瀏覽器登入資料、本機環境與版本筆記，包含 `.autobricks/` 及既有 WP 的實際資料目錄。Agent 產品不得將上述資料寫入 plugin 安裝快取。需要建立環境時，由使用者明確要求後使用同來源的 `setup` 技能，將 `docker-compose.yml` 與 `init-wp.sh` 範本複製到 `<WP_DIR>`，不覆蓋既有環境。
 
@@ -40,7 +40,7 @@ Agent 產品確保工作專案的 Git 忽略執行產物、瀏覽器登入資料
 
 Agent 產品先在瀏覽器載入原站，查看首屏、逐段捲動到頁尾，再於窄螢幕檢視整頁，操作選單、內容切換與可操作元素。Agent 產品辨識頁面有哪些內容、哪些部分隨寬度改變，以及哪些畫面需要操作或等待才會出現。
 
-Agent 產品在 `report.md` 留下簡短觀察，例如「桌面導覽捲動後固定，手機改為收合選單；主視覺交替換圖並緩慢放大；消息可拖曳」。觀察到的內容、互動與動畫同時成為轉換依據及驗收項目。
+Agent 產品在 `<RUN_DIR>/tmp/notes.md` 留下簡短觀察，例如「桌面導覽捲動後固定，手機改為收合選單；主視覺交替換圖並緩慢放大；消息可拖曳」。觀察到的內容、互動與動畫同時成為轉換依據及驗收項目。
 
 | 需要判斷的問題 | 取得的資料 | 資料如何影響做法 |
 | --- | --- | --- |
@@ -54,7 +54,7 @@ Agent 產品取得元素的尺寸、位置、字型與間距，並比較不同�
 
 ## 用 CDP 操作瀏覽器與取得畫面
 
-Agent 產品可用 Node 22+ 執行 `<PLUGIN_ROOT>/src/browser.mjs`，直接連線 Chrome CDP。此工具不需要 Playwright 或 MCP，連線與完整指令用法見 `<PLUGIN_ROOT>/doc/browser.md`。
+Agent 產品可用 Node 22+ 執行 `<PLUGIN_ROOT>/src/browser.mjs`，直接連線 Chrome CDP。此工具不需要 Playwright 或 MCP。Agent 產品需要查詢連線設定、指令或參數時，讀取 [references/browser.md](references/browser.md)。
 
 - Agent 產品先確認 Chrome 已提供 CDP 連線。`open` 只會在既有 Chrome 建立分頁，不會啟動 Chrome 程式。
 - 需要啟動 Chrome 時，Agent 產品可使用 `<PLUGIN_ROOT>/templates/` 的啟動範本，將腳本與 profile 放在 `<PROJECT_ROOT>/.browser/`。需要使用者登入或觀看操作時使用有視窗的 Chrome，背景觀察可使用 headless Chrome。
@@ -64,8 +64,8 @@ Agent 產品可用 Node 22+ 執行 `<PLUGIN_ROOT>/src/browser.mjs`，直接連�
 以下指令中的路徑與 target 需替換為當次實際值，shell 語法依執行環境調整：
 
 ```text
-node "<PLUGIN_ROOT>/src/browser.mjs" open "<參考網址>" "<RUN_DIR>/screenshots/source"
-node "<PLUGIN_ROOT>/src/browser.mjs" shot "<SOURCE_TARGET>" "<RUN_DIR>/screenshots/source/mobile.png" 0 390
+node "<PLUGIN_ROOT>/src/browser.mjs" open "<參考網址>" "<RUN_DIR>/tmp/screenshots/source"
+node "<PLUGIN_ROOT>/src/browser.mjs" shot "<SOURCE_TARGET>" "<RUN_DIR>/tmp/screenshots/source/mobile.png" 0 390
 ```
 
 `open` 回傳分頁 `target`，並保存 `browser.json` 與 `first.png`。Agent 產品從回傳資料取得 `<SOURCE_TARGET>`，後續指定同一分頁操作，另記錄 WP 分頁的 target。`shot` 最後兩個參數是捲動位置與視窗寬度，指定寬度時使用 1000px 高度。其他尺寸或特殊操作可透過 `cdp` 傳入請求。
@@ -78,7 +78,7 @@ node "<PLUGIN_ROOT>/src/browser.mjs" shot "<SOURCE_TARGET>" "<RUN_DIR>/screensho
 | 擷取畫面 | `Page.captureScreenshot` | 可存成 PNG 的圖片資料 |
 | 點擊、移入、拖曳 | `Input.dispatchMouseEvent` | 操作引發的事件與狀態變化 |
 
-例如 Agent 產品可將以下量測存成 `<RUN_DIR>/scripts/measure.js`，並以當站要檢查的選擇器替換 `main`：
+例如 Agent 產品可將以下量測存成 `<RUN_DIR>/tmp/scripts/measure.js`，並以當站要檢查的選擇器替換 `main`：
 
 ```javascript
 (() => {
@@ -95,10 +95,10 @@ node "<PLUGIN_ROOT>/src/browser.mjs" shot "<SOURCE_TARGET>" "<RUN_DIR>/screensho
 ```
 
 ```text
-node "<PLUGIN_ROOT>/src/browser.mjs" eval "<SOURCE_TARGET>" "<RUN_DIR>/scripts/measure.js" "<RUN_DIR>/measurements/main.json"
+node "<PLUGIN_ROOT>/src/browser.mjs" eval "<SOURCE_TARGET>" "<RUN_DIR>/tmp/scripts/measure.js" "<RUN_DIR>/tmp/measurements/main.json"
 ```
 
-同一分頁的載入、改寬、捲動、操作與截圖需依序進行，避免量測時頁面狀態被其他操作改變。`survey` 含特定 DOM 結構與狀態處理假設，Agent 產品先確認當站適用，不適用時改用 `eval`、`shot` 或 `cdp`。Agent 產品可在當次 `scripts/` 撰寫下載、量測或生成工具，重用已取得且仍適用的資料，只補查缺少或已變動的部分。
+同一分頁的載入、改寬、捲動、操作與截圖需依序進行，避免量測時頁面狀態被其他操作改變。`survey` 含特定 DOM 結構與狀態處理假設，Agent 產品先確認當站適用，不適用時改用 `eval`、`shot` 或 `cdp`。Agent 產品可在 `<RUN_DIR>/tmp/scripts/` 撰寫下載、量測或生成工具，重用已取得且仍適用的資料，只補查缺少或已變動的部分。
 
 ## 截圖分析與差異修正
 
@@ -152,14 +152,14 @@ Agent 產品綜合觀察與量測選擇轉換方式。原站 HTML／CSS 清楚�
 - 檔案不存在或記錄不適用時，Agent 產品查閱當前已安裝 Bricks 的 schema／原始碼並實測，再建立或更新筆記，記錄版本、相關設定、驗證結果與證據位置。
 - 筆記保存在使用者工作專案根目錄並由 Git 忽略，不放入 skill 的 `references/`，也不隨 plugin 發行或寫入 plugin 快取。
 
-Agent 產品可使用 `<PLUGIN_ROOT>/src/extract_bricks_schema.py`，指定實際 theme 目錄與 `<RUN_DIR>/measurements/bricks-schema.json` 輸出路徑，取得當前版本的元素及欄位資料。元素設定以已安裝版本與實際渲染為準，不將其他版本的筆記當成通用 schema。
+Agent 產品可使用 `<PLUGIN_ROOT>/src/extract_bricks_schema.py`，以 `--theme-dir` 指定實際 theme 目錄，以 `--out` 指定 `<RUN_DIR>/tmp/measurements/bricks-schema.json`，取得當前版本的元素及欄位資料。元素設定以已安裝版本與實際渲染為準，不將其他版本的筆記當成通用 schema。
 
 ### 產生 JSON 與建立測試頁
 
-Agent 產品使用 `uv run` 執行 Python。輸出 JSON 後執行格式檢查，有當次 schema 時透過 `--live-schema` 指定：
+Agent 產品使用 `uv run` 執行 Python。模板草稿放在 `tmp/`，產生後執行格式檢查。有當次 schema 時，以 `--live-schema "<RUN_DIR>/tmp/measurements/bricks-schema.json"` 指定：
 
 ```text
-uv run --no-project python "<PLUGIN_ROOT>/src/validate_template.py" "<RUN_DIR>/template.json"
+uv run --no-project python "<PLUGIN_ROOT>/src/validate_template.py" "<RUN_DIR>/tmp/template.json"
 ```
 
 格式檢查包含元素欄位、ID 與父子引用。驗證器未載入 live schema 時會略過元素名稱與設定欄位的相關檢查，Agent 產品需區分結構檢查與版本欄位檢查的結果。
@@ -180,9 +180,9 @@ Agent 產品對照原站的觀察紀錄檢查是否有遺漏。修正後重驗�
 
 ## 交付與總結
 
-Agent 產品向使用者提供：
+Agent 產品將交付的匯入包與必要素材整理到 `<RUN_DIR>/output/`，確認驗證結果對應交付版本，並將以下交付資訊寫入 `<RUN_DIR>/output/report.md`，在回覆中提供匯入包與報告的位置：
 
-- 模板 JSON、可開啟的 WP 預覽網址，以及素材搬移所需檔案。
+- 參考網址、模板 JSON、可開啟的 WP 預覽網址，以及素材搬移所需檔案。
 - 原站與成品的代表截圖，標示視窗尺寸及相關互動狀態。
 - 格式、正常匯入、外觀、RWD、互動、動畫及可編輯性的驗證結果，明列剩餘差異與未測項目。
 - 可直接在 Bricks 編輯的部分，以及仍由自訂 CSS 或程式碼控制的排版、樣式或互動，指出對應修改位置。

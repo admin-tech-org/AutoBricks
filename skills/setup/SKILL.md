@@ -21,7 +21,9 @@ description: 在使用者明確要求時，檢查、安裝或修復 AutoBricks �
 - `<PROJECT_ROOT>`：使用者指定的工作專案根目錄，未另行指定時使用當前對話的工作專案，不以 skill 所在目錄推定。
 - 瀏覽器啟動腳本、`cdp.env` 與 profile 存在 `<PROJECT_ROOT>/.browser/`，Python 虛擬環境存在 `<PROJECT_ROOT>/.autobricks/venv/`。
 - `<WP_DIR>`：WordPress 測試環境目錄，預設為 `<PROJECT_ROOT>/.autobricks/docker/`，開發 AutoBricks 與安裝 plugin 時皆相同。Docker 設定存在此目錄，WordPress 檔案存在其中的 `wp/`，MariaDB 資料由 Docker 的 `db_data` named volume 保存。
-- 重建成果、素材、量測、截圖與當次腳本存在 `<PROJECT_ROOT>/data/<run>/`，版本筆記存在 `<PROJECT_ROOT>/bricks-import.md`。環境與執行產物不得寫入 plugin 安裝快取。
+- `<RUN_DIR>`：當次任務的 `<PROJECT_ROOT>/data/YYYYMMDD-agent_product-task_name/`。日期採任務開始時的本機日期，產品名與英文任務名使用小寫，多字以底線連接，例如 `20260914-codex-new_art_clone_web`、`20260914-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
+- Agent 產品建立 `<RUN_DIR>/tmp/` 與 `<RUN_DIR>/output/`。當次分析工具、腳本、下載素材、量測、截圖與其他中間檔案全部放入 `tmp/`，可匯入的 Bricks 匯入包及交付所需素材放入 `output/`，最終交付報告寫入 `output/report.md`。
+- 版本筆記存在 `<PROJECT_ROOT>/bricks-import.md`。環境與執行產物不得寫入 plugin 安裝快取。
 
 Agent 產品以載入檔案的位置辨識 plugin 根目錄，不依賴 Agent 產品專用的環境變數。直接使用專案 skill 或使用安裝副本時，均採用此方式。
 
@@ -50,7 +52,7 @@ UV_PROJECT_ENVIRONMENT="<PROJECT_ROOT>/.autobricks/venv" uv sync --project "<PLU
 ```
 
 ### 5. 準備 Chrome CDP 連線
-Agent 產品透過 Chrome CDP 觀察原站或 WP 預覽的內容、排版與互動，可使用現有的 CDP 工具或共用的 `<PLUGIN_ROOT>/src/browser.mjs`。共用工具的連線方式見 `<PLUGIN_ROOT>/doc/browser.md`。啟動腳本的預設埠為 9222，Agent 產品需確認瀏覽器與所用工具設定的埠一致。
+Agent 產品透過 Chrome CDP 觀察原站或 WP 預覽的內容、排版與互動，可使用現有的 CDP 工具或共用的 `<PLUGIN_ROOT>/src/browser.mjs`。共用工具的連線方式見 [../web-to-bricks/references/browser.md](../web-to-bricks/references/browser.md)。啟動腳本的預設埠為 9222，Agent 產品需確認瀏覽器與所用工具設定的埠一致。
 
 1. **Agent 產品將啟動腳本放進使用者專案的 `.browser/`**，讓瀏覽器 profile 與登入資料留在該專案：
    ```bash

@@ -7,7 +7,7 @@ Agent 產品依 web-to-bricks skill 檢查 template.json，並另行驗證正常
   2. id：格式 ^[a-z0-9]{6}$、唯一；警告不含數字（匯入 id 全域字串替換的踩雷防護）
   3. 圖：parent/children 互相一致、無懸空引用、無環、皆可從根到達
   4. element name 與 settings 欄位：對照 --live-schema 指定的原始碼掃描結果，
-     預設使用 data/bricks-schema-live.json；沒有 live schema 就略過相關檢查。
+     由呼叫端指定當次任務的 tmp/measurements/bricks-schema.json；未指定就略過相關檢查。
      掃描可能漏掉繼承或動態產生的欄位，需配合已安裝 theme 與實測判讀。
   5. 固定形狀檢查（基於 1.12.x 經驗，不隨 live schema 切換；版本筆記見使用者專案的 bricks-import.md）：
      _boxShadow 必須 object、_gradient 必須 object、_background 不可是字串、
@@ -299,8 +299,8 @@ def main():
     ap.add_argument("template", help="template.json 路徑（裸陣列或含 content 的物件皆可）")
     ap.add_argument(
         "--live-schema",
-        default=os.path.join("data", "bricks-schema-live.json"),
-        help="extract_bricks_schema.py 的輸出，用於核對元素名稱與設定欄位",
+        default=None,
+        help="當次 extract_bricks_schema.py 的輸出，用於核對元素名稱與設定欄位；未指定則略過",
     )
     ap.add_argument("--strict", action="store_true", help="警告也視為失敗")
     ap.add_argument("--json", action="store_true", dest="as_json", help="機器可讀輸出")
@@ -331,7 +331,7 @@ def main():
             + (f"  [live schema: Bricks {live['version']}]" if live else "")
         )
         if live is None:
-            print("[!] 沒有 live schema（data/bricks-schema-live.json）—— 跳過 element name 檢查；先跑 src/extract_bricks_schema.py 生成")
+            print("[!] 未載入 live schema，略過元素名稱與設定欄位檢查；以 --live-schema 指定當次 schema 檔案")
         for msg in errors:
             print(f"[error] {msg}")
         for msg in warnings:

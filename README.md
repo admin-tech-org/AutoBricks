@@ -114,12 +114,22 @@ Agent 產品從載入的 `SKILL.md` 位置向上辨識 AutoBricks 根目錄，�
 
 - `src/validate_template.py`：Agent 產品執行 `uv run python src/validate_template.py <template.json>`，檢查模板元素欄位與引用關係。
 - `src/extract_bricks_schema.py`：需要時從已安裝的 Bricks theme 查欄位。
-- `src/browser.mjs`：各 Agent 產品共用的 CDP 小工具，Node 22+；用法見 [doc/browser.md](doc/browser.md)。
+- `src/browser.mjs`：各 Agent 產品共用的 CDP 小工具，Node 22+；用法見 [skills/web-to-bricks/references/browser.md](skills/web-to-bricks/references/browser.md)。
 - `docker/`：測試環境範本與推送工具。
 - `.autobricks/docker/`：工作專案的 Docker 設定與 WordPress 檔案，開發與安裝 plugin 時皆使用此位置。
 - `templates/`：Chrome 啟動範本。
-- `data/<run>/`：各次 JSON、素材、量測和截圖。
+- `data/YYYYMMDD-agent_product-task_name/`：各次任務資料，分為 `tmp/` 與 `output/`。
 - `.browser/`：瀏覽器 profile。
+
+任務目錄以開始時的本機日期命名。產品名與英文任務名使用小寫，多字以底線連接，例如 `20260914-codex-new_art_clone_web`、`20260914-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
+
+```text
+data/20260914-codex-new_art_clone_web/
+├── tmp/              # 分析工具、腳本、下載素材、量測、截圖與草稿等所有中間檔案
+└── output/
+    ├── template.json # 可匯入的 Bricks 模板，必要素材亦放在 output/
+    └── report.md     # 最終交付報告：預覽網址、耗時、驗收結果與剩餘差異
+```
 
 執行產物、登入資料與商業 theme 不納入 Git。
 

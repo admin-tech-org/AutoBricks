@@ -18,7 +18,9 @@ Agent 產品以原站的內容、版型、RWD、互動與動畫作為重建及�
 - Agent 產品可重用現有工具，並查閱已安裝的 Bricks 原始碼確認元素設定。
 - Agent 產品執行 Python 時使用 `uv run`。
 - Agent 產品依執行環境選擇合適的 shell 與指令語法。
-- Agent 產品將模板、素材與量測資料存入使用者工作目錄的 `data/<run>/`。
+- Agent 產品將當次任務資料存入使用者工作目錄的 `data/YYYYMMDD-agent_product-task_name/`。日期採任務開始時的本機日期，產品名與英文任務名使用小寫，多字以底線連接，例如 `20260914-codex-new_art_clone_web`、`20260914-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
+- Agent 產品在當次任務目錄建立 `tmp/` 與 `output/`。分析工具、腳本、下載素材、量測、截圖、草稿與其他中間檔案全部放入 `tmp/`，子目錄依任務需要安排。
+- Agent 產品將可匯入的 Bricks 匯入包與交付所需素材放入 `output/`，並將最終交付報告寫入 `output/report.md`。
 - Agent 產品將瀏覽器 profile 存入使用者工作目錄的 `.browser/`。
 - Agent 產品預設將本機 WordPress 環境放在使用者工作目錄的 `.autobricks/docker/`，開發 AutoBricks 時亦同。AutoBricks 的 `docker/` 只提供範本與工具。
 - Agent 產品尚未熟悉 AutoBricks 的 Docker 環境時，操作前需先完整閱讀 [docker/README.md](docker/README.md)，了解操作方式與注意事項。

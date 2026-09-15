@@ -20,15 +20,14 @@
 
 - `<PLUGIN_ROOT>` 是當次載入的 AutoBricks 安裝包或原始碼目錄，提供 `src/` 工具及 `docker/`、`templates/` 範本。
 - `<PROJECT_ROOT>` 是使用者的工作專案根目錄，保存重建成果與本機環境。
-- `<RUN_DIR>` 是當次重建的 `<PROJECT_ROOT>/data/<run>/`。
+- `<RUN_DIR>` 是當次任務的 `<PROJECT_ROOT>/data/YYYYMMDD-agent_product-task_name/`。日期採任務開始時的本機日期，產品名與英文任務名使用小寫，多字以底線連接，例如 `20260914-codex-new_art_clone_web`、`20260914-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
 - `<WP_DIR>` 是 WordPress 測試環境目錄，預設使用 `<PROJECT_ROOT>/.autobricks/docker/`，開發 AutoBricks 與安裝 plugin 時皆相同。`<PLUGIN_ROOT>/docker/` 只提供範本與工具。其他既有環境需先確認 Compose 設定與實際掛載再沿用。
 
 | 資料 | 存放位置 |
 | --- | --- |
-| 模板 JSON | `<RUN_DIR>/template.json` |
-| 圖片、SVG、字型及成品程式資源 | `<RUN_DIR>/assets/` |
-| 來源資料、量測、截圖及當次腳本 | `<RUN_DIR>/source/`、`<RUN_DIR>/measurements/`、`<RUN_DIR>/screenshots/`、`<RUN_DIR>/scripts/` |
-| 頁號、預覽網址、耗時與驗收紀錄 | `<RUN_DIR>/report.md` |
+| 可匯入的 Bricks 匯入包與交付所需素材 | `<RUN_DIR>/output/`，例如 `template.json` 與必要的 `assets/` |
+| 最終交付報告：頁號、預覽網址、耗時、驗收結果與剩餘差異 | `<RUN_DIR>/output/report.md` |
+| 來源資料、下載素材、量測、截圖、當次腳本、草稿與其他中間檔案 | `<RUN_DIR>/tmp/`，子目錄依任務需要安排 |
 | 瀏覽器啟動設定與 profile | `<PROJECT_ROOT>/.browser/` |
 | Python 虛擬環境 | `<PROJECT_ROOT>/.autobricks/venv/` |
 | Docker 設定與 WordPress 檔案 | `<WP_DIR>/docker-compose.yml`、`<WP_DIR>/wp/` |
@@ -61,7 +60,7 @@ docker compose -f "<WP_DIR>/docker-compose.yml" up -d
 docker compose -f "<WP_DIR>/docker-compose.yml" ps
 ```
 
-Chrome CDP 的連線方式與指令見 [doc/browser.md](browser.md)。瀏覽器與工具的連線埠需一致，Agent 產品取得截圖後仍需實際開啟圖片檢查。
+Chrome CDP 的連線方式與指令見 [skills/web-to-bricks/references/browser.md](../skills/web-to-bricks/references/browser.md)。瀏覽器與工具的連線埠需一致，Agent 產品取得截圖後仍需實際開啟圖片檢查。
 
 ## 4. 在 Bricks 開啟與編輯頁面
 
@@ -100,8 +99,8 @@ Bricks 模板 JSON 描述元素、父子關係、內容與設定。Bricks 讀取
 Agent 產品可從實際安裝的 theme 擷取元素與欄位清單，再指定給驗證器。以下路徑需替換為當次實際值：
 
 ```text
-uv run --no-project python "<PLUGIN_ROOT>/src/extract_bricks_schema.py" --theme-dir "<WP_DIR>/wp/wp-content/themes/bricks" --out "<RUN_DIR>/measurements/bricks-schema.json"
-uv run --no-project python "<PLUGIN_ROOT>/src/validate_template.py" "<RUN_DIR>/template.json" --live-schema "<RUN_DIR>/measurements/bricks-schema.json"
+uv run --no-project python "<PLUGIN_ROOT>/src/extract_bricks_schema.py" --theme-dir "<WP_DIR>/wp/wp-content/themes/bricks" --out "<RUN_DIR>/tmp/measurements/bricks-schema.json"
+uv run --no-project python "<PLUGIN_ROOT>/src/validate_template.py" "<RUN_DIR>/output/template.json" --live-schema "<RUN_DIR>/tmp/measurements/bricks-schema.json"
 ```
 
 驗證器檢查元素 ID、父子引用及部分設定。未載入 live schema 時，元素名稱與設定欄位的相關檢查會略過。原始碼掃描也可能漏掉繼承或動態建立的欄位，結果需配合 theme 原始碼與實測判讀。
@@ -110,7 +109,7 @@ uv run --no-project python "<PLUGIN_ROOT>/src/validate_template.py" "<RUN_DIR>/t
 
 ## 8. 檢查交付成果
 
-使用者可依 Agent 產品提供的 `report.md` 及預覽網址檢查：
+使用者可依 Agent 產品提供的 `<RUN_DIR>/output/report.md` 及預覽網址檢查：
 
 - 原站與成品是否有相同內容與素材，代表截圖是否使用相同視窗尺寸及互動狀態。
 - 桌面、手機、斷點附近與中間寬度的排列是否吻合，是否出現文字截斷或意外橫向溢出。

@@ -35,10 +35,10 @@ docker compose -f "<WP_DIR>/docker-compose.yml" run --rm wpcli <wp 指令>   # w
 
 ## 將模板寫入測試頁
 
-Agent 產品可透過 `push-template.php` 直接將 JSON 寫入 WP 頁面，以便檢查瀏覽器畫面。以下為 Bash 指令範例；Agent 產品需替換當次檔案路徑，並記錄腳本回傳的 PAGE_ID。後續修改只指定該次頁號。
+Agent 產品可透過 `push-template.php` 直接將 JSON 寫入 WP 頁面，以便檢查瀏覽器畫面。以下為 Bash 指令範例，`<RUN_DIR>` 是當次任務的 `<PROJECT_ROOT>/data/YYYYMMDD-agent_product-task_name/`。範例使用交付模板，開發中的草稿可改用 `<RUN_DIR>/tmp/template.json`。Agent 產品需替換當次檔案路徑，並記錄腳本回傳的 PAGE_ID。後續修改只指定該次頁號。
 
 ```bash
-MSYS_NO_PATHCONV=1 docker cp data/<id>/template.json autobricks-wp:/tmp/template.json
+MSYS_NO_PATHCONV=1 docker cp "<RUN_DIR>/output/template.json" autobricks-wp:/tmp/template.json
 MSYS_NO_PATHCONV=1 docker cp "<PLUGIN_ROOT>/docker/push-template.php" autobricks-wp:/tmp/
 MSYS_NO_PATHCONV=1 docker exec -e TEMPLATE=/tmp/template.json -e TITLE="測試頁" \
   autobricks-wp php /tmp/push-template.php
