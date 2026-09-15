@@ -1,6 +1,6 @@
 <?php
 /**
- * 把 Bricks template JSON 寫進 WordPress 頁面（於容器內執行；clone skill 主迴圈會呼叫）。
+ * 把 Bricks template JSON 寫進 WordPress 測試頁面（於容器內執行，供 web-to-bricks 開發預覽）。
  *
  * 用法（host 端）：
  *   MSYS_NO_PATHCONV=1 docker cp template.json autobricks-wp:/tmp/template.json
@@ -67,7 +67,7 @@ if (!empty($tpl['customCss'])) {
   update_post_meta($page_id, '_bricks_page_settings', wp_slash($settings));
 }
 
-// 可執行 code 元素（clone skill 動態階梯第 4 層）點名：Bricks 有 code execution 權限與
+// 點名可執行 code 元素：Bricks 有 code execution 權限與
 // 程式碼簽章機制（版本相關）——前台 JS 沒跑時，從這份名單開始查，勿當作推送成功＝會動。
 $exec_ids = [];
 foreach ($tpl['content'] as $el) {

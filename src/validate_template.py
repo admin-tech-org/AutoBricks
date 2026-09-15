@@ -1,26 +1,26 @@
-"""AutoBricks 驗證 gate — 檢查 Bricks Builder 模板 JSON 是否可安全匯入 Bricks。
+"""AutoBricks 模板驗證器 — 檢查 JSON 結構與部分 Bricks 設定。
 
-replica skill 產出 template.json 後必須跑本腳本並修到 PASS 才交付。
+Agent 產品依 web-to-bricks skill 檢查 template.json，並另行驗證正常匯入與實際頁面。
 只用標準函式庫。檢查層次：
 
   1. 信封：{id, name, parent, children, settings}（component 實例以 cid 識別、放寬 name）
   2. id：格式 ^[a-z0-9]{6}$、唯一；警告不含數字（匯入 id 全域字串替換的踩雷防護）
   3. 圖：parent/children 互相一致、無懸空引用、無環、皆可從根到達
-  4. element name 與 settings 欄位：對照 data/bricks-schema-live.json
-     （extract_bricks_schema.py 從使用者 theme 原始碼抽出、版本自動對齊——含逐鍵檢查）；
-     沒有 live schema 就跳過 element name 檢查（先跑 extract_bricks_schema.py 生成）
-  5. 已知形狀（實機驗證於 1.12.x；經驗明細在使用者專案的 bricks-gotchas.local.md）：
+  4. element name 與 settings 欄位：對照 --live-schema 指定的原始碼掃描結果，
+     預設使用 data/bricks-schema-live.json；沒有 live schema 就略過相關檢查。
+     掃描可能漏掉繼承或動態產生的欄位，需配合已安裝 theme 與實測判讀。
+  5. 固定形狀檢查（基於 1.12.x 經驗，不隨 live schema 切換；版本筆記見使用者專案的 bricks-import.md）：
      _boxShadow 必須 object、_gradient 必須 object、_background 不可是字串、
      _cssCustom 含 %root% 直接判 error（1.12.x 實證不替換）、font-family 帶逗號警告、
      image 同時固定 _width 與 _height 警告（變形）、selectors 為 2.x 特性警告
-  6. code 元素（動態階梯第 4 層＝自訂 JS）：executeCode 開了但無任何 code 內容判 error、
+  6. code 元素：executeCode 開了但無任何 code 內容判 error、
      code/javascriptCode/cssCode 含 %root% 判 error、javascriptCode 內含 <script> 標籤警告、
-     外部載入（script src / import()）與 document.write 警告（JS 鐵則：vanilla 自包含）、
+     外部載入（script src / import()）與 document.write 警告，需確認來源及實際執行結果、
      有 javascriptCode 但 executeCode 未開警告（前台不執行）、
      每顆可執行 code 元素都發警告供逐一審核（渲染對照必實測有跑）
 
 用法：
-  uv run python src/validate_template.py <template.json> [--schema-dir DIR] [--strict] [--json]
+  uv run --no-project python src/validate_template.py <template.json> [--live-schema FILE] [--strict] [--json]
 
 exit code：0 = PASS（--strict 時警告也算 fail）、1 = 有 error、2 = 用法/讀檔錯誤
 """
@@ -69,7 +69,7 @@ def load_elements(path):
 
 
 def load_live_schema(path):
-    """src/extract_bricks_schema.py 的輸出：從使用者 theme 原始碼抽取的 schema（比官方 2.3 更權威）。"""
+    """載入 src/extract_bricks_schema.py 從使用者 theme 原始碼掃描的元素與欄位清單。"""
     if not path or not os.path.isfile(path):
         return None
     try:
@@ -194,7 +194,7 @@ def check(elements, schema_names, global_classes=None, live=None):
             if el.get("name") == "image" and "_width" in settings and "_height" in settings:
                 warn(i, el, "image 同時固定 _width 與 _height——窄容器會變形；高度改用 id-scoped aspect-ratio")
 
-            # ---- 6. code 元素（動態階梯第 4 層：自訂 JS）---------------------
+            # ---- 6. code 元素內容與執行檢查 -------------------------------
             if el.get("name") == "code":
                 exec_on = bool(settings.get("executeCode"))
                 has_body = any(
@@ -217,13 +217,13 @@ def check(elements, schema_names, global_classes=None, live=None):
                         warn(i, el, "javascriptCode 內含 <script> 標籤——此欄位要純 JS（markup 放 code 欄位）")
                     if re.search(r"<script[^>]*\bsrc\s*=|\bimport\s*\(|document\.write", js):
                         warn(
-                            i, el, "javascriptCode 含外部載入或 document.write——JS 階梯鐵則：vanilla、自包含、不動全域"
+                            i, el, "javascriptCode 含外部載入或 document.write——確認資源來源、載入順序與頁面影響，並實測執行結果"
                         )
                 if exec_on and has_body:
                     warn(
                         i,
                         el,
-                        "可執行 code 元素（動態階梯第 4 層）——確認階梯 1–3 表達不了才用；渲染對照必實測 JS 有跑（Bricks code execution／簽章可能擋）",
+                        "可執行 code 元素——需實測 JS 與互動效果，並依目標版本確認 Bricks code execution 設定與簽章",
                     )
 
     # ---- 3. 圖完整性 ----------------------------------------------------
@@ -300,7 +300,7 @@ def main():
     ap.add_argument(
         "--live-schema",
         default=os.path.join("data", "bricks-schema-live.json"),
-        help="extract_bricks_schema.py 的輸出（存在時優先於官方 schema）",
+        help="extract_bricks_schema.py 的輸出，用於核對元素名稱與設定欄位",
     )
     ap.add_argument("--strict", action="store_true", help="警告也視為失敗")
     ap.add_argument("--json", action="store_true", dest="as_json", help="機器可讀輸出")

@@ -22,7 +22,7 @@ Agent 產品交付可供使用者在 Bricks 修改文字、圖片與排版的成
 claude --plugin-dir .
 ```
 
-`--plugin-dir .` 要求 Claude Code 直接載入目前目錄的 plugin，供使用者測試尚未發佈的修改。Claude Code 讀取 `.claude-plugin/plugin.json` 識別 AutoBricks，並從 `skills/` 取得技能。使用者不必先透過 marketplace 安裝。[Claude Code 官方說明](https://code.claude.com/docs/en/plugins#test-your-plugins-locally)
+`--plugin-dir .` 要求 Claude Code 直接載入目前目錄的 plugin，供使用者測試尚未發佈的修改。Claude Code 讀取 `.claude-plugin/plugin.json` 識別 AutoBricks，並從 `skills/` 取得技能。使用者不必先透過 marketplace 安裝。官方說明見 [code.claude.com/docs/en/plugins](https://code.claude.com/docs/en/plugins#test-your-plugins-locally)。
 
 Claude Code 啟動後，使用者在 **Claude Code 對話框**指定要測試的技能與目標網頁：
 
@@ -34,8 +34,8 @@ Claude Code 啟動後，使用者在 **Claude Code 對話框**指定要測試的
 
 | 使用者要執行的工作 | 對話指令 | Claude Code 讀取的說明 |
 |---|---|---|
-| 重建指定網頁 | `/autobricks:web-to-bricks <參考網頁網址>` | [網頁重建 skill](skills/web-to-bricks/SKILL.md) |
-| 檢查或安裝本機測試環境 | `/autobricks:setup` | [環境設定 skill](skills/setup/SKILL.md) |
+| 重建指定網頁 | `/autobricks:web-to-bricks <參考網頁網址>` | [skills/web-to-bricks/SKILL.md](skills/web-to-bricks/SKILL.md) |
+| 檢查或安裝本機測試環境 | `/autobricks:setup` | [skills/setup/SKILL.md](skills/setup/SKILL.md) |
 
 ### 發行階段：將技能與工具提供為可安裝的 plugin
 
@@ -58,7 +58,7 @@ Claude Code 啟動後，使用者在 **Claude Code 對話框**指定要測試的
 codex -C .
 ```
 
-`-C .` 將目前目錄設為工作目錄，供使用者測試尚未發佈的修改。Codex 從專案的 `.agents/skills/` 取得技能。使用者不必先透過 marketplace 安裝。[Codex 官方說明](https://learn.chatgpt.com/docs/build-skills#where-codex-loads-local-skills)
+`-C .` 將目前目錄設為工作目錄，供使用者測試尚未發佈的修改。Codex 從專案的 `.agents/skills/` 取得技能。使用者不必先透過 marketplace 安裝。官方說明見 [learn.chatgpt.com/docs/build-skills](https://learn.chatgpt.com/docs/build-skills#where-codex-loads-local-skills)。
 
 Codex 啟動後，使用者在 **Codex 對話框**指定要測試的技能與目標網頁：
 
@@ -70,11 +70,11 @@ Codex 啟動後，使用者在 **Codex 對話框**指定要測試的技能與目
 
 | 使用者要執行的工作 | 對話指令 | Codex 讀取的說明 |
 |---|---|---|
-| 重建指定網頁 | `$autobricks:web-to-bricks <參考網頁網址>` | [網頁重建 skill](.agents/skills/web-to-bricks/SKILL.md) |
-| 檢查或安裝本機測試環境 | `$autobricks:setup` | [環境設定 skill](.agents/skills/setup/SKILL.md) |
+| 重建指定網頁 | `$autobricks:web-to-bricks <參考網頁網址>` | [.agents/skills/web-to-bricks/SKILL.md](.agents/skills/web-to-bricks/SKILL.md) |
+| 檢查或安裝本機測試環境 | `$autobricks:setup` | [.agents/skills/setup/SKILL.md](.agents/skills/setup/SKILL.md) |
 
 > [!TIP]
-> Codex 的專案 skill 放在 `.agents/skills/`；`.codex/` 主要存放設定。本專案透過 `.gitignore` 排除個人的 `.codex/config.toml`，詳細分工見 [本機設定與 Git](doc/codex-plugin.md#本機設定與-git)。
+> Codex 的專案 skill 放在 `.agents/skills/`；`.codex/` 主要存放設定。本專案透過 `.gitignore` 排除個人的 `.codex/config.toml`，詳細分工見 [doc/codex-plugin.md](doc/codex-plugin.md#本機設定與-git) 的「本機設定與 Git」段落。
 
 ### 發行階段：將技能與工具提供為可安裝的 plugin
 
@@ -88,7 +88,7 @@ codex plugin add autobricks@autobricks
 安裝並啟用後，使用者重新啟動 Codex，仍以 `$autobricks:web-to-bricks` 或 `$autobricks:setup` 呼叫技能；Codex 此時讀取的是安裝副本。
 
 > [!TIP]
-> `.codex-plugin/plugin.json` 指定 plugin 的技能目錄。安裝版本使用快取副本；修改原始碼後需更新安裝內容。指定分支、專案啟用與更新步驟見 [Codex 安裝說明](doc/codex-plugin.md)。
+> `.codex-plugin/plugin.json` 指定 plugin 的技能目錄。安裝版本使用快取副本；修改原始碼後需更新安裝內容。指定分支、專案啟用與更新步驟見 [doc/codex-plugin.md](doc/codex-plugin.md)。
 
 ## 共用規則與模型比較
 
@@ -108,29 +108,28 @@ Agent 產品從載入的 `SKILL.md` 位置向上辨識 AutoBricks 根目錄，�
 
 使用者選擇模型與推理強度；Agent 產品依原站的內容、版型與動態行為決定量測方法、重建步驟，以及是否需要分工。AutoBricks 的共用規則不綁定特定模型或固定分工流程。
 
-環境使用 [uv](https://docs.astral.sh/uv/)、Chrome CDP、Docker WordPress 與已授權的 Bricks theme；本機預覽網址是 `http://localhost:8080`。安裝細節見 [Docker 說明](docker/README.md) 與 [教學](doc/tutorial.md)。
+環境使用 uv（[docs.astral.sh/uv/](https://docs.astral.sh/uv/)）、Chrome CDP、Docker WordPress 與已授權的 Bricks theme；本機預覽網址是 `http://localhost:8080`。安裝細節見 [docker/README.md](docker/README.md) 與 [doc/tutorial.md](doc/tutorial.md)。
 
 ## 工具與產物
 
 - `src/validate_template.py`：Agent 產品執行 `uv run python src/validate_template.py <template.json>`，檢查模板元素欄位與引用關係。
 - `src/extract_bricks_schema.py`：需要時從已安裝的 Bricks theme 查欄位。
-- [src/browser.mjs](src/browser.mjs)：各 Agent 產品共用的 CDP 小工具，Node 22+；用法見 [瀏覽器工具說明](doc/browser.md)。
-- `docker/`：測試環境與推送工具；`templates/`：Chrome 啟動範本。
-- `data/<run>/`：各次 JSON、素材、量測和截圖；`.browser/`：瀏覽器 profile。執行產物、登入資料與商業 theme 不納入 Git。
+- `src/browser.mjs`：各 Agent 產品共用的 CDP 小工具，Node 22+；用法見 [doc/browser.md](doc/browser.md)。
+- `docker/`：測試環境與推送工具。
+- `templates/`：Chrome 啟動範本。
+- `data/<run>/`：各次 JSON、素材、量測和截圖。
+- `.browser/`：瀏覽器 profile。
 
-Agent 產品應依目標環境已安裝的 Bricks 版本與實際渲染確認元素設定；版本相關經驗按需查 [匯入備忘](skills/web-to-bricks/references/bricks-import.md)，不能直接套用至其他版本。
+執行產物、登入資料與商業 theme 不納入 Git。
 
-## 方法草稿
+Agent 產品依目標環境已安裝的 Bricks 版本與實際渲染確認元素設定，將已驗證的版本與環境細節記錄在使用者工作專案根目錄的 `bricks-import.md`。此檔案由各工作專案建立及維護，不納入 Git，也不隨 plugin 發行。
 
-[網頁觀察、轉換與驗收方法](doc/web-reconstruction-method.md) 說明 CDP 操作、截圖分析、RWD、動畫、Bricks 轉換及驗收時的判斷方式，供使用者檢閱與比較 Agent 產品。本文尚未併入 skill；實作時仍依當站情況選擇合適方法。
+## 重建方法
 
-## 實驗紀錄與還原點
+`web-to-bricks` 技能正文包含網站觀察、CDP 操作、元素量測、截圖分析、RWD、動畫、Bricks 轉換、正常匯入及可編輯性驗收的方法，並列明執行產物的存放位置。Agent 產品依當站問題選擇合適方法，依原站內容與行為驗收成果。
 
-- [Cyberpunk 重建](doc/codex-cyberpunk-experiment.md)
-- [牛耳心境莊園重建](doc/codex-newer-art-experiment.md)
-- [既有流程效能分析](doc/performance-review-20260914.md)
-- `d68bd9b`：同步前完整現況，包含舊 Claude skill、工人定義與 Codex 實驗成果。
-- [舊流程設計理由](doc/replica-rationale.md) 僅供查歷史，不是現行執行規則。
+- Claude Code：[skills/web-to-bricks/SKILL.md](skills/web-to-bricks/SKILL.md)
+- Codex：[.agents/skills/web-to-bricks/SKILL.md](.agents/skills/web-to-bricks/SKILL.md)
 
 ## 使用範圍
 

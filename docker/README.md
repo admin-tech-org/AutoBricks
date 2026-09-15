@@ -15,8 +15,7 @@ Agent 產品使用本機 WordPress + MariaDB + Bricks 渲染重建頁面，檢�
 
 完成後：站台 http://localhost:8080、後台 `admin` / `admin`。冪等、可重跑。
 
-> Bricks 授權金鑰：本機測試不啟用也能用 builder；要收更新/內建模板庫再到後台
-> Bricks → License 啟用。
+> 使用者依目標 Bricks 版本與後台提示確認授權狀態。Agent 產品需實際確認編輯器可開啟，不能只以 theme 已啟用判定環境就緒。
 
 ## 常用操作
 
@@ -40,7 +39,7 @@ MSYS_NO_PATHCONV=1 docker exec -e TEMPLATE=/tmp/template.json -e TITLE="測試�
 # → 印出 PAGE_ID 與 permalink；加 -e PAGE_ID=<n> 才會覆寫既有頁
 ```
 
-直接寫入頁面可供開發預覽；交付前，Agent 產品仍需確認模板經 Bricks 匯入器匯入後的內容、樣式與素材，詳見 [匯入備忘](../skills/web-to-bricks/references/bricks-import.md)。
+直接寫入頁面可供開發預覽。交付前，Agent 產品仍需確認模板經 Bricks 匯入器匯入後的內容、樣式與素材，並查閱使用者工作專案根目錄的 `bricks-import.md` 核對版本與環境細節。檔案不存在或版本不符時，Agent 產品依當前已安裝的 Bricks 原始碼與實測建立或更新筆記。
 
 ## 操作注意
 

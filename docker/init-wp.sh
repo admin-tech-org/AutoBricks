@@ -41,4 +41,4 @@ echo
 echo "== 環境就緒 =="
 echo "  站台   : http://localhost:8080"
 echo "  後台   : http://localhost:8080/wp-admin   (admin / admin)"
-echo "  推模板 : /autobricks:clone 會自動推；手動流程見 docker/README.md"
+echo "  重建頁面 : 使用 web-to-bricks 技能；手動推送流程見 docker/README.md"

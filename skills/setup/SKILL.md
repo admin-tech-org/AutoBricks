@@ -13,7 +13,12 @@ description: 在使用者明確要求時，檢查、安裝或修復 AutoBricks �
 ## 步驟
 
 ### 1. 取得 plugin 根目錄
-Agent 產品從目前載入的 skill 絕對路徑向上尋找同時包含 `pyproject.toml` 與 `docker/push-template.php` 的 AutoBricks 根目錄，後續以 `<PLUGIN_ROOT>` 代稱，並讀取該目錄的 `AGENTS.md`。`<PROJECT_ROOT>` 是使用者的工作目錄，供存放環境與執行產物。
+- `<PLUGIN_ROOT>`：Agent 產品從目前載入的 skill 絕對路徑向上尋找，同時包含 `pyproject.toml` 與 `docker/push-template.php` 的 AutoBricks 根目錄，供取得工具與範本。
+- `<PROJECT_ROOT>`：使用者指定的工作專案根目錄，未另行指定時使用當前對話的工作專案，不以 skill 所在目錄推定。
+- 瀏覽器啟動腳本、`cdp.env` 與 profile 存在 `<PROJECT_ROOT>/.browser/`，Python 虛擬環境存在 `<PROJECT_ROOT>/.autobricks/venv/`。
+- 首次建置的 Docker 設定存在 `<PROJECT_ROOT>/.autobricks/docker/`，WordPress 檔案存在其中的 `wp/`。MariaDB 資料由 Docker 的 `db_data` named volume 保存。既有 WP 環境保留原位置，不搬移或覆蓋。
+- 重建成果、素材、量測、截圖與當次腳本存在 `<PROJECT_ROOT>/data/<run>/`，版本筆記存在 `<PROJECT_ROOT>/bricks-import.md`。環境與執行產物不得寫入 plugin 安裝快取。
+
 Agent 產品以載入檔案的位置辨識 plugin 根目錄，不依賴 Agent 產品專用的環境變數。直接使用專案 skill 或使用安裝副本時，均採用此方式。
 
 ### 2. 確認作業系統

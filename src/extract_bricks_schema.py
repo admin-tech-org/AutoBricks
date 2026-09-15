@@ -4,7 +4,7 @@
 原理：每個 element 是一個 PHP class（includes/elements/*.php），
 `$this->controls['key']` 的定義就是該 element 的 settings schema——
 掃描原始碼把「element 名 → 可用 settings key 清單」抽成 JSON，
-供 clone skill 查欄位存在性、供 validate_template.py --live-schema 做逐鍵檢查。
+供 web-to-bricks skill 查欄位存在性、供 validate_template.py --live-schema 做逐鍵檢查。
 
 用法：
   uv run python src/extract_bricks_schema.py [--theme-dir DIR] [--out FILE]

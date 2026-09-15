@@ -9,7 +9,7 @@ __pycache__/
 .autobricks/
 tmp/
 data/
-bricks-gotchas.local.md
+/bricks-import.md
 
 # Docker 本機環境：wp 是 bind mount（含商業的 Bricks theme，絕不進版控）
 docker/wp/
