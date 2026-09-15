@@ -19,8 +19,9 @@ bricks_src/
 .env
 .env.*
 
-# Claude 本機設定
+# Agent 產品的本機設定（不隨專案發行）
 .claude/settings.local.json
+/.codex/config.toml
 
 # OS / editor cruft
 .DS_Store

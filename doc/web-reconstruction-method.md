@@ -24,7 +24,7 @@ Agent 產品可以先留下簡短觀察，例如「桌面導覽在主視覺下�
 
 ## 用 CDP 操作瀏覽器與取得畫面
 
-CDP 是 Chrome 提供的控制介面。[共用 `browser.mjs`](../.codex/tools/browser.mjs) 是 Node 工具，直接連線 Chrome；雖然檔案位於 `.codex/tools/`，能執行 Node 的 Agent 產品都可使用。這條操作路徑不需要另外安裝 Playwright 或 MCP。
+CDP 是 Chrome 提供的控制介面。[共用 `src/browser.mjs`](../src/browser.mjs) 是 Node 工具，直接連線 Chrome，能執行 Node 的 Agent 產品都可使用。這條操作路徑不需要另外安裝 Playwright 或 MCP，指令用法見 [瀏覽器工具說明](browser.md)。
 
 Agent 產品先確認 Chrome 已提供 CDP 連線。`browser.mjs` 的 `open` 只會在既有 Chrome 建立分頁，不會啟動 Chrome 程式。需要啟動時，可參考 [Windows 範本](../templates/launch-chrome-cdp.bat) 或 [macOS／Linux 範本](../templates/launch-chrome-cdp.sh)，將 profile 放在使用者工作目錄的 `.browser/`。Headless Chrome 可在背景渲染；需要使用者登入或觀看操作時，可使用有視窗的 Chrome。
 
@@ -34,7 +34,7 @@ Agent 產品先確認 Chrome 已提供 CDP 連線。`browser.mjs` 的 `open` 只
 
 ```powershell
 $pluginRoot = 'C:\path\to\AutoBricks'
-$browserTool = Join-Path $pluginRoot '.codex/tools/browser.mjs'
+$browserTool = Join-Path $pluginRoot 'src/browser.mjs'
 $runDir = Join-Path (Get-Location).Path 'data/example'
 $env:AUTOBRICKS_CDP = 'http://127.0.0.1:9444'
 Invoke-RestMethod "$env:AUTOBRICKS_CDP/json/version"

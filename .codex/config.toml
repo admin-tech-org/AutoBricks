@@ -1,9 +1,0 @@
-# AutoBricks project configuration.
-# Keep the user's model, reasoning, permissions and tool defaults.
-# Project instructions: ../AGENTS.md
-# Discoverable local skill: ../.agents/skills/web-to-bricks/SKILL.md
-# Codex config: https://learn.chatgpt.com/docs/config-file/config-basic
-
-[plugins."autobricks@autobricks"]
-# Develop against the project's .agents/skills/; keep the installed snapshot disabled.
-enabled = false

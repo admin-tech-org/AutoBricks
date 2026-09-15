@@ -31,7 +31,7 @@ HUD、SVG 裝飾與靜態程式碼展示有合併 HTML。FAQ 改用原生 detail
 
 驗證器的欄位警告主要是繼承 controls 的 tag／customTag 未被靜態 schema 掃描辨識；這次已由實際 HTML 與正式匯入驗證。深度警告是成立的，沒有把它消音，也沒有因此無限壓平結構。
 
-專案新增的 [AGENTS.md](../AGENTS.md) 只有 12 行；[skill](../.agents/skills/web-to-bricks/SKILL.md) 只有 23 行；[.codex](../.codex/README.md) 保存 CDP 小工具，設定不覆蓋使用者模型與權限。詳細擷取、build.py、push.py、source-map、量測與截圖放在 git 忽略的 `data/codex-cyberpunk-20260914/`。
+實驗當時新增的 [AGENTS.md](../AGENTS.md) 只有 12 行；[skill](../.agents/skills/web-to-bricks/SKILL.md) 只有 23 行；CDP 小工具當時放在 `.codex/`，目前共用工具位於 [src/browser.mjs](../src/browser.mjs)，專案設定不覆蓋使用者模型與權限。詳細擷取、build.py、push.py、source-map、量測與截圖放在 git 忽略的 `data/codex-cyberpunk-20260914/`。
 
 這次支持的判斷是：先取得可看的整頁，再依實際差異處理 Bricks 相容性，可以明顯減少前置流程。若下一步要求更乾淨的編輯樹與更少 CSS，應把那項工作另外量測，避免把視覺接近和完全原生化混成同一個無止境的目標。
 
