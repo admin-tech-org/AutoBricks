@@ -103,7 +103,7 @@ uv run --no-project python "<PLUGIN_ROOT>/src/extract_bricks_schema.py" --theme-
 uv run --no-project python "<PLUGIN_ROOT>/src/validate_template.py" "<RUN_DIR>/output/template.json" --live-schema "<RUN_DIR>/tmp/measurements/bricks-schema.json"
 ```
 
-驗證器檢查元素 ID、父子引用及部分設定。未載入 live schema 時，元素名稱與設定欄位的相關檢查會略過。原始碼掃描也可能漏掉繼承或動態建立的欄位，結果需配合 theme 原始碼與實測判讀。
+驗證器檢查元素 ID、父子引用及部分設定。未載入 live schema 時，元素名稱與設定欄位的相關檢查會略過。原始碼掃描會合併可辨識的父類別欄位，但不執行 PHP，動態組裝、條件與覆寫的結果仍需配合 theme 原始碼與實測判讀。
 
 驗證器另有基於 Bricks 1.12.x 經驗的固定檢查，這些檢查不會因傳入其他版本的 schema 就自動改變。跨版本使用時，Agent 產品需核對相關訊息的適用性。格式檢查通過也不代表正常匯入、外觀、動畫或可編輯性已通過。
 

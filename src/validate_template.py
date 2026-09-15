@@ -8,7 +8,7 @@ Agent 產品依 web-to-bricks skill 檢查 template.json，並另行驗證正常
   3. 圖：parent/children 互相一致、無懸空引用、無環、皆可從根到達
   4. element name 與 settings 欄位：對照 --live-schema 指定的原始碼掃描結果，
      由呼叫端指定當次任務的 tmp/measurements/bricks-schema.json；未指定就略過相關檢查。
-     掃描可能漏掉繼承或動態產生的欄位，需配合已安裝 theme 與實測判讀。
+     掃描包含可辨識的父類別欄位，但不執行 PHP；動態組裝、條件與覆寫仍需配合 theme 與實測判讀。
   5. 固定形狀檢查（基於 1.12.x 經驗，不隨 live schema 切換；版本筆記見使用者專案的 bricks-import.md）：
      _boxShadow 必須 object、_gradient 必須 object、_background 不可是字串、
      _cssCustom 含 %root% 直接判 error（1.12.x 實證不替換）、font-family 帶逗號警告、

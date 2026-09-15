@@ -27,6 +27,7 @@ node "<PLUGIN_ROOT>/src/browser.mjs" open https://example.com "<RUN_DIR>/tmp/scr
 | `list` | 列出 Chrome 的 CDP targets，包含分頁 ID |
 | `open URL OUTPUT_DIR` | 建立分頁、載入網址，保存 `browser.json` 與 `first.png` |
 | `eval TARGET FILE [OUTPUT]` | 在分頁執行 JavaScript 檔案，輸出回傳值或保存為 JSON |
+| `wait TARGET FILE [TIMEOUT_MS]` | 重複檢查 JavaScript 檔案的條件，回傳 `true` 才完成，預設上限 15000ms，逾時以失敗結束 |
 | `shot TARGET PNG [Y] [WIDTH]` | 捲動至 Y、指定視窗寬度，保存視窗截圖 |
 | `click TARGET SELECTOR` | 將符合 CSS 選擇器的元素捲入畫面，再點擊中心位置 |
 | `hover TARGET SELECTOR` | 將符合 CSS 選擇器的元素捲入畫面，再將滑鼠移至中心位置 |
@@ -38,3 +39,27 @@ node "<PLUGIN_ROOT>/src/browser.mjs" open https://example.com "<RUN_DIR>/tmp/scr
 `survey` 依賴原站的 `header`、`section`、`footer` 結構，並含特定頁型的狀態處理。Agent 產品需先確認當站適用；不適用時使用 `eval`、`shot` 或 `cdp` 取得所需資料。
 
 同一分頁的載入、改寬、捲動、操作與截圖需依序進行。Agent 產品取得 PNG 後，仍需以圖片檢視工具開啟並檢查畫面；工具執行成功不等於頁面驗收通過。
+
+## 確認操作完成
+
+- `open` 等待新文件的載入事件與字型載入結束，逾時會報錯。這不代表動態內容、圖片素材或應用程式已驗證正確。
+- `click`、`hover` 回報輸入事件已送出。Agent 產品依當站操作選擇完成條件，例如選單已展開、匯入結果已出現、編輯器已顯示修改後的內容，再執行量測或截圖。
+- `wait` 的檔案只檢查狀態，須能重複執行，不在其中點擊、送出表單或匯入。工具支援 Promise，遇到導頁造成的執行環境失效會重試，其他程式錯誤直接回報。逾時表示尚未確認完成，Agent 產品需檢查條件與頁面狀態。
+
+例如將以下內容存成 `<RUN_DIR>/tmp/scripts/menu-ready.js`，選擇器與預期狀態依當站替換：
+
+```javascript
+document.querySelector('button[aria-controls="menu"]')?.getAttribute('aria-expanded') === 'true'
+```
+
+```text
+node "<PLUGIN_ROOT>/src/browser.mjs" wait "<TARGET>" "<RUN_DIR>/tmp/scripts/menu-ready.js" 10000
+```
+
+工具會將操作中的分頁帶到前景。Agent 產品檢查動畫或依賴計時器的行為時，避免同時操作其他分頁，以免背景節流影響觀察。
+
+`cdp` 接受檔案路徑。需要其他 CDP 方法時，將請求存成 JSON 陣列，再執行 `cdp TARGET REQUESTS.json`，例如設定視窗尺寸：
+
+```json
+[{"method":"Emulation.setDeviceMetricsOverride","params":{"width":390,"height":844,"deviceScaleFactor":1,"mobile":false}}]
+```
