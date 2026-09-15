@@ -9,8 +9,8 @@ Agent 產品以原站的內容、版型、RWD、互動與動畫作為重建及�
 ## 規則與技能
 
 - 本檔是各 Agent 產品共用的工作規則。Claude Code 透過 `CLAUDE.md` 引用本檔。
-- `skills/` 與 `.agents/skills/` 各提供同名、同內容的 `web-to-bricks` 與 `setup` 技能。維護者同步兩邊的技能與參考文件。
-- Agent 產品執行網頁重建時，載入當次來源的 `web-to-bricks`。
+- `skills/` 與 `.agents/skills/` 各提供同名、同內容的 `web-page-to-bricks` 與 `setup` 技能。維護者同步兩邊的技能與參考文件。
+- Agent 產品執行網頁重建時，載入當次來源的 `web-page-to-bricks`。
 - 使用者明確要求環境檢查或安裝時，Agent 產品才載入 `setup`。
 
 ## 工具與執行產物

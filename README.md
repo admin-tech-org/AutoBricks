@@ -27,14 +27,14 @@ claude --plugin-dir .
 Claude Code 啟動後，使用者在 **Claude Code 對話框**指定要測試的技能與目標網頁：
 
 ```text
-請讀取目前專案的 skills/web-to-bricks/SKILL.md，依該技能重建 <參考網頁網址>，保留 RWD。
+請讀取目前專案的 skills/web-page-to-bricks/SKILL.md，依該技能重建 <參考網頁網址>，保留 RWD。
 ```
 
 使用者也可在 **Claude Code 對話框**直接輸入技能指令：
 
 | 使用者要執行的工作 | 對話指令 | Claude Code 讀取的說明 |
 |---|---|---|
-| 重建指定網頁 | `/autobricks:web-to-bricks <參考網頁網址>` | [skills/web-to-bricks/SKILL.md](skills/web-to-bricks/SKILL.md) |
+| 重建指定網頁 | `/autobricks:web-page-to-bricks <參考網頁網址>` | [skills/web-page-to-bricks/SKILL.md](skills/web-page-to-bricks/SKILL.md) |
 | 檢查或安裝本機測試環境 | `/autobricks:setup` | [skills/setup/SKILL.md](skills/setup/SKILL.md) |
 
 ### 發行階段：將技能與工具提供為可安裝的 plugin
@@ -46,7 +46,7 @@ Claude Code 啟動後，使用者在 **Claude Code 對話框**指定要測試的
 /plugin install autobricks@autobricks
 ```
 
-安裝完成後，使用者仍以 `/autobricks:web-to-bricks` 或 `/autobricks:setup` 呼叫技能；Claude Code 此時讀取的是安裝副本。
+安裝完成後，使用者仍以 `/autobricks:web-page-to-bricks` 或 `/autobricks:setup` 呼叫技能；Claude Code 此時讀取的是安裝副本。
 
 ## 使用 Codex
 
@@ -63,14 +63,14 @@ codex -C .
 Codex 啟動後，使用者在 **Codex 對話框**指定要測試的技能與目標網頁：
 
 ```text
-請讀取目前專案的 .agents/skills/web-to-bricks/SKILL.md，依該技能重建 <參考網頁網址>，保留 RWD。
+請讀取目前專案的 .agents/skills/web-page-to-bricks/SKILL.md，依該技能重建 <參考網頁網址>，保留 RWD。
 ```
 
 使用者也可在 **Codex 對話框**直接輸入技能指令：
 
 | 使用者要執行的工作 | 對話指令 | Codex 讀取的說明 |
 |---|---|---|
-| 重建指定網頁 | `$autobricks:web-to-bricks <參考網頁網址>` | [.agents/skills/web-to-bricks/SKILL.md](.agents/skills/web-to-bricks/SKILL.md) |
+| 重建指定網頁 | `$autobricks:web-page-to-bricks <參考網頁網址>` | [.agents/skills/web-page-to-bricks/SKILL.md](.agents/skills/web-page-to-bricks/SKILL.md) |
 | 檢查或安裝本機測試環境 | `$autobricks:setup` | [.agents/skills/setup/SKILL.md](.agents/skills/setup/SKILL.md) |
 
 > [!TIP]
@@ -85,7 +85,7 @@ codex plugin marketplace add admin-tech-org/AutoBricks
 codex plugin add autobricks@autobricks
 ```
 
-安裝並啟用後，使用者重新啟動 Codex，仍以 `$autobricks:web-to-bricks` 或 `$autobricks:setup` 呼叫技能；Codex 此時讀取的是安裝副本。
+安裝並啟用後，使用者重新啟動 Codex，仍以 `$autobricks:web-page-to-bricks` 或 `$autobricks:setup` 呼叫技能；Codex 此時讀取的是安裝副本。
 
 > [!TIP]
 > `.codex-plugin/plugin.json` 指定 plugin 的技能目錄。安裝版本使用快取副本；修改原始碼後需更新安裝內容。指定分支、專案啟用與更新步驟見 [doc/codex-plugin.md](doc/codex-plugin.md)。
@@ -99,7 +99,7 @@ codex plugin add autobricks@autobricks
 
 兩種 Agent 產品使用同名、同內容的技能：
 
-- **`web-to-bricks`**：負責網頁重建。
+- **`web-page-to-bricks`**：負責單一網頁的重建與驗收。
 - **`setup`**：在使用者明確要求時檢查或安裝環境。
 
 維護者在 `skills/` 與 `.agents/skills/` 各保留一份，修改後同步技能與參考文件。
@@ -114,7 +114,7 @@ Agent 產品從載入的 `SKILL.md` 位置向上辨識 AutoBricks 根目錄，�
 
 - `src/validate_template.py`：Agent 產品執行 `uv run python src/validate_template.py <template.json>`，檢查模板元素欄位與引用關係。
 - `src/extract_bricks_schema.py`：需要時從已安裝的 Bricks theme 查欄位。
-- `src/browser.mjs`：各 Agent 產品共用的 CDP 小工具，Node 22+；用法見 [skills/web-to-bricks/references/browser.md](skills/web-to-bricks/references/browser.md)。
+- `src/browser.mjs`：各 Agent 產品共用的 CDP 小工具，Node 22+；用法見 [skills/web-page-to-bricks/references/browser.md](skills/web-page-to-bricks/references/browser.md)。
 - `docker/`：測試環境範本與推送工具。
 - `.autobricks/docker/`：工作專案的 Docker 設定與 WordPress 檔案，開發與安裝 plugin 時皆使用此位置。
 - `templates/`：Chrome 啟動範本。
@@ -137,10 +137,10 @@ Agent 產品依目標環境已安裝的 Bricks 版本與實際渲染確認元素
 
 ## 重建方法
 
-`web-to-bricks` 技能正文包含網站觀察、CDP 操作、元素量測、截圖分析、RWD、動畫、Bricks 轉換、正常匯入及可編輯性驗收的方法，並列明執行產物的存放位置。Agent 產品依當站問題選擇合適方法，依原站內容與行為驗收成果。
+`web-page-to-bricks` 技能正文包含網站觀察、CDP 操作、元素量測、截圖分析、RWD、動畫、Bricks 轉換、正常匯入及可編輯性驗收的方法，並列明執行產物的存放位置。Agent 產品依當站問題選擇合適方法，依原站內容與行為驗收成果。
 
-- Claude Code：[skills/web-to-bricks/SKILL.md](skills/web-to-bricks/SKILL.md)
-- Codex：[.agents/skills/web-to-bricks/SKILL.md](.agents/skills/web-to-bricks/SKILL.md)
+- Claude Code：[skills/web-page-to-bricks/SKILL.md](skills/web-page-to-bricks/SKILL.md)
+- Codex：[.agents/skills/web-page-to-bricks/SKILL.md](.agents/skills/web-page-to-bricks/SKILL.md)
 
 ## 使用範圍
 

@@ -3,7 +3,7 @@
 原理：每個 element 是一個 PHP class（includes/elements/*.php），
 掃描 `$this->controls['key']` 的直接賦值，沿 PHP class 繼承關係合併父類別欄位，
 把「element 名 → 候選 settings key 清單」抽成 JSON，
-供 web-to-bricks skill 查欄位存在性、供 validate_template.py --live-schema 做逐鍵檢查。
+供 web-page-to-bricks skill 查欄位存在性、供 validate_template.py --live-schema 做逐鍵檢查。
 這是靜態掃描，不執行 PHP。動態組裝、條件判斷、方法覆寫或移除欄位仍需查原始碼與實測。
 
 用法：

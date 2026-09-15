@@ -12,9 +12,9 @@
 | 工作 | Claude Code | Codex |
 | --- | --- | --- |
 | 檢查、安裝或修復環境 | [skills/setup/SKILL.md](../skills/setup/SKILL.md) | [.agents/skills/setup/SKILL.md](../.agents/skills/setup/SKILL.md) |
-| 觀察參考網站、重建及驗收 | [skills/web-to-bricks/SKILL.md](../skills/web-to-bricks/SKILL.md) | [.agents/skills/web-to-bricks/SKILL.md](../.agents/skills/web-to-bricks/SKILL.md) |
+| 觀察參考網站、重建及驗收 | [skills/web-page-to-bricks/SKILL.md](../skills/web-page-to-bricks/SKILL.md) | [.agents/skills/web-page-to-bricks/SKILL.md](../.agents/skills/web-page-to-bricks/SKILL.md) |
 
-兩套技能的內容相同。使用者明確要求環境檢查或安裝時，Agent 產品才使用 `setup`。網站觀察、CDP 操作、RWD、動畫及驗收的方法由 `web-to-bricks` 說明，共用工作規則見 [AGENTS.md](../AGENTS.md)。
+兩套技能的內容相同。使用者明確要求環境檢查或安裝時，Agent 產品才使用 `setup`。網站觀察、CDP 操作、RWD、動畫及驗收的方法由 `web-page-to-bricks` 說明，共用工作規則見 [AGENTS.md](../AGENTS.md)。
 
 ## 2. 確認工具與資料位置
 
@@ -60,7 +60,7 @@ docker compose -f "<WP_DIR>/docker-compose.yml" up -d
 docker compose -f "<WP_DIR>/docker-compose.yml" ps
 ```
 
-Chrome CDP 的連線方式與指令見 [skills/web-to-bricks/references/browser.md](../skills/web-to-bricks/references/browser.md)。瀏覽器與工具的連線埠需一致，Agent 產品取得截圖後仍需實際開啟圖片檢查。
+Chrome CDP 的連線方式與指令見 [skills/web-page-to-bricks/references/browser.md](../skills/web-page-to-bricks/references/browser.md)。瀏覽器與工具的連線埠需一致，Agent 產品取得截圖後仍需實際開啟圖片檢查。
 
 ## 4. 在 Bricks 開啟與編輯頁面
 

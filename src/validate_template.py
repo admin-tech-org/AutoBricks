@@ -1,6 +1,6 @@
 """AutoBricks 模板驗證器 — 檢查 JSON 結構與部分 Bricks 設定。
 
-Agent 產品依 web-to-bricks skill 檢查 template.json，並另行驗證正常匯入與實際頁面。
+Agent 產品依 web-page-to-bricks skill 檢查 template.json，並另行驗證正常匯入與實際頁面。
 只用標準函式庫。檢查層次：
 
   1. 信封：{id, name, parent, children, settings}（component 實例以 cid 識別、放寬 name）

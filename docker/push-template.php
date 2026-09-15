@@ -1,6 +1,6 @@
 <?php
 /**
- * 把 Bricks template JSON 寫進 WordPress 測試頁面（於容器內執行，供 web-to-bricks 開發預覽）。
+ * 把 Bricks template JSON 寫進 WordPress 測試頁面（於容器內執行，供 web-page-to-bricks 開發預覽）。
  *
  * 用法（host 端）：
  *   MSYS_NO_PATHCONV=1 docker cp template.json autobricks-wp:/tmp/template.json

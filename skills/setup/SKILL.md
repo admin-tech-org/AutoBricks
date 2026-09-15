@@ -52,7 +52,7 @@ UV_PROJECT_ENVIRONMENT="<PROJECT_ROOT>/.autobricks/venv" uv sync --project "<PLU
 ```
 
 ### 5. 準備 Chrome CDP 連線
-Agent 產品透過 Chrome CDP 觀察原站或 WP 預覽的內容、排版與互動，可使用現有的 CDP 工具或共用的 `<PLUGIN_ROOT>/src/browser.mjs`。共用工具的連線方式見 [../web-to-bricks/references/browser.md](../web-to-bricks/references/browser.md)。啟動腳本的預設埠為 9222，Agent 產品需確認瀏覽器與所用工具設定的埠一致。
+Agent 產品透過 Chrome CDP 觀察原站或 WP 預覽的內容、排版與互動，可使用現有的 CDP 工具或共用的 `<PLUGIN_ROOT>/src/browser.mjs`。共用工具的連線方式見 [../web-page-to-bricks/references/browser.md](../web-page-to-bricks/references/browser.md)。啟動腳本的預設埠為 9222，Agent 產品需確認瀏覽器與所用工具設定的埠一致。
 
 1. **Agent 產品將啟動腳本放進使用者專案的 `.browser/`**，讓瀏覽器 profile 與登入資料留在該專案：
    ```bash
@@ -90,4 +90,4 @@ Agent 產品需要本機 WordPress + Bricks 實際渲染重建頁面，檢查模
 ### 7. 回報
 Agent 產品向使用者回報 uv 與 Node 版本、Python 虛擬環境、CDP 連線位址、WP 預覽網址、Bricks 是否啟用，以及實際安裝或調整的環境項目。尚未完成的項目需分別列出。
 
-環境就緒後，使用者可呼叫 `web-to-bricks` 技能並提供參考網址。Agent 產品依該技能觀察原站、轉換內容與版型，再檢查 Bricks 成品。
+環境就緒後，使用者可呼叫 `web-page-to-bricks` 技能並提供參考網址。Agent 產品依該技能觀察原站、轉換內容與版型，再檢查 Bricks 成品。

@@ -1,14 +1,14 @@
 ---
-name: web-to-bricks
-description: 將使用者指定的參考網頁內容與版型轉為可匯入、可編輯的 WordPress Bricks JSON，並在本機 Docker WordPress 比對外觀、RWD、互動與素材。用於網頁重建實作，不用於純程式審查。
+name: web-page-to-bricks
+description: 將使用者指定的單一參考網頁內容與版型轉為可匯入、可編輯的 WordPress Bricks JSON，並在本機 Docker WordPress 比對外觀、RWD、互動與素材。用於單一網頁重建實作，不用於純程式審查。
 ---
 
-# web-to-bricks
+# web-page-to-bricks
 
 - **Agent 產品**：Claude Code、Codex 等可使用工具執行任務的 AI 助理軟體。
 - **使用者**：提出需求、指定參考網頁並接收成品的人。
 
-Agent 產品將使用者指定的參考網頁重建成可匯入 WordPress Bricks 的 JSON，讓使用者能在 Bricks 修改文字、圖片與排版。原站的內容、外觀、RWD、互動與動畫都是重建及驗收依據，不能因靜態首版已接近原站就視為完成。
+Agent 產品將使用者指定的單一參考網頁重建成可匯入 WordPress Bricks 的 JSON，讓使用者能在 Bricks 修改文字、圖片與排版。原站的內容、外觀、RWD、互動與動畫都是重建及驗收依據，不能因靜態首版已接近原站就視為完成。
 
 下列方法用來支持觀察、轉換與驗收的判斷。Agent 產品依當站問題選擇資料來源與工具，可在觀察、實作和驗證之間往返，不預設並行任務數、固定分區或全屬性掃描。網站結構不同時，Agent 產品重新選擇適合當站的方法。
 
