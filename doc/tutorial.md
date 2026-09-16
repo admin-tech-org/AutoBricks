@@ -74,7 +74,7 @@ Chrome CDP 的連線方式與指令見 [skills/web-page-to-bricks/references/bro
 
 選中元素後，使用者應能辨認元素名稱、所在容器及可修改欄位。自訂 CSS 或程式碼控制的部分，由 Agent 產品在交付總結標示修改位置。
 
-額外的 CSS、JS 與必要程式庫在 Code Snippets 後台維護，交付包提供免費版可用的 PHP 片段。圖片、影片、字型等素材放在 uploads。`snippets/` 是交付時的可讀副本，後台修改不會自動回寫這些檔案，使用者可從 Code Snippets 重新匯出保存。
+額外的 CSS、JS 與必要程式庫在 Code Snippets 後台維護，免費版與 Pro 版均使用 PHP 類別。使用者修改 PHP 片段內的 CSS／JS，保留外層頁面判斷，修改後可從 Code Snippets 重新匯出保存。`snippets/` 只保留交付時的 PHP 可讀副本。圖片、影片、字型等素材放在 uploads。
 
 ## 5. 模板 JSON 如何成為頁面
 
@@ -96,7 +96,7 @@ Bricks 模板 JSON 描述元素、父子關係、內容與設定。Bricks 讀取
 
 1. 使用者以 `uv run` 執行 `replace-domain.py` 與 `rename-assets-folder.py`，按需更換部署網址及素材資料夾名稱。腳本可接續操作，產生部署副本並保留原始檔案，不直接修改遠端 WP。
 2. 使用者透過 File Manager、SSH／SFTP 等方式，將部署副本的 `assets/<asset-folder>/` 整個子資料夾上傳至 `wp-content/uploads/`。
-3. 使用者在 Code Snippets 匯入並啟用 `code-snippets.json` 的 PHP 片段。相同片段已啟用時不再啟用第二套，`snippets/` 內的可讀副本也不需另外上傳。
+3. 使用者在 Code Snippets 匯入並啟用 `code-snippets.json` 的 PHP 片段。相同片段已啟用時不再啟用第二套，`snippets/` 內的 PHP 副本也不需另外上傳。
 4. 使用者在 Bricks 後台模板管理入口匯入部署副本的 `template.json`，將模板插入頁面並套用頁面設定，使片段的作用條件生效，再檢查前台與編輯器。
 
 整個交付 ZIP 不能直接當作 Bricks 模板匯入。自製外掛與新增後端服務需另行規劃，表單等功能是否完成串接以 `report.md` 的實測結果為準。

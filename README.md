@@ -138,7 +138,7 @@ data/20260916-223015-codex-new_art_clone_web/
     ├── template.json
     ├── code-snippets.json
     ├── assets/new-art/           # 上傳至 uploads/ 的非程式碼素材
-    ├── snippets/                 # PHP 包裝與 CSS／JS 可讀副本
+    ├── snippets/                 # PHP 片段可讀副本
     ├── replace-domain.py
     ├── rename-assets-folder.py
     ├── report.md                 # 匯入教學、維護位置、耗時與驗收結果
@@ -148,6 +148,8 @@ data/20260916-223015-codex-new_art_clone_web/
 ```
 
 Agent 產品只交付一個 `YYYYMMDD-HHMMSS-<page-name>-bricks.zip`，包含上述交付檔案，ZIP 時間採打包時的本機時間。使用者先解壓，依 `report.md` 執行 `uv run` 部署腳本、上傳素材，再分別匯入 Code Snippets 與 Bricks。`comparison.html` 可離線查看實際截圖及驗收結果。整包 ZIP 不是直接匯入 Bricks 的模板 ZIP。
+
+Code Snippets 免費版與 Pro 版均使用 PHP 片段，CSS／JS 寫在片段內。`code-snippets.json` 用於匯入，`snippets/` 只保留對應的 PHP 可讀副本，不另交付獨立 CSS／JS 副本。
 
 專案根目錄的 [output_schema_version](output_schema_version) 第一行是版本號，後面列出交付結構與用途。Agent 產品將該檔原樣放入交付目錄與 ZIP。結構改版時才升版。
 

@@ -6,7 +6,7 @@ data/YYYYMMDD-HHMMSS-agent_product-task_name/
     ├── template.json                 # Bricks 模板與頁面設定
     ├── code-snippets.json            # PHP 片段匯入檔，無片段時清單為空
     ├── assets/<asset-folder>/        # 圖片、影片、字型等非程式碼素材
-    ├── snippets/                     # PHP 包裝與 CSS／JS 副本，可為空
+    ├── snippets/                     # PHP 片段可讀副本，可為空
     ├── replace-domain.py             # 更換部署網址
     ├── rename-assets-folder.py       # 更換素材資料夾名稱
     ├── report.md                     # 匯入教學、維護位置與驗收結果

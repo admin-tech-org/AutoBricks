@@ -157,9 +157,9 @@ Agent 產品綜合觀察與量測選擇轉換方式。原站 HTML／CSS 清楚�
 - 字型依字體、字重及分片辨識。Agent 產品保留來源與新名稱的對照於 `tmp/`，更名時維持素材內容與字型字元範圍對應，並同步更新模板及程式碼中的引用。
 - Agent 產品將圖片、SVG、影片、字型及文件等非程式碼素材放在 `output/assets/<asset-folder>/`，交付模板與 Snippets 的素材引用需對應包內檔案，不能只依賴測試站專有的附件網址或 ID。使用者首次部署時，透過 File Manager、SSH／SFTP 等方式將 `<asset-folder>` 整個上傳至 `wp-content/uploads/`。素材資料夾使用清楚、穩定的名稱，不需跟著交付 ZIP 的時間戳變更。
 - Agent 產品將原生內容與樣式保留在 Bricks 元素設定，將額外的自訂 CSS、JS 及必要程式庫存入 Code Snippets，依用途命名與拆分。使用者與接手的設計師可在 WP 後台維護程式碼，也能將程式碼交由 Agent 產品協助調整。程式碼不放入 uploads，也不以 Snippet 再引入 uploads 裡的程式檔。
-- Agent 產品為每份 CSS／JS 提供 PHP 包裝版本，讓 Code Snippets 免費版亦可載入。預設交付的 `code-snippets.json` 包含 PHP 片段，`snippets/` 保留對應 PHP 與可讀的 CSS／JS 副本。額外提供 Pro 原生格式時，Agent 產品標示為替代選項，不能同時啟用兩套。
+- Agent 產品將 CSS／JS 內嵌於 PHP 片段，免費版與 Pro 版均使用 PHP 類別。Agent 產品以同一份 PHP 內容產生 `code-snippets.json` 與 `snippets/*.php`，不另交付獨立 CSS／JS 副本或 Pro 專用格式。
 - Agent 產品先確認測試站已安裝並啟用 Code Snippets（免費版即可），缺少時依使用者已授權的環境變更範圍補齊，操作見 `<PLUGIN_ROOT>/docker/README.md`。
-- Agent 產品依實際安裝的 Code Snippets 版本確認匯入格式，以隨模板攜帶的頁面標記限制片段作用範圍，處理依賴與初始化順序，並驗證前台及 Bricks 編輯器預覽。Agent 產品在可用的免費版環境實測 PHP 包裝片段，未測的片段格式或外掛版本如實記錄，不把格式相容推定為實測通過。
+- Agent 產品依實際安裝的 Code Snippets 版本確認匯入格式，以隨模板攜帶的頁面標記限制片段作用範圍，處理依賴與初始化順序，並驗證前台及 Bricks 編輯器預覽。Agent 產品在可用的免費版環境實測 PHP 片段，未測的外掛版本如實記錄，不把格式相容推定為實測通過。
 
 ### 依本機 Bricks 版本確認設定
 
@@ -194,7 +194,7 @@ Agent 產品可用 `<PLUGIN_ROOT>/docker/push-template.php` 直接寫入測試�
 - **可編輯性**：在 Bricks 編輯器實際選取並試改代表性的文字、圖片與容器，確認欄位、媒體控制及預覽有效，測試後恢復交付內容。公開頁正常不代表編輯器正常。
 - **程式碼維護**：正常匯入並啟用 PHP 片段，確認 CSS／JS 不依賴 uploads 中的程式檔、只作用於指定頁面且沒有重複執行。Agent 產品在 Code Snippets 後台試改代表性樣式或互動，確認頁面更新後恢復交付內容。
 - **交付結構與片段歸屬**：依 [../check-schema-version/SKILL.md](../check-schema-version/SKILL.md) 檢查包內版本與結構。正常匯入後重新取得頁面設定與片段，確認頁面識別碼與片段 tag 仍相符，不單憑本機 JSON 判斷。
-- **部署副本**：從最終 ZIP 解壓後測試兩支 Python 腳本各自及接續執行的結果，檢查模板、Snippets、程式碼副本與實際素材路徑一致，版本檔及頁面識別碼保留，且原始包保留。正常匯入與瀏覽器驗收需對應包內的同一份模板及片段。
+- **部署副本**：從最終 ZIP 解壓後測試兩支 Python 腳本各自及接續執行的結果，檢查模板、Snippets 匯入檔、PHP 副本與實際素材路徑一致，版本檔及頁面識別碼保留，且原始包保留。正常匯入與瀏覽器驗收需對應包內的同一份模板及片段。
 
 Agent 產品對照原站的觀察紀錄檢查是否有遺漏。修正後重驗受影響的版型或互動，同一問題持續調整仍無改善時查明原因，必要時說明限制或缺少的條件，不把未通過改稱已完成，也不無限重複相同修正。
 
@@ -209,7 +209,7 @@ output_schema_version         # 交付結構版本與目錄說明
 template.json                 # Bricks 模板與頁面設定
 code-snippets.json            # Code Snippets PHP 片段匯入檔
 assets/<asset-folder>/        # 上傳至 uploads/ 的非程式碼素材
-snippets/                     # PHP 包裝與 CSS／JS 可讀副本，不上傳至 uploads/
+snippets/                     # PHP 片段可讀副本，不上傳至 uploads/
 replace-domain.py             # 更換部署網址
 rename-assets-folder.py       # 更換上傳用的素材資料夾名稱
 report.md                     # 匯入教學、維護位置與驗收結果
@@ -221,7 +221,7 @@ Agent 產品以 `<PLUGIN_ROOT>/output_schema_version` 為當次交付結構的�
 
 Agent 產品提供能在解壓目錄以 `uv run` 執行的兩支 Python 腳本，將實際指令寫入 `report.md`。腳本不依賴 AutoBricks 原始碼或 `tmp/`，可接續執行並產生部署副本，保留原始交付檔案，不直接修改遠端 WP：
 
-- `replace-domain.py` 接受目標站網址，將包內目前部署站的網址換成目標站網址，包含協定、網域、連接埠與站台子路徑，同步更新模板、Snippets 匯入檔與程式碼副本。腳本保留不屬於本包部署的外部連結。
+- `replace-domain.py` 接受目標站網址，將包內目前部署站的網址換成目標站網址，包含協定、網域、連接埠與站台子路徑，同步更新模板、Snippets 匯入檔與 PHP 副本。腳本保留不屬於本包部署的外部連結。
 - `rename-assets-folder.py` 接受新的素材資料夾名稱，重新命名部署副本的 `assets/<asset-folder>/`，並同步更新上述檔案中的素材路徑。名稱不得造成目錄越界或覆蓋既有素材。
 
 兩支腳本均保留版本檔及頁面識別碼。Agent 產品在報告說明部署副本的用途，不以省略驗收證據的部署副本取代完整交付包。
@@ -235,6 +235,6 @@ Agent 產品將以下資訊寫入 `report.md`，在回覆中提供完整 ZIP、�
 - 解壓、執行腳本、上傳素材、匯入並啟用 Snippets、匯入 Bricks 及套用頁面設定的步驟，指出各檔案的用途與片段作用條件。已啟用的同一套片段不重複匯入啟用。
 - `comparison.html` 與代表截圖的位置，及各驗收項目的證據。
 - 格式、正常匯入、外觀、RWD、互動、動畫及可編輯性的驗證結果，明列剩餘差異與未測項目。
-- 可直接在 Bricks 編輯的部分、Code Snippets 中對應的樣式與互動，以及素材替換位置。說明後台修改不會自動回寫包內的程式碼副本，使用者可重新匯出片段保存。
+- 可直接在 Bricks 編輯的部分、Code Snippets 中對應的 PHP 片段，以及素材替換位置。使用者修改 PHP 片段內的 CSS／JS，保留外層頁面判斷。後台修改後可重新匯出片段保存。
 - 未串接的後端功能與當前畫面行為，不能將前端完成描述為收件或其他服務已可用。
 - 首版與完整驗證的實際耗時，另記錄工具建置、網頁轉換及修正驗證的時間，無法拆分的時間註明原因。
