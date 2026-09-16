@@ -96,7 +96,7 @@ codex plugin add autobricks@autobricks
 > [!TIP]
 > `.codex-plugin/plugin.json` 指定 plugin 的技能目錄。安裝版本使用快取副本；修改原始碼後需更新安裝內容。指定分支、專案啟用與更新步驟見 [doc/codex-plugin.md](doc/codex-plugin.md)。
 
-## 共用規則與模型比較
+## 共用規則與技能
 
 在本專案工作時，各 Agent 產品依下列方式讀取共用規則：
 
@@ -119,7 +119,7 @@ Agent 產品從載入的 `SKILL.md` 位置向上辨識 AutoBricks 根目錄，�
 
 ## 工具與產物
 
-- `src/validate_template.py`：Agent 產品執行 `uv run python src/validate_template.py <template.json>`，檢查模板元素欄位與引用關係。
+- `src/validate_template.py`：Agent 產品執行 `uv run --no-project python src/validate_template.py <template.json>`，檢查模板元素欄位與引用關係。
 - `src/extract_bricks_schema.py`：需要時從已安裝的 Bricks theme 查欄位。
 - `src/browser.mjs`：各 Agent 產品共用的 CDP 小工具，Node 22+；用法見 [skills/web-page-to-bricks/references/browser.md](skills/web-page-to-bricks/references/browser.md)。
 - `docker/`：測試環境範本與推送工具。

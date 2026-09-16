@@ -15,7 +15,7 @@ Codex 使用自身的 marketplace 指令下載與安裝，只是可以讀取既�
 
 `.agents/skills/` 本身是 Codex 支援的專案技能目錄，使用者可以直接在專案中測試。AutoBricks 在 plugin 定義中設定 `"skills": "./.agents/skills/"`，讓 Codex 安裝 plugin 後也能從安裝副本的同一路徑找到技能。安裝會複製 plugin 的技能、工具等檔案，不是只快取 skill 文字。
 
-`skills/` 與 `.agents/skills/` 各提供相同的 `web-page-to-bricks` 與 `setup` 技能。維護者同步兩邊的完整內容與參考文件；Agent 產品從載入的 skill 路徑辨識 plugin 根目錄，技能不依賴 Agent 產品專用的環境變數。
+`skills/` 與 `.agents/skills/` 各提供同名、同內容的 `web-page-to-bricks`、`check-schema-version` 與 `setup` 技能。維護者同步兩邊的完整內容與參考文件。Agent 產品從載入的 skill 路徑辨識 plugin 根目錄，技能不依賴 Agent 產品專用的環境變數。
 
 ## 只在指定專案啟用
 
@@ -52,10 +52,10 @@ codex plugin marketplace add admin-tech-org/AutoBricks --ref <已發佈的分支
 codex plugin add autobricks@autobricks
 ```
 
-安裝並設定啟用範圍後，使用者開啟新對話：
+安裝並設定啟用範圍後，使用者以工作專案的實際路徑開啟新對話：
 
 ```powershell
-codex -C "C:\Users\USER\Desktop\github\AutoBricks"
+codex -C "<PROJECT_ROOT>"
 ```
 
 使用者在 Codex 對話框輸入 `$autobricks:web-page-to-bricks <參考網址>` 開始重建，或 `$autobricks:setup` 檢查環境。使用者可透過 `/plugins` 檢查安裝狀態。新對話會載入已啟用 plugin 的安裝副本；`-C` 只指定工作目錄，不負責載入本機 plugin 原始碼。已實測的 Codex CLI 0.154.0 不支援 `--plugin-dir`。
@@ -76,6 +76,9 @@ codex plugin add autobricks@autobricks
 
 使用者可執行 `codex plugin marketplace list` 查看目前登記的來源。
 
-Agent 產品更新已安裝的本機 plugin 時，依 plugin-creator 的 cachebuster 流程更新 `.codex-plugin/plugin.json`，同步乾淨來源後再安裝。GitHub marketplace 更新則使用 `codex plugin marketplace upgrade autobricks`。使用者在更新後開啟新對話，並確認專案啟用範圍。
+維護者發行新版時更新 `.codex-plugin/plugin.json` 的 `version`，並同步安裝來源。使用者依來源更新安裝副本：
 
-此配置供 Git／本機 marketplace 發行，尚未提交 OpenAI 公開 Plugin Directory。plugin-creator 的靜態驗證器限定技能目錄為 `skills/`，無法驗證本 repo 在 manifest 指定的 `.agents/skills/` 路徑；該路徑已以 Codex CLI 安裝與技能探索確認相容。格式依據：[OpenAI plugin 包裝文件](https://developers.openai.com/plugins/build/plugins)。
+- **本機來源**：先將乾淨來源更新至要測試的版本，再執行 `codex plugin add autobricks@autobricks`。
+- **GitHub marketplace**：先執行 `codex plugin marketplace upgrade autobricks` 更新來源快照，再執行 `codex plugin add autobricks@autobricks`。
+
+使用者在更新後開啟新對話，確認載入的技能內容與專案啟用範圍。marketplace 指令與安裝副本的原理見 [developers.openai.com/plugins/build/plugins](https://developers.openai.com/plugins/build/plugins)。

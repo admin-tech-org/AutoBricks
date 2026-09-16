@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "autobricks",
-      "description": "Agent 產品將使用者指定的原站內容與版型轉為可編輯的 Bricks JSON，並在本機 WordPress 比對外觀、RWD、互動與素材。skills：web-page-to-bricks / setup。",
+      "description": "Agent 產品將使用者指定的原站內容與版型轉為可編輯的 Bricks JSON，並在本機 WordPress 比對外觀、RWD、互動與素材。skills：web-page-to-bricks / check-schema-version / setup。",
       "source": "./"
     }
   ]

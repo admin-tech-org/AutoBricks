@@ -7,7 +7,7 @@
 這是靜態掃描，不執行 PHP。動態組裝、條件判斷、方法覆寫或移除欄位仍需查原始碼與實測。
 
 用法：
-  uv run python src/extract_bricks_schema.py [--theme-dir DIR] --out FILE
+  uv run --no-project python src/extract_bricks_schema.py [--theme-dir DIR] --out FILE
 
 預設 theme-dir 為 cwd 的 .autobricks/docker/wp/wp-content/themes/bricks，
 其他 WP 環境以 --theme-dir 指定，不從 plugin 安裝包尋找 theme。

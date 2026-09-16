@@ -175,7 +175,7 @@ def check(elements, schema_names, global_classes=None, live=None):
             for skey, sval in settings.items():
                 base = skey.split(":", 1)[0]
                 if base == "_boxShadow" and not isinstance(sval, dict):
-                    err(i, el, f"{skey} 必須是 OBJECT（h2b 的陣列寫法是錯的；1.12.x 實證）")
+                    err(i, el, f"{skey} 必須是 OBJECT，不能使用陣列（1.12.x 實證）")
                 if base == "_gradient" and not isinstance(sval, dict):
                     err(i, el, f"{skey} 必須是 object（獨立 _gradient key，勿塞 CSS 字串）")
                 if base == "_background":

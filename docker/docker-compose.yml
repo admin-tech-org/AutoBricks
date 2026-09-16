@@ -26,7 +26,7 @@ services:
       retries: 24
 
   wordpress:
-    # PHP 8.2：Bricks 1.12.5 的安全選擇（8.3+ 未經團隊驗證）
+    # PHP 8.2：依目標 Bricks 版本需求調整
     image: wordpress:6.8-php8.2-apache
     container_name: autobricks-wp
     depends_on:

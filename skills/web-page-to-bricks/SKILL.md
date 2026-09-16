@@ -29,7 +29,6 @@ Agent 產品將使用者指定的單一參考網頁重建成可匯入 WordPress 
 | 元素量測、當次 Bricks schema、原站與 WP 截圖 | `<RUN_DIR>/tmp/`，例如 `measurements/`、`screenshots/source/`、`screenshots/wp/` |
 | 臨時分析工具、下載／生成／驗證腳本、過程筆記與其他中間檔案 | `<RUN_DIR>/tmp/`，例如 `scripts/`、`notes.md` |
 | Chrome 啟動腳本、`cdp.env` 與瀏覽器 profile | `<PROJECT_ROOT>/.browser/`，profile 位於其中的 `.chrome_cdp*` 子目錄 |
-| Python 虛擬環境 | `<PROJECT_ROOT>/.autobricks/venv/` |
 | Docker 設定與 WordPress 檔案 | `<WP_DIR>/docker-compose.yml`、`<WP_DIR>/wp/`，theme 與上傳素材位於 `wp/wp-content/` |
 | MariaDB 資料 | Docker Compose 的 `db_data` named volume，由 Docker 保存，不是專案內的檔案目錄 |
 | 當前 Bricks 版本與匯入經驗 | `<PROJECT_ROOT>/bricks-import.md` |

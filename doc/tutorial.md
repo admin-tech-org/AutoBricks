@@ -13,6 +13,7 @@
 | --- | --- | --- |
 | 檢查、安裝或修復環境 | [skills/setup/SKILL.md](../skills/setup/SKILL.md) | [.agents/skills/setup/SKILL.md](../.agents/skills/setup/SKILL.md) |
 | 觀察參考網站、重建及驗收 | [skills/web-page-to-bricks/SKILL.md](../skills/web-page-to-bricks/SKILL.md) | [.agents/skills/web-page-to-bricks/SKILL.md](../.agents/skills/web-page-to-bricks/SKILL.md) |
+| 檢查交付包版本與結構，依要求升級 | [skills/check-schema-version/SKILL.md](../skills/check-schema-version/SKILL.md) | [.agents/skills/check-schema-version/SKILL.md](../.agents/skills/check-schema-version/SKILL.md) |
 
 兩套技能的內容相同。使用者明確要求環境檢查或安裝時，Agent 產品才使用 `setup`。網站觀察、CDP 操作、RWD、動畫及驗收的方法由 `web-page-to-bricks` 說明，共用工作規則見 [AGENTS.md](../AGENTS.md)。
 
@@ -30,7 +31,6 @@
 | 原站與成品的驗收對照 | `<RUN_DIR>/output/comparison.html` 與 `screenshots/` |
 | 來源資料、下載素材、量測、截圖、當次腳本、草稿與其他中間檔案 | `<RUN_DIR>/tmp/`，子目錄依任務需要安排 |
 | 瀏覽器啟動設定與 profile | `<PROJECT_ROOT>/.browser/` |
-| Python 虛擬環境 | `<PROJECT_ROOT>/.autobricks/venv/` |
 | Docker 設定與 WordPress 檔案 | `<WP_DIR>/docker-compose.yml`、`<WP_DIR>/wp/` |
 | 資料庫 | Compose 的 `db_data` named volume，由 Docker 保存 |
 | 當前 Bricks 版本的實測筆記 | `<PROJECT_ROOT>/bricks-import.md` |

@@ -1,6 +1,6 @@
 ---
 name: setup
-description: 在使用者明確要求時，檢查、安裝或修復 AutoBricks 執行環境：uv 與 Node、Python 相依套件、Chrome CDP 連線，以及用於匯入和檢查 Bricks 成品的 Docker WordPress。
+description: 在使用者明確要求時，檢查、安裝或修復 AutoBricks 執行環境：uv 與 Node、Chrome CDP 連線，以及用於匯入和檢查 Bricks 成品的 Docker WordPress。
 ---
 
 # setup
@@ -11,7 +11,7 @@ description: 在使用者明確要求時，檢查、安裝或修復 AutoBricks �
 - **準備目標**：Agent 產品準備觀察原站、生成 Bricks JSON 與檢查 WP 成品所需的環境。
 - **環境檢查**：Agent 產品先檢查現有環境與使用者授權，僅補齊缺少的項目。
 - **安裝授權**：需要安裝軟體且尚未取得授權時，Agent 產品才向使用者說明變更並取得同意。
-- **指令語法**：以下指令以 Bash 語法示範。Agent 產品依執行環境選擇 shell，在本專案的 Windows 環境使用 PowerShell，必要時轉寫指令或呼叫 Bash 腳本。
+- **指令語法**：以下指令以 Bash 語法示範。Agent 產品依執行環境選擇 shell，必要時轉寫指令或呼叫 Bash 腳本。
 - **執行權限**：權限行為以當前 Agent 產品的設定為準。
 
 ## 步驟
@@ -19,7 +19,7 @@ description: 在使用者明確要求時，檢查、安裝或修復 AutoBricks �
 ### 1. 取得 plugin 根目錄
 - `<PLUGIN_ROOT>`：Agent 產品從目前載入的 skill 絕對路徑向上尋找，同時包含 `pyproject.toml` 與 `docker/push-template.php` 的 AutoBricks 根目錄，供取得工具與範本。
 - `<PROJECT_ROOT>`：使用者指定的工作專案根目錄，未另行指定時使用當前對話的工作專案，不以 skill 所在目錄推定。
-- 瀏覽器啟動腳本、`cdp.env` 與 profile 存在 `<PROJECT_ROOT>/.browser/`，Python 虛擬環境存在 `<PROJECT_ROOT>/.autobricks/venv/`。
+- 瀏覽器啟動腳本、`cdp.env` 與 profile 存在 `<PROJECT_ROOT>/.browser/`。
 - `<WP_DIR>`：WordPress 測試環境目錄，預設為 `<PROJECT_ROOT>/.autobricks/docker/`，開發 AutoBricks 與安裝 plugin 時皆相同。Docker 設定存在此目錄，WordPress 檔案存在其中的 `wp/`，MariaDB 資料由 Docker 的 `db_data` named volume 保存。
 - `<RUN_DIR>`：當次任務的 `<PROJECT_ROOT>/data/YYYYMMDD-HHMMSS-agent_product-task_name/`。日期與時分秒採任務開始時的本機時間，產品名與英文任務名使用小寫，多字以底線連接，例如 `20260916-223015-codex-new_art_clone_web`、`20260916-223015-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
 - Agent 產品建立 `<RUN_DIR>/tmp/` 與 `<RUN_DIR>/output/`。當次分析工具、腳本、下載素材、量測、截圖與其他中間檔案全部放入 `tmp/`，可匯入的 Bricks 匯入包及交付所需素材放入 `output/`，最終交付報告寫入 `output/report.md`。
@@ -44,14 +44,9 @@ Agent 產品先檢查版本；現有工具符合需求時跳過安裝：
     （環境載入與安裝指令需在同一個 Bash session；Agent 產品提醒使用者將 `NVM_DIR` 設定與 nvm 載入指令加入 `~/.zshrc`。）
   - Linux：官方 nvm 安裝器後同上。
 
-### 4. 安裝專案相依（venv + 驗證工具）
-Agent 產品執行以下指令，建立或更新專案虛擬環境，供 Python 工具檢查模板 JSON：
+專案的模板驗證與 Bricks schema 擷取工具只使用 Python 標準函式庫，Agent 產品可直接以 `uv run --no-project python` 執行，不需先執行 `uv sync`。
 
-```bash
-UV_PROJECT_ENVIRONMENT="<PROJECT_ROOT>/.autobricks/venv" uv sync --project "<PLUGIN_ROOT>"
-```
-
-### 5. 準備 Chrome CDP 連線
+### 4. 準備 Chrome CDP 連線
 Agent 產品透過 Chrome CDP 觀察原站或 WP 預覽的內容、排版與互動，可使用現有的 CDP 工具或共用的 `<PLUGIN_ROOT>/src/browser.mjs`。啟動腳本與共用工具都讀取 `<PROJECT_ROOT>/.browser/cdp.env` 的 `CDP_PORT`，未設定時皆使用 9222。連線方式見 [../web-page-to-bricks/references/browser.md](../web-page-to-bricks/references/browser.md)。
 
 1. **Agent 產品將啟動腳本放進使用者專案的 `.browser/`**，讓瀏覽器 profile 與登入資料留在該專案：
@@ -65,13 +60,13 @@ Agent 產品透過 Chrome CDP 觀察原站或 WP 預覽的內容、排版與互�
    啟動腳本讀取該檔；未自訂 profile 時，非 9222 埠使用 `.chrome_cdp-<port>` profile。同一 profile 只能供一個 Chrome 實例使用。
    Agent 產品從工作專案執行 `browser.mjs`，工具會自動尋找該設定檔。其他瀏覽器工具則依其介面指定相同位址。Agent 產品只啟動當次工作需要的瀏覽器，並確認所用埠未被其他服務占用。
 3. **Agent 產品啟動設定好的 Chrome**：
-   - Windows：`cmd //c "<PROJECT_ROOT>/.browser/launch-chrome-cdp.bat"`
+   - Windows（Git Bash 範例）：`cmd //c "<PROJECT_ROOT>/.browser/launch-chrome-cdp.bat"`
    - macOS／Linux：`bash "<PROJECT_ROOT>/.browser/launch-chrome-cdp.sh"`
    Agent 產品以 `curl -s http://127.0.0.1:<port>/json/version` 確認 Chrome 已提供 CDP 連線。
 4. 目標網站需要登入時，由使用者在剛啟動的 Chrome 視窗完成登入；瀏覽器 profile 保存登入狀態。後續重建時，Agent 產品先檢查 CDP 連線，必要時再啟動瀏覽器。
 5. Agent 產品呼叫所用瀏覽器工具，確認工具能開啟頁面、讀取 DOM 及擷取截圖，再用所用產品的圖片檢視工具開啟截圖；CDP 埠有回應不代表完整的觀察流程已可用。
 
-### 6. Docker WordPress + Bricks 驗證環境（必備）
+### 5. Docker WordPress + Bricks 驗證環境（必備）
 Agent 產品需要本機 WordPress + Bricks 實際渲染重建頁面，檢查模板匯入、外觀、RWD、互動與素材。使用者提供已授權的 Bricks theme。
 
 1. **Agent 產品確認 Docker Desktop 已啟動**（`docker version` 有 Server 段）。Docker 尚未可用時，Agent 產品依使用者授權協助啟動或安裝；需要使用者操作時，明確說明缺少的步驟，不能回報 WP 環境已就緒。
@@ -88,7 +83,7 @@ Agent 產品需要本機 WordPress + Bricks 實際渲染重建頁面，檢查模
    預設站台為 http://localhost:8080，後台帳號／密碼為 admin/admin，僅供本機測試。細節見 `<PLUGIN_ROOT>/docker/README.md`。
 4. Agent 產品確認測試站已安裝並啟用 Code Snippets（免費版即可），供重建技能驗證 PHP 片段。初始化腳本不安裝此外掛，缺少時依已取得的環境安裝授權補齊，操作見 `<PLUGIN_ROOT>/docker/README.md`。
 
-### 7. 回報
-Agent 產品向使用者回報 uv 與 Node 版本、Python 虛擬環境、CDP 連線位址、WP 預覽網址、Bricks 與 Code Snippets 是否啟用，以及實際安裝或調整的環境項目。尚未完成的項目需分別列出。
+### 6. 回報
+Agent 產品向使用者回報 uv 與 Node 版本、CDP 連線位址、WP 預覽網址、Bricks 與 Code Snippets 是否啟用，以及實際安裝或調整的環境項目。尚未完成的項目需分別列出。
 
 環境就緒後，使用者可呼叫 `web-page-to-bricks` 技能並提供參考網址。Agent 產品依該技能觀察原站、轉換內容與版型，再檢查 Bricks 成品。
