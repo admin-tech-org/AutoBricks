@@ -20,13 +20,14 @@
 
 - `<PLUGIN_ROOT>` 是當次載入的 AutoBricks 安裝包或原始碼目錄，提供 `src/` 工具及 `docker/`、`templates/` 範本。
 - `<PROJECT_ROOT>` 是使用者的工作專案根目錄，保存重建成果與本機環境。
-- `<RUN_DIR>` 是當次任務的 `<PROJECT_ROOT>/data/YYYYMMDD-agent_product-task_name/`。日期採任務開始時的本機日期，產品名與英文任務名使用小寫，多字以底線連接，例如 `20260914-codex-new_art_clone_web`、`20260914-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
+- `<RUN_DIR>` 是當次任務的 `<PROJECT_ROOT>/data/YYYYMMDD-HHMMSS-agent_product-task_name/`。日期與時分秒採任務開始時的本機時間，產品名與英文任務名使用小寫，多字以底線連接，例如 `20260916-223015-codex-new_art_clone_web`、`20260916-223015-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
 - `<WP_DIR>` 是 WordPress 測試環境目錄，預設使用 `<PROJECT_ROOT>/.autobricks/docker/`，開發 AutoBricks 與安裝 plugin 時皆相同。`<PLUGIN_ROOT>/docker/` 只提供範本與工具。其他既有環境需先確認 Compose 設定與實際掛載再沿用。
 
 | 資料 | 存放位置 |
 | --- | --- |
-| 可匯入的 Bricks 匯入包與交付所需素材 | `<RUN_DIR>/output/`，例如 `template.json` 與必要的 `assets/` |
+| 單一交付 ZIP、模板、Snippets、部署腳本與素材 | `<RUN_DIR>/output/`，素材位於 `assets/<asset-folder>/` |
 | 最終交付報告：頁號、預覽網址、耗時、驗收結果與剩餘差異 | `<RUN_DIR>/output/report.md` |
+| 原站與成品的驗收對照 | `<RUN_DIR>/output/comparison.html` 與 `screenshots/` |
 | 來源資料、下載素材、量測、截圖、當次腳本、草稿與其他中間檔案 | `<RUN_DIR>/tmp/`，子目錄依任務需要安排 |
 | 瀏覽器啟動設定與 profile | `<PROJECT_ROOT>/.browser/` |
 | Python 虛擬環境 | `<PROJECT_ROOT>/.autobricks/venv/` |
@@ -73,6 +74,8 @@ Chrome CDP 的連線方式與指令見 [skills/web-page-to-bricks/references/bro
 
 選中元素後，使用者應能辨認元素名稱、所在容器及可修改欄位。自訂 CSS 或程式碼控制的部分，由 Agent 產品在交付總結標示修改位置。
 
+額外的 CSS、JS 與必要程式庫在 Code Snippets 後台維護，交付包提供免費版可用的 PHP 片段。圖片、影片、字型等素材放在 uploads。`snippets/` 是交付時的可讀副本，後台修改不會自動回寫這些檔案，使用者可從 Code Snippets 重新匯出保存。
+
 ## 5. 模板 JSON 如何成為頁面
 
 Bricks 模板 JSON 描述元素、父子關係、內容與設定。Bricks 讀取這些資料後呈現可編輯的結構，並產生前台的 HTML、CSS 與必要程式。JSON 是匯入與交換格式，不代表 WordPress 的所有資料都直接以 JSON 字串存放。
@@ -88,6 +91,15 @@ Bricks 模板 JSON 描述元素、父子關係、內容與設定。Bricks 讀取
 具體欄位與資料形狀以目標環境的 Bricks 版本為準。Agent 產品從已安裝 theme 的原始碼、該版本匯出的模板與實際渲染確認設定，將已驗證的細節記入 `<PROJECT_ROOT>/bricks-import.md`。
 
 ## 6. 開發預覽與正常匯入
+
+每次交付只有一個 `YYYYMMDD-HHMMSS-<page-name>-bricks.zip`，檔名時間採打包時的本機時間。使用者先解壓，再依包內 `report.md` 的實際指令操作：
+
+1. 使用者以 `uv run` 執行 `replace-domain.py` 與 `rename-assets-folder.py`，按需更換部署網址及素材資料夾名稱。腳本可接續操作，產生部署副本並保留原始檔案，不直接修改遠端 WP。
+2. 使用者透過 File Manager、SSH／SFTP 等方式，將部署副本的 `assets/<asset-folder>/` 整個子資料夾上傳至 `wp-content/uploads/`。
+3. 使用者在 Code Snippets 匯入並啟用 `code-snippets.json` 的 PHP 片段。相同片段已啟用時不再啟用第二套，`snippets/` 內的可讀副本也不需另外上傳。
+4. 使用者正常匯入部署副本的 `template.json`，將模板插入頁面並套用頁面設定，使片段的作用條件生效，再檢查前台與編輯器。
+
+整個交付 ZIP 不能直接當作 Bricks 模板匯入。自製外掛與新增後端服務需另行規劃，表單等功能是否完成串接以 `report.md` 的實測結果為準。
 
 - **開發預覽**：Agent 產品使用 `docker/push-template.php` 將模板內容寫入當次 WP 頁面，快速檢查及修正畫面。腳本未指定 `PAGE_ID` 時建立新頁，續修時只更新回傳的當次頁號。操作見 [docker/README.md](../docker/README.md)。
 - **正常匯入**：使用者或 Agent 產品透過目標 Bricks 的模板匯入介面載入 JSON，再將模板插入當次頁面並儲存。匯入模板庫不等於已建立可供訪客查看的頁面，仍需確認模板已套用到預期頁面。
@@ -109,7 +121,7 @@ uv run --no-project python "<PLUGIN_ROOT>/src/validate_template.py" "<RUN_DIR>/o
 
 ## 8. 檢查交付成果
 
-使用者可依 Agent 產品提供的 `<RUN_DIR>/output/report.md` 及預覽網址檢查：
+使用者可依 Agent 產品提供的 `<RUN_DIR>/output/report.md`、可離線開啟的 `comparison.html` 及預覽網址檢查。比較頁引用包內的實際截圖與動態證據，區分通過、未通過及未測項目，產生比較頁不代表所有項目都已通過：
 
 - 原站與成品是否有相同內容與素材，代表截圖是否使用相同視窗尺寸及互動狀態。
 - 桌面、手機、斷點附近與中間寬度的排列是否吻合，是否出現文字截斷或意外橫向溢出。

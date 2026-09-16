@@ -11,7 +11,7 @@
 
 預設 theme-dir 為 cwd 的 .autobricks/docker/wp/wp-content/themes/bricks，
 其他 WP 環境以 --theme-dir 指定，不從 plugin 安裝包尋找 theme。
-Agent 產品以 --out 指定當次任務的 data/YYYYMMDD-agent_product-task_name/tmp/measurements/bricks-schema.json。
+Agent 產品以 --out 指定當次任務的 data/YYYYMMDD-HHMMSS-agent_product-task_name/tmp/measurements/bricks-schema.json。
 只用標準函式庫。
 """
 

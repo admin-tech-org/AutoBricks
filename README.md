@@ -12,6 +12,10 @@ Agent 產品先在瀏覽器檢視原站的內容、版型、RWD、互動與動�
 
 Agent 產品交付可供使用者在 Bricks 修改文字、圖片與排版的成品。
 
+- 額外的 CSS、JS 與必要程式庫由 Code Snippets 管理，並提供免費版可用的 PHP 片段，方便設計師在 WP 後台維護。
+- 圖片、影片、字型與文件等素材依內容清楚命名，首次部署時透過 File Manager、SSH／SFTP 等方式上傳至 `wp-content/uploads/`。
+- 自製 WordPress 外掛及新增後端服務需另行規劃，不屬於預設的網頁重建範圍。
+
 ## 使用 Claude Code
 
 ### 開發階段：直接載入本機 plugin 測試
@@ -118,18 +122,28 @@ Agent 產品從載入的 `SKILL.md` 位置向上辨識 AutoBricks 根目錄，�
 - `docker/`：測試環境範本與推送工具。
 - `.autobricks/docker/`：工作專案的 Docker 設定與 WordPress 檔案，開發與安裝 plugin 時皆使用此位置。
 - `templates/`：Chrome 啟動範本。
-- `data/YYYYMMDD-agent_product-task_name/`：各次任務資料，分為 `tmp/` 與 `output/`。
+- `data/YYYYMMDD-HHMMSS-agent_product-task_name/`：各次任務資料，分為 `tmp/` 與 `output/`。
 - `.browser/`：瀏覽器 profile。
 
-任務目錄以開始時的本機日期命名。產品名與英文任務名使用小寫，多字以底線連接，例如 `20260914-codex-new_art_clone_web`、`20260914-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
+任務目錄以開始時的本機日期與時分秒命名。產品名與英文任務名使用小寫，多字以底線連接，例如 `20260916-223015-codex-new_art_clone_web`、`20260916-223015-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
 
 ```text
-data/20260914-codex-new_art_clone_web/
+data/20260916-223015-codex-new_art_clone_web/
 ├── tmp/              # 分析工具、腳本、下載素材、量測、截圖與草稿等所有中間檔案
 └── output/
-    ├── template.json # 可匯入的 Bricks 模板，必要素材亦放在 output/
-    └── report.md     # 最終交付報告：預覽網址、耗時、驗收結果與剩餘差異
+    ├── template.json
+    ├── code-snippets.json
+    ├── assets/new-art/           # 上傳至 uploads/ 的非程式碼素材
+    ├── snippets/                 # PHP 包裝與 CSS／JS 可讀副本
+    ├── replace-domain.py
+    ├── rename-assets-folder.py
+    ├── report.md                 # 匯入教學、維護位置、耗時與驗收結果
+    ├── comparison.html           # 原站與成品的實際驗收對照
+    ├── screenshots/
+    └── 20260916-231240-new-art-bricks.zip
 ```
+
+Agent 產品只交付一個 `YYYYMMDD-HHMMSS-<page-name>-bricks.zip`，包含上述交付檔案，ZIP 時間採打包時的本機時間。使用者先解壓，依 `report.md` 執行 `uv run` 部署腳本、上傳素材，再分別匯入 Code Snippets 與 Bricks。`comparison.html` 可離線查看實際截圖及驗收結果。整包 ZIP 不是直接匯入 Bricks 的模板 ZIP。
 
 執行產物、登入資料與商業 theme 不納入 Git。
 

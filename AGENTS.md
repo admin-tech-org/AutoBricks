@@ -18,7 +18,7 @@ Agent 產品以原站的內容、版型、RWD、互動與動畫作為重建及�
 - Agent 產品可重用現有工具，並查閱已安裝的 Bricks 原始碼確認元素設定。
 - Agent 產品執行 Python 時使用 `uv run`。
 - Agent 產品依執行環境選擇合適的 shell 與指令語法。
-- Agent 產品將當次任務資料存入使用者工作目錄的 `data/YYYYMMDD-agent_product-task_name/`。日期採任務開始時的本機日期，產品名與英文任務名使用小寫，多字以底線連接，例如 `20260914-codex-new_art_clone_web`、`20260914-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
+- Agent 產品將當次任務資料存入使用者工作目錄的 `data/YYYYMMDD-HHMMSS-agent_product-task_name/`。日期與時分秒採任務開始時的本機時間，產品名與英文任務名使用小寫，多字以底線連接，例如 `20260916-223015-codex-new_art_clone_web`、`20260916-223015-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
 - Agent 產品在當次任務目錄建立 `tmp/` 與 `output/`。分析工具、腳本、下載素材、量測、截圖、草稿與其他中間檔案全部放入 `tmp/`，子目錄依任務需要安排。
 - Agent 產品將可匯入的 Bricks 匯入包與交付所需素材放入 `output/`，並將最終交付報告寫入 `output/report.md`。
 - Agent 產品將瀏覽器 profile 存入使用者工作目錄的 `.browser/`。
@@ -33,4 +33,4 @@ Agent 產品以原站的內容、版型、RWD、互動與動畫作為重建及�
 - Agent 產品保留使用者原有的未提交修改。
 - Agent 產品不將商業 Bricks theme、瀏覽器登入資料與執行產物納入 Git。
 - Agent 產品提交 Git commit 時，沿用既有的「gitmoji + 類型: 中文摘要」格式，例如 `📝 docs: 更新使用說明`。
-- Agent 產品交付 JSON、WP 預覽網址、原站與成品的代表截圖、實際耗時、已驗項目及剩餘差異，供使用者檢查外觀、互動與可編輯程度。
+- Agent 產品依 `web-page-to-bricks` 的交付約定提供單一 `YYYYMMDD-HHMMSS-<page-name>-bricks.zip`，時間採打包時的本機時間。包內附模板、Snippets、素材、部署腳本、`report.md` 與 `comparison.html`，供使用者匯入、維護及檢查實際驗收結果。

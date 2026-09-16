@@ -21,7 +21,7 @@ description: 在使用者明確要求時，檢查、安裝或修復 AutoBricks �
 - `<PROJECT_ROOT>`：使用者指定的工作專案根目錄，未另行指定時使用當前對話的工作專案，不以 skill 所在目錄推定。
 - 瀏覽器啟動腳本、`cdp.env` 與 profile 存在 `<PROJECT_ROOT>/.browser/`，Python 虛擬環境存在 `<PROJECT_ROOT>/.autobricks/venv/`。
 - `<WP_DIR>`：WordPress 測試環境目錄，預設為 `<PROJECT_ROOT>/.autobricks/docker/`，開發 AutoBricks 與安裝 plugin 時皆相同。Docker 設定存在此目錄，WordPress 檔案存在其中的 `wp/`，MariaDB 資料由 Docker 的 `db_data` named volume 保存。
-- `<RUN_DIR>`：當次任務的 `<PROJECT_ROOT>/data/YYYYMMDD-agent_product-task_name/`。日期採任務開始時的本機日期，產品名與英文任務名使用小寫，多字以底線連接，例如 `20260914-codex-new_art_clone_web`、`20260914-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
+- `<RUN_DIR>`：當次任務的 `<PROJECT_ROOT>/data/YYYYMMDD-HHMMSS-agent_product-task_name/`。日期與時分秒採任務開始時的本機時間，產品名與英文任務名使用小寫，多字以底線連接，例如 `20260916-223015-codex-new_art_clone_web`、`20260916-223015-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
 - Agent 產品建立 `<RUN_DIR>/tmp/` 與 `<RUN_DIR>/output/`。當次分析工具、腳本、下載素材、量測、截圖與其他中間檔案全部放入 `tmp/`，可匯入的 Bricks 匯入包及交付所需素材放入 `output/`，最終交付報告寫入 `output/report.md`。
 - 版本筆記存在 `<PROJECT_ROOT>/bricks-import.md`。環境與執行產物不得寫入 plugin 安裝快取。
 

@@ -2,7 +2,7 @@
 
 `<PLUGIN_ROOT>/src/browser.mjs` 是直接連線 Chrome CDP 的 Node 工具，供 Claude Code、Codex 等 Agent 產品共用。需要 Node 22+，不需安裝 npm 套件、Playwright 或 MCP。
 
-`<PLUGIN_ROOT>`、`<PROJECT_ROOT>` 與 `<RUN_DIR>` 沿用當次技能確認的工具、專案與任務目錄。`<RUN_DIR>` 使用 `<PROJECT_ROOT>/data/YYYYMMDD-agent_product-task_name/`，瀏覽器工具的腳本及輸出放入其中的 `tmp/`。
+`<PLUGIN_ROOT>`、`<PROJECT_ROOT>` 與 `<RUN_DIR>` 沿用當次技能確認的工具、專案與任務目錄。`<RUN_DIR>` 使用 `<PROJECT_ROOT>/data/YYYYMMDD-HHMMSS-agent_product-task_name/`，瀏覽器工具的腳本及輸出放入其中的 `tmp/`。
 
 ## 連線與執行
 
