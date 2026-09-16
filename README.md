@@ -12,7 +12,7 @@ Agent 產品先在瀏覽器檢視原站的內容、版型、RWD、互動與動�
 
 Agent 產品交付可供使用者在 Bricks 修改文字、圖片與排版的成品。
 
-- 額外的 CSS、JS 與必要程式庫由 Code Snippets 管理，並提供免費版可用的 PHP 片段，方便設計師在 WP 後台維護。
+- Agent 產品將額外的 CSS、JS 與必要程式庫交由 Code Snippets 管理，並提供免費版可用的 PHP 片段，方便使用者與接手的設計師在 WP 後台維護。
 - 圖片、影片、字型與文件等素材依內容清楚命名，首次部署時透過 File Manager、SSH／SFTP 等方式上傳至 `wp-content/uploads/`。
 - 自製 WordPress 外掛及新增後端服務需另行規劃，不屬於預設的網頁重建範圍。
 
@@ -112,7 +112,7 @@ Agent 產品從載入的 `SKILL.md` 位置向上辨識 AutoBricks 根目錄，�
 
 使用者選擇模型與推理強度；Agent 產品依原站的內容、版型與動態行為決定量測方法、重建步驟，以及是否需要分工。AutoBricks 的共用規則不綁定特定模型或固定分工流程。
 
-環境使用 uv（[docs.astral.sh/uv/](https://docs.astral.sh/uv/)）、Chrome CDP、Docker WordPress 與已授權的 Bricks theme；本機預覽網址是 `http://localhost:8080`。安裝細節見 [docker/README.md](docker/README.md) 與 [doc/tutorial.md](doc/tutorial.md)。
+環境使用 uv（[docs.astral.sh/uv/](https://docs.astral.sh/uv/)）、Node 22+、Chrome CDP、Docker WordPress、已授權的 Bricks theme 與 Code Snippets（免費版即可）。本機預覽網址是 `http://localhost:8080`。安裝細節見 [docker/README.md](docker/README.md) 與 [doc/tutorial.md](doc/tutorial.md)。
 
 ## 工具與產物
 

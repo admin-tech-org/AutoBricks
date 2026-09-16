@@ -24,6 +24,12 @@ Agent 產品使用本機 WordPress + MariaDB + Bricks 渲染重建頁面，檢�
 
 > 使用者依目標 Bricks 版本與後台提示確認授權狀態。Agent 產品需實際確認編輯器可開啟，不能只以 theme 已啟用判定環境就緒。
 
+Code Snippets 供重建頁面的 CSS／JS 載入與後台維護，免費版即可驗證交付的 PHP 片段。初始化腳本不安裝此外掛。Agent 產品先檢查已安裝版本，缺少時依使用者已授權的環境變更範圍，透過 WP 後台或以下指令補齊，保留既有版本與設定：
+
+```text
+docker compose -f "<WP_DIR>/docker-compose.yml" run --rm wpcli plugin install code-snippets --activate
+```
+
 ## 常用操作
 
 ```bash
@@ -38,12 +44,15 @@ docker compose -f "<WP_DIR>/docker-compose.yml" run --rm wpcli <wp 指令>   # w
 Agent 產品可透過 `push-template.php` 直接將 JSON 寫入 WP 頁面，以便檢查瀏覽器畫面。以下為 Bash 指令範例，`<RUN_DIR>` 是當次任務的 `<PROJECT_ROOT>/data/YYYYMMDD-HHMMSS-agent_product-task_name/`。範例使用交付模板，開發中的草稿可改用 `<RUN_DIR>/tmp/template.json`。Agent 產品需替換當次檔案路徑，並記錄腳本回傳的 PAGE_ID。後續修改只指定該次頁號。
 
 ```bash
-MSYS_NO_PATHCONV=1 docker cp "<RUN_DIR>/output/template.json" autobricks-wp:/tmp/template.json
-MSYS_NO_PATHCONV=1 docker cp "<PLUGIN_ROOT>/docker/push-template.php" autobricks-wp:/tmp/
-MSYS_NO_PATHCONV=1 docker exec -e TEMPLATE=/tmp/template.json -e TITLE="測試頁" \
-  autobricks-wp php /tmp/push-template.php
+run_name="$(basename "<RUN_DIR>")"
+MSYS_NO_PATHCONV=1 docker cp "<RUN_DIR>/output/template.json" "autobricks-wp:/tmp/${run_name}-template.json"
+MSYS_NO_PATHCONV=1 docker cp "<PLUGIN_ROOT>/docker/push-template.php" "autobricks-wp:/tmp/${run_name}-push-template.php"
+MSYS_NO_PATHCONV=1 docker exec -e TEMPLATE="/tmp/${run_name}-template.json" \
+  autobricks-wp php "/tmp/${run_name}-push-template.php"
 # → 印出 PAGE_ID 與 permalink；加 -e PAGE_ID=<n> 才會覆寫既有頁
 ```
+
+`run_name` 取自當次任務目錄名稱，避免容器暫存檔與其他任務互相覆蓋。頁面標題沿用 JSON 的 `title`，避免透過 shell 環境變數傳遞中文時的編碼差異。
 
 直接寫入頁面可供開發預覽。交付前，Agent 產品仍需確認模板經 Bricks 匯入器匯入後的內容、樣式與素材，並查閱使用者工作專案根目錄的 `bricks-import.md` 核對版本與環境細節。檔案不存在或版本不符時，Agent 產品依當前已安裝的 Bricks 原始碼與實測建立或更新筆記。
 

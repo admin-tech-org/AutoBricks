@@ -39,7 +39,7 @@ Agent 產品將執行產物、登入資料、WordPress 資料及商業 theme 排
 
 ## 3. 準備與啟動測試環境
 
-重建需要 uv、Node 22+、可提供 CDP 連線的 Chrome、Docker，以及使用者提供的已授權 Bricks theme。Agent 產品依 `setup` 檢查現有環境，沿用可用的工具與 WordPress。
+重建需要 uv、Node 22+、可提供 CDP 連線的 Chrome、Docker，以及使用者提供的已授權 Bricks theme。WordPress 另需啟用 Code Snippets（免費版即可）以載入交付的 PHP 片段。使用者明確要求環境檢查或安裝時，Agent 產品依 `setup` 檢查現有環境，沿用可用的工具與 WordPress。
 
 首次建置時，Agent 產品依 `setup` 將 `docker-compose.yml` 與 `init-wp.sh` 範本複製至 `<WP_DIR>`，確認 Compose 的 WordPress 掛載來源為 `<WP_DIR>/wp/`，再執行其中的 `init-wp.sh`。既有環境不需要重新複製範本。腳本使用 Bash，使用者或 Agent 產品需依當前 shell 選擇合適的呼叫方式。
 
@@ -97,7 +97,7 @@ Bricks 模板 JSON 描述元素、父子關係、內容與設定。Bricks 讀取
 1. 使用者以 `uv run` 執行 `replace-domain.py` 與 `rename-assets-folder.py`，按需更換部署網址及素材資料夾名稱。腳本可接續操作，產生部署副本並保留原始檔案，不直接修改遠端 WP。
 2. 使用者透過 File Manager、SSH／SFTP 等方式，將部署副本的 `assets/<asset-folder>/` 整個子資料夾上傳至 `wp-content/uploads/`。
 3. 使用者在 Code Snippets 匯入並啟用 `code-snippets.json` 的 PHP 片段。相同片段已啟用時不再啟用第二套，`snippets/` 內的可讀副本也不需另外上傳。
-4. 使用者正常匯入部署副本的 `template.json`，將模板插入頁面並套用頁面設定，使片段的作用條件生效，再檢查前台與編輯器。
+4. 使用者在 Bricks 後台模板管理入口匯入部署副本的 `template.json`，將模板插入頁面並套用頁面設定，使片段的作用條件生效，再檢查前台與編輯器。
 
 整個交付 ZIP 不能直接當作 Bricks 模板匯入。自製外掛與新增後端服務需另行規劃，表單等功能是否完成串接以 `report.md` 的實測結果為準。
 

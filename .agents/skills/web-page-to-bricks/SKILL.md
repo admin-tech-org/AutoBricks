@@ -10,13 +10,13 @@ description: 將使用者指定的單一參考網頁內容與版型轉為可匯�
 
 Agent 產品將使用者指定的單一參考網頁重建成可匯入 WordPress Bricks 的 JSON，讓使用者能在 Bricks 修改文字、圖片與排版。原站的內容、外觀、RWD、互動與動畫都是重建及驗收依據，不能因靜態首版已接近原站就視為完成。
 
-本技能預設不設計或開發自製 WordPress 外掛，也不新增表單收件等後端服務，這些需求需另行規劃。Agent 產品保留頁面前端互動，並在未串接服務時清楚呈現不可用狀態，不顯示虛假的送出成功訊息。頁面程式碼交由既有的 Code Snippets 外掛管理。
+本技能預設不設計或開發自製 WordPress 外掛，也不新增表單收件等後端服務，這些需求需另行規劃。Agent 產品保留頁面前端互動，並在未串接服務時清楚呈現不可用狀態，不顯示虛假的送出成功訊息。頁面程式碼交由 Code Snippets 外掛管理。
 
 下列方法用來支持觀察、轉換與驗收的判斷。Agent 產品依當站問題選擇資料來源與工具，可在觀察、實作和驗證之間往返，不預設並行任務數、固定分區或全屬性掃描。網站結構不同時，Agent 產品重新選擇適合當站的方法。
 
 ## 工作位置與資料存放
 
-- `<PLUGIN_ROOT>`：Agent 產品從當次 skill 的絕對路徑向上尋找，同時含 `pyproject.toml` 與 `docker/push-template.php` 的 AutoBricks 根目錄。共用工具與範本從此目錄取得，不依賴 Agent 產品專用的環境變數。
+- `<PLUGIN_ROOT>`：Agent 產品從當次 skill 的絕對路徑向上尋找同時含 `pyproject.toml` 與 `docker/push-template.php` 的 AutoBricks 根目錄。共用工具與範本從此目錄取得，不依賴 Agent 產品專用的環境變數。
 - `<PROJECT_ROOT>`：使用者指定的工作專案根目錄，未另行指定時使用當前對話的工作專案。Agent 產品不以 skill 所在目錄推定此位置。開發 AutoBricks 時，兩個根目錄可以相同。
 - `<RUN_DIR>`：當次任務的 `<PROJECT_ROOT>/data/YYYYMMDD-HHMMSS-agent_product-task_name/`。日期與時分秒採任務開始時的本機時間，產品名與英文任務名使用小寫，多字以底線連接，例如 `20260916-223015-codex-new_art_clone_web`、`20260916-223015-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
 - `<WP_DIR>`：WordPress 測試環境目錄，預設為 `<PROJECT_ROOT>/.autobricks/docker/`，開發 AutoBricks 與安裝 plugin 時皆相同。`<PLUGIN_ROOT>/docker/` 只提供範本與工具，不能作為 WP 執行目錄。沿用其他既有環境前，Agent 產品需確認 Compose 設定與容器實際掛載確實屬於使用者指定的環境。
@@ -36,7 +36,7 @@ Agent 產品將使用者指定的單一參考網頁重建成可匯入 WordPress 
 
 Agent 產品建立 `tmp/` 與 `output/`，所有當次中間檔案放入 `tmp/`，其中的子目錄依任務需要安排。交付匯入包所需的素材須一併整理至 `output/`，即使素材已部署到測試站也不能省略。成品不能依賴 `tmp/` 內的檔案才能顯示。
 
-Agent 產品確保工作專案的 Git 忽略執行產物、瀏覽器登入資料、本機環境與版本筆記，包含 `.autobricks/` 及既有 WP 的實際資料目錄。Agent 產品不得將上述資料寫入 plugin 安裝快取。需要建立環境時，由使用者明確要求後使用同來源的 `setup` 技能，將 `docker-compose.yml` 與 `init-wp.sh` 範本複製到 `<WP_DIR>`，不覆蓋既有環境。
+Agent 產品確保工作專案的 Git 忽略執行產物、瀏覽器登入資料、本機環境與版本筆記，包含 `.autobricks/` 及既有 WP 的實際資料目錄。Agent 產品不得將上述資料寫入 plugin 安裝快取。使用者明確要求建立環境後，Agent 產品使用同來源的 `setup` 技能，將 `docker-compose.yml` 與 `init-wp.sh` 範本複製到 `<WP_DIR>`，不覆蓋既有環境。
 
 ## 先建立對網站的理解
 
@@ -70,7 +70,7 @@ node "<PLUGIN_ROOT>/src/browser.mjs" open "<參考網址>" "<RUN_DIR>/tmp/screen
 node "<PLUGIN_ROOT>/src/browser.mjs" shot "<SOURCE_TARGET>" "<RUN_DIR>/tmp/screenshots/source/mobile.png" 0 390
 ```
 
-`open` 回傳分頁 `target`，並保存 `browser.json` 與 `first.png`。Agent 產品從回傳資料取得 `<SOURCE_TARGET>`，後續指定同一分頁操作，另記錄 WP 分頁的 target。`shot` 最後兩個參數是捲動位置與視窗寬度，指定寬度時使用 1000px 高度。其他尺寸或特殊操作可透過 `cdp` 傳入請求。
+`open` 回傳分頁 `target`，並保存 `browser.json` 與 `first.png`。Agent 產品從回傳資料取得 `<SOURCE_TARGET>`，後續指定同一分頁操作，另記錄 WP 分頁的 target。`shot` 最後兩個參數是捲動位置與視窗寬度，指定寬度時，`shot` 固定將視窗高度設為 1000px。其他尺寸或特殊操作可透過 `cdp` 傳入請求。
 
 | 動作 | CDP 方法 | Agent 產品取得的結果 |
 | --- | --- | --- |
@@ -155,9 +155,10 @@ Agent 產品綜合觀察與量測選擇轉換方式。原站 HTML／CSS 清楚�
 - Agent 產品查看圖片、閱讀文件，並用截圖工具抽樣影片畫面，依內容與用途命名。原站已有清楚名稱時沿用，其餘使用英文小寫與連字號，例如 `hero-resort-aerial-video.mp4`，必要時加區段、順序或 RWD 變體。
 - 字型依字體、字重及分片辨識。Agent 產品保留來源與新名稱的對照於 `tmp/`，更名時維持素材內容與字型字元範圍對應，並同步更新模板及程式碼中的引用。
 - Agent 產品將圖片、SVG、影片、字型及文件等非程式碼素材放在 `output/assets/<asset-folder>/`，交付模板與 Snippets 的素材引用需對應包內檔案，不能只依賴測試站專有的附件網址或 ID。使用者首次部署時，透過 File Manager、SSH／SFTP 等方式將 `<asset-folder>` 整個上傳至 `wp-content/uploads/`。素材資料夾使用清楚、穩定的名稱，不需跟著交付 ZIP 的時間戳變更。
-- Bricks 保留原生內容與樣式設定。Agent 產品將額外的自訂 CSS、JS 及必要程式庫存入 Code Snippets，依用途命名與拆分，讓設計師在 WP 後台與 Agent 產品協作修改。程式碼不放入 uploads，也不以 Snippet 再引入 uploads 裡的程式檔。
-- Agent 產品為每份 CSS／JS 提供 PHP 包裝版本，讓 Code Snippets 免費版亦可載入。預設 `code-snippets.json` 匯入 PHP 片段，`snippets/` 保留對應 PHP 與可讀的 CSS／JS 副本。額外提供 Pro 原生格式時，Agent 產品標示為替代選項，不能同時啟用兩套。
-- Agent 產品確認目標 Code Snippets 版本的匯入格式，以隨模板攜帶的頁面標記限制片段作用範圍，處理依賴與初始化順序，並驗證前台及 Bricks 編輯器預覽。Agent 產品在可用的免費版環境實測 PHP 版本，未測其他版本時如實記錄，不把格式相容推定為實測通過。
+- Agent 產品將原生內容與樣式保留在 Bricks 元素設定，將額外的自訂 CSS、JS 及必要程式庫存入 Code Snippets，依用途命名與拆分。使用者與接手的設計師可在 WP 後台維護程式碼，也能將程式碼交由 Agent 產品協助調整。程式碼不放入 uploads，也不以 Snippet 再引入 uploads 裡的程式檔。
+- Agent 產品為每份 CSS／JS 提供 PHP 包裝版本，讓 Code Snippets 免費版亦可載入。預設交付的 `code-snippets.json` 包含 PHP 片段，`snippets/` 保留對應 PHP 與可讀的 CSS／JS 副本。額外提供 Pro 原生格式時，Agent 產品標示為替代選項，不能同時啟用兩套。
+- Agent 產品先確認測試站已安裝並啟用 Code Snippets（免費版即可），缺少時依使用者已授權的環境變更範圍補齊，操作見 `<PLUGIN_ROOT>/docker/README.md`。
+- Agent 產品依實際安裝的 Code Snippets 版本確認匯入格式，以隨模板攜帶的頁面標記限制片段作用範圍，處理依賴與初始化順序，並驗證前台及 Bricks 編輯器預覽。Agent 產品在可用的免費版環境實測 PHP 包裝片段，未測的片段格式或外掛版本如實記錄，不把格式相容推定為實測通過。
 
 ### 依本機 Bricks 版本確認設定
 
@@ -177,11 +178,13 @@ uv run --no-project python "<PLUGIN_ROOT>/src/validate_template.py" "<RUN_DIR>/t
 
 格式檢查包含元素欄位、ID 與父子引用。驗證器未載入 live schema 時會略過元素名稱與設定欄位的相關檢查，Agent 產品需區分結構檢查與版本欄位檢查的結果。
 
+驗證器另有基於 Bricks 1.12.x 的固定規則，不會隨 live schema 切換。Agent 產品需結合目標版本的原始碼與實測判讀版本相關訊息。
+
 Agent 產品可用 `<PLUGIN_ROOT>/docker/push-template.php` 直接寫入測試頁，操作見 `<PLUGIN_ROOT>/docker/README.md`。未傳入 `PAGE_ID` 時腳本建立新頁，Agent 產品記錄回傳頁號與網址，續修時只指定該次頁號。當次模板與容器暫存檔使用獨立名稱，避免覆蓋其他工作。使用 global classes 前，Agent 產品確認定義不會覆蓋既有全站樣式。
 
 ## 驗收以正常匯入後的頁面為準
 
-直接寫入測試頁可供首版與修正預覽，交付前仍需透過目標 Bricks 的正常匯入流程驗證模板，檢查匯入後的頁面。Agent 產品依原站觀察項目完成下列驗證，分別記錄通過、未通過及未測項目：
+直接寫入測試頁可供首版與修正預覽。交付前，Agent 產品從目標版本的 Bricks 後台模板管理入口正常匯入模板，再將模板與頁面設定套用到當次 WP 測試頁。驗收對象是套用後的實際頁面與編輯器，僅匯入模板庫或查看模板預覽不算完成。Agent 產品依原站觀察項目完成下列驗證，分別記錄通過、未通過及未測項目：
 
 - **格式與匯入**：檢查 JSON 驗證結果，確認正常匯入後的元素、CSS 選擇器、素材與腳本仍有效。直接推送成功不等於正常匯入通過。
 - **內容與外觀**：比對整頁內容、代表截圖與有差異的元素尺寸，核對圖片的實際素材，避免漏區、錯圖或佔位圖。
@@ -213,7 +216,7 @@ screenshots/                  # 比較頁使用的代表截圖，必要時附動
 
 Agent 產品提供能在解壓目錄以 `uv run` 執行的兩支 Python 腳本，將實際指令寫入 `report.md`。腳本不依賴 AutoBricks 原始碼或 `tmp/`，可接續執行並產生部署副本，保留原始交付檔案，不直接修改遠端 WP：
 
-- `replace-domain.py` 接受目標站網址，處理本包部署網址的協定、網域與連接埠，以及需要的站台子路徑，同步更新模板、Snippets 匯入檔與程式碼副本。腳本保留不屬於本包部署的外部連結。
+- `replace-domain.py` 接受目標站網址，將包內目前部署站的網址換成目標站網址，包含協定、網域、連接埠與站台子路徑，同步更新模板、Snippets 匯入檔與程式碼副本。腳本保留不屬於本包部署的外部連結。
 - `rename-assets-folder.py` 接受新的素材資料夾名稱，重新命名部署副本的 `assets/<asset-folder>/`，並同步更新上述檔案中的素材路徑。名稱不得造成目錄越界或覆蓋既有素材。
 
 Agent 產品製作可離線開啟的 `comparison.html`，以相對路徑引用包內原站與成品的截圖，標示頁面網址、測試時間、視窗尺寸、區段與互動狀態。比較頁涵蓋桌機、手機及重要斷點，整理實際執行的互動與動畫驗收，必要時附連續畫面或錄影，並區分通過、未通過及未測項目。產生 HTML 本身不等於已完成驗證，內容必須對應實測紀錄與交付版本。

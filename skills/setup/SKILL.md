@@ -86,8 +86,9 @@ Agent 產品需要本機 WordPress + Bricks 實際渲染重建頁面，檢查模
    ```
 3. 使用者提供已授權的 Bricks theme 後，Agent 產品將 theme 解壓至 `<WP_DIR>/wp/wp-content/themes/bricks/`，再執行 `<WP_DIR>/init-wp.sh` 啟用。Agent 產品確認工作目錄的 Git 忽略 `.autobricks/`、`.browser/` 與執行產物，不將商業 theme 納入版控。
    預設站台為 http://localhost:8080，後台帳號／密碼為 admin/admin，僅供本機測試。細節見 `<PLUGIN_ROOT>/docker/README.md`。
+4. Agent 產品確認測試站已安裝並啟用 Code Snippets（免費版即可），供重建技能驗證 PHP 片段。初始化腳本不安裝此外掛，缺少時依已取得的環境安裝授權補齊，操作見 `<PLUGIN_ROOT>/docker/README.md`。
 
 ### 7. 回報
-Agent 產品向使用者回報 uv 與 Node 版本、Python 虛擬環境、CDP 連線位址、WP 預覽網址、Bricks 是否啟用，以及實際安裝或調整的環境項目。尚未完成的項目需分別列出。
+Agent 產品向使用者回報 uv 與 Node 版本、Python 虛擬環境、CDP 連線位址、WP 預覽網址、Bricks 與 Code Snippets 是否啟用，以及實際安裝或調整的環境項目。尚未完成的項目需分別列出。
 
 環境就緒後，使用者可呼叫 `web-page-to-bricks` 技能並提供參考網址。Agent 產品依該技能觀察原站、轉換內容與版型，再檢查 Bricks 成品。

@@ -2,11 +2,7 @@
 /**
  * 把 Bricks template JSON 寫進 WordPress 測試頁面（於容器內執行，供 web-page-to-bricks 開發預覽）。
  *
- * 用法（host 端）：
- *   MSYS_NO_PATHCONV=1 docker cp template.json autobricks-wp:/tmp/template.json
- *   MSYS_NO_PATHCONV=1 docker cp push-template.php autobricks-wp:/tmp/
- *   MSYS_NO_PATHCONV=1 docker exec -e TEMPLATE=/tmp/template.json \
- *       [-e PAGE_ID=89] [-e TITLE="My Page"] autobricks-wp php /tmp/push-template.php
+ * 主機端指令與依任務隔離的暫存檔命名，見 docker/README.md「將模板寫入測試頁」。
  *
  * 不給 PAGE_ID → 建全新 published page（絕不覆寫既有頁）；給了才覆寫該頁。
  * 關鍵（勿省）：wp_set_current_user(admin) 否則 WP 靜默丟棄寫入；內容必 wp_slash。
