@@ -135,7 +135,6 @@ data/20260916-223015-codex-new_art_clone_web/
 ├── tmp/              # 分析工具、腳本、下載素材、量測、截圖與草稿等所有中間檔案
 └── output/
     ├── output_schema_version    # 交付結構版本與目錄說明
-    ├── page-manifest.json       # 頁面、片段與素材資料夾的對應
     ├── template.json
     ├── code-snippets.json
     ├── assets/new-art/           # 上傳至 uploads/ 的非程式碼素材
@@ -150,11 +149,11 @@ data/20260916-223015-codex-new_art_clone_web/
 
 Agent 產品只交付一個 `YYYYMMDD-HHMMSS-<page-name>-bricks.zip`，包含上述交付檔案，ZIP 時間採打包時的本機時間。使用者先解壓，依 `report.md` 執行 `uv run` 部署腳本、上傳素材，再分別匯入 Code Snippets 與 Bricks。`comparison.html` 可離線查看實際截圖及驗收結果。整包 ZIP 不是直接匯入 Bricks 的模板 ZIP。
 
-專案根目錄的 [output_schema_version](output_schema_version) 定義目前交付結構，第一行從 `version:1` 開始。Agent 產品將該檔原樣放入交付目錄與 ZIP。此版本與 Bricks 版本分開，也不代表網站已驗收通過。結構或欄位約定改變時才升版，單純修改技能措辭不需升版。
+專案根目錄的 [output_schema_version](output_schema_version) 第一行是版本號，後面列出交付結構與用途。Agent 產品將該檔原樣放入交付目錄與 ZIP。結構改版時才升版。
 
-`page-manifest.json` 記錄穩定的 `page_key`、片段對應與素材資料夾。模板頁面設定與 Snippets 程式碼也保留識別及 schema 標記，讓 Agent 產品日後能對應後台修改過的內容。使用者改網址或素材資料夾名稱時保留識別，設計師修改內容時也需保留標記。
+Bricks 頁面的 Body classes 與所屬 Code Snippets 的 tag 使用相同識別碼。這個對應保存在 WP，讓後續工作可從指定頁面找到所屬片段，即使本機 `data/` 為空也不影響辨認。使用者修改內容或搬站時保留識別標記。
 
-版本定義及 migration 紀錄見 [skills/check-schema-version/references/output-schema.md](skills/check-schema-version/references/output-schema.md)。目前只有版本 1，未標版舊包不會自動視為版本 1。這些約定先建立交付基礎，尚未提供正式站 push、fetch 或 merge 技能。
+版本紀錄見 [skills/check-schema-version/references/output-schema.md](skills/check-schema-version/references/output-schema.md)：`v1` 列出初版結構，後續 migration 只列變更，再附目標版本結構。目前尚未提供正式站 push、fetch 或 merge 技能。
 
 執行產物、登入資料與商業 theme 不納入 Git。
 
