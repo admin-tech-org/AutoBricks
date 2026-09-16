@@ -52,7 +52,7 @@ UV_PROJECT_ENVIRONMENT="<PROJECT_ROOT>/.autobricks/venv" uv sync --project "<PLU
 ```
 
 ### 5. 準備 Chrome CDP 連線
-Agent 產品透過 Chrome CDP 觀察原站或 WP 預覽的內容、排版與互動，可使用現有的 CDP 工具或共用的 `<PLUGIN_ROOT>/src/browser.mjs`。共用工具的連線方式見 [../web-page-to-bricks/references/browser.md](../web-page-to-bricks/references/browser.md)。啟動腳本的預設埠為 9222，Agent 產品需確認瀏覽器與所用工具設定的埠一致。
+Agent 產品透過 Chrome CDP 觀察原站或 WP 預覽的內容、排版與互動，可使用現有的 CDP 工具或共用的 `<PLUGIN_ROOT>/src/browser.mjs`。啟動腳本與共用工具都讀取 `<PROJECT_ROOT>/.browser/cdp.env` 的 `CDP_PORT`，未設定時皆使用 9222。連線方式見 [../web-page-to-bricks/references/browser.md](../web-page-to-bricks/references/browser.md)。
 
 1. **Agent 產品將啟動腳本放進使用者專案的 `.browser/`**，讓瀏覽器 profile 與登入資料留在該專案：
    ```bash
@@ -62,8 +62,8 @@ Agent 產品透過 Chrome CDP 觀察原站或 WP 預覽的內容、排版與互�
    ```
    Agent 產品確認該專案的 `.gitignore` 排除 `.browser/`。
 2. **Agent 產品優先沿用可用的 CDP 埠設定**；首次設定時使用空閒的 9222，或依使用者需求選擇其他埠，並將 `CDP_PORT=<port>` 寫入 `.browser/cdp.env`。
-   啟動腳本讀取該檔；非 9222 時使用 `.chrome_cdp-<port>` profile。同一 profile 只能供一個 Chrome 實例使用。
-   Agent 產品依所用工具的介面指定相同的 CDP 連線位址，只啟動當次工作需要的瀏覽器，並確認所用埠未被其他服務占用。
+   啟動腳本讀取該檔；未自訂 profile 時，非 9222 埠使用 `.chrome_cdp-<port>` profile。同一 profile 只能供一個 Chrome 實例使用。
+   Agent 產品從工作專案執行 `browser.mjs`，工具會自動尋找該設定檔。其他瀏覽器工具則依其介面指定相同位址。Agent 產品只啟動當次工作需要的瀏覽器，並確認所用埠未被其他服務占用。
 3. **Agent 產品啟動設定好的 Chrome**：
    - Windows：`cmd //c "<PROJECT_ROOT>/.browser/launch-chrome-cdp.bat"`
    - macOS／Linux：`bash "<PROJECT_ROOT>/.browser/launch-chrome-cdp.sh"`

@@ -39,6 +39,7 @@ Claude Code 啟動後，使用者在 **Claude Code 對話框**指定要測試的
 | 使用者要執行的工作 | 對話指令 | Claude Code 讀取的說明 |
 |---|---|---|
 | 重建指定網頁 | `/autobricks:web-page-to-bricks <參考網頁網址>` | [skills/web-page-to-bricks/SKILL.md](skills/web-page-to-bricks/SKILL.md) |
+| 檢查交付包版本與結構 | `/autobricks:check-schema-version <交付目錄或 ZIP>` | [skills/check-schema-version/SKILL.md](skills/check-schema-version/SKILL.md) |
 | 檢查或安裝本機測試環境 | `/autobricks:setup` | [skills/setup/SKILL.md](skills/setup/SKILL.md) |
 
 ### 發行階段：將技能與工具提供為可安裝的 plugin
@@ -50,7 +51,7 @@ Claude Code 啟動後，使用者在 **Claude Code 對話框**指定要測試的
 /plugin install autobricks@autobricks
 ```
 
-安裝完成後，使用者仍以 `/autobricks:web-page-to-bricks` 或 `/autobricks:setup` 呼叫技能；Claude Code 此時讀取的是安裝副本。
+安裝完成後，使用者仍以上表的對話指令呼叫技能。Claude Code 此時讀取的是安裝副本。
 
 ## 使用 Codex
 
@@ -75,6 +76,7 @@ Codex 啟動後，使用者在 **Codex 對話框**指定要測試的技能與目
 | 使用者要執行的工作 | 對話指令 | Codex 讀取的說明 |
 |---|---|---|
 | 重建指定網頁 | `$autobricks:web-page-to-bricks <參考網頁網址>` | [.agents/skills/web-page-to-bricks/SKILL.md](.agents/skills/web-page-to-bricks/SKILL.md) |
+| 檢查交付包版本與結構 | `$autobricks:check-schema-version <交付目錄或 ZIP>` | [.agents/skills/check-schema-version/SKILL.md](.agents/skills/check-schema-version/SKILL.md) |
 | 檢查或安裝本機測試環境 | `$autobricks:setup` | [.agents/skills/setup/SKILL.md](.agents/skills/setup/SKILL.md) |
 
 > [!TIP]
@@ -89,7 +91,7 @@ codex plugin marketplace add admin-tech-org/AutoBricks
 codex plugin add autobricks@autobricks
 ```
 
-安裝並啟用後，使用者重新啟動 Codex，仍以 `$autobricks:web-page-to-bricks` 或 `$autobricks:setup` 呼叫技能；Codex 此時讀取的是安裝副本。
+安裝並啟用後，使用者重新啟動 Codex，再以上表的對話指令呼叫技能。Codex 此時讀取的是安裝副本。
 
 > [!TIP]
 > `.codex-plugin/plugin.json` 指定 plugin 的技能目錄。安裝版本使用快取副本；修改原始碼後需更新安裝內容。指定分支、專案啟用與更新步驟見 [doc/codex-plugin.md](doc/codex-plugin.md)。
@@ -104,6 +106,7 @@ codex plugin add autobricks@autobricks
 兩種 Agent 產品使用同名、同內容的技能：
 
 - **`web-page-to-bricks`**：負責單一網頁的重建與驗收。
+- **`check-schema-version`**：檢查交付包的版本與結構，在使用者要求升級時依既有 migration 轉換副本。目前只支援 `output_schema`。
 - **`setup`**：在使用者明確要求時檢查或安裝環境。
 
 維護者在 `skills/` 與 `.agents/skills/` 各保留一份，修改後同步技能與參考文件。
@@ -123,7 +126,7 @@ Agent 產品從載入的 `SKILL.md` 位置向上辨識 AutoBricks 根目錄，�
 - `.autobricks/docker/`：工作專案的 Docker 設定與 WordPress 檔案，開發與安裝 plugin 時皆使用此位置。
 - `templates/`：Chrome 啟動範本。
 - `data/YYYYMMDD-HHMMSS-agent_product-task_name/`：各次任務資料，分為 `tmp/` 與 `output/`。
-- `.browser/`：瀏覽器 profile。
+- `.browser/`：Chrome 啟動腳本、獨立 profile，以及啟動腳本與 CDP 工具共用的 `cdp.env` 連線設定。
 
 任務目錄以開始時的本機日期與時分秒命名。產品名與英文任務名使用小寫，多字以底線連接，例如 `20260916-223015-codex-new_art_clone_web`、`20260916-223015-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
 
@@ -131,6 +134,8 @@ Agent 產品從載入的 `SKILL.md` 位置向上辨識 AutoBricks 根目錄，�
 data/20260916-223015-codex-new_art_clone_web/
 ├── tmp/              # 分析工具、腳本、下載素材、量測、截圖與草稿等所有中間檔案
 └── output/
+    ├── output_schema_version    # 交付結構版本與目錄說明
+    ├── page-manifest.json       # 頁面、片段與素材資料夾的對應
     ├── template.json
     ├── code-snippets.json
     ├── assets/new-art/           # 上傳至 uploads/ 的非程式碼素材
@@ -144,6 +149,12 @@ data/20260916-223015-codex-new_art_clone_web/
 ```
 
 Agent 產品只交付一個 `YYYYMMDD-HHMMSS-<page-name>-bricks.zip`，包含上述交付檔案，ZIP 時間採打包時的本機時間。使用者先解壓，依 `report.md` 執行 `uv run` 部署腳本、上傳素材，再分別匯入 Code Snippets 與 Bricks。`comparison.html` 可離線查看實際截圖及驗收結果。整包 ZIP 不是直接匯入 Bricks 的模板 ZIP。
+
+專案根目錄的 [output_schema_version](output_schema_version) 定義目前交付結構，第一行從 `version:1` 開始。Agent 產品將該檔原樣放入交付目錄與 ZIP。此版本與 Bricks 版本分開，也不代表網站已驗收通過。結構或欄位約定改變時才升版，單純修改技能措辭不需升版。
+
+`page-manifest.json` 記錄穩定的 `page_key`、片段對應與素材資料夾。模板頁面設定與 Snippets 程式碼也保留識別及 schema 標記，讓 Agent 產品日後能對應後台修改過的內容。使用者改網址或素材資料夾名稱時保留識別，設計師修改內容時也需保留標記。
+
+版本定義及 migration 紀錄見 [skills/check-schema-version/references/output-schema.md](skills/check-schema-version/references/output-schema.md)。目前只有版本 1，未標版舊包不會自動視為版本 1。這些約定先建立交付基礎，尚未提供正式站 push、fetch 或 merge 技能。
 
 執行產物、登入資料與商業 theme 不納入 Git。
 

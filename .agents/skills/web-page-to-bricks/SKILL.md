@@ -60,7 +60,7 @@ Agent 產品可用 Node 22+ 執行 `<PLUGIN_ROOT>/src/browser.mjs`，直接連�
 
 - Agent 產品先確認 Chrome 已提供 CDP 連線。`open` 只會在既有 Chrome 建立分頁，不會啟動 Chrome 程式。
 - 需要啟動 Chrome 時，Agent 產品可使用 `<PLUGIN_ROOT>/templates/` 的啟動範本，將腳本與 profile 放在 `<PROJECT_ROOT>/.browser/`。需要使用者登入或觀看操作時使用有視窗的 Chrome，背景觀察可使用 headless Chrome。
-- 啟動範本預設埠為 9222，工具預設埠為 9444。Agent 產品沿用可用埠，透過 `AUTOBRICKS_CDP` 指定相同的工具連線位址，並檢查 `/json/version`。此變數屬於 AutoBricks 工具，不依賴特定 Agent 產品。
+- Chrome 啟動腳本與工具共用 `<PROJECT_ROOT>/.browser/cdp.env` 的 `CDP_PORT`，未設定時皆使用 9222。Agent 產品從工作專案執行工具，沿用可用埠，並檢查該位址的 `/json/version`；連線設定細節見 [references/browser.md](references/browser.md)。
 - Agent 產品確認工具能開啟頁面、讀取 DOM、擷取截圖，並以圖片檢視工具實際開啟 PNG。成功輸出圖片路徑不代表 Agent 產品已查看畫面。
 
 以下指令中的路徑與 target 需替換為當次實際值，shell 語法依執行環境調整：
@@ -152,6 +152,7 @@ Agent 產品綜合觀察與量測選擇轉換方式。原站 HTML／CSS 清楚�
 
 ### 素材命名與程式碼維護
 
+- Agent 產品產生模板與片段前，讀取 [../check-schema-version/references/output-schema.md](../check-schema-version/references/output-schema.md) 的當前版本定義，建立 `page-manifest.json`，將穩定的頁面／片段識別與 schema 版本標記放入可正常匯出的頁面設定及程式碼。搬站、改網址與續修保留識別，讓後續工作能對應設計師在後台修改過的內容。
 - Agent 產品查看圖片、閱讀文件，並用截圖工具抽樣影片畫面，依內容與用途命名。原站已有清楚名稱時沿用，其餘使用英文小寫與連字號，例如 `hero-resort-aerial-video.mp4`，必要時加區段、順序或 RWD 變體。
 - 字型依字體、字重及分片辨識。Agent 產品保留來源與新名稱的對照於 `tmp/`，更名時維持素材內容與字型字元範圍對應，並同步更新模板及程式碼中的引用。
 - Agent 產品將圖片、SVG、影片、字型及文件等非程式碼素材放在 `output/assets/<asset-folder>/`，交付模板與 Snippets 的素材引用需對應包內檔案，不能只依賴測試站專有的附件網址或 ID。使用者首次部署時，透過 File Manager、SSH／SFTP 等方式將 `<asset-folder>` 整個上傳至 `wp-content/uploads/`。素材資料夾使用清楚、穩定的名稱，不需跟著交付 ZIP 的時間戳變更。
@@ -192,7 +193,8 @@ Agent 產品可用 `<PLUGIN_ROOT>/docker/push-template.php` 直接寫入測試�
 - **互動與動畫**：重新載入正常頁面，實際觸發觀察到的互動及動畫，核對時間、狀態切換、內容與窄螢幕行為。靜態尺寸一致不能代替動態驗收。
 - **可編輯性**：在 Bricks 編輯器實際選取並試改代表性的文字、圖片與容器，確認欄位、媒體控制及預覽有效，測試後恢復交付內容。公開頁正常不代表編輯器正常。
 - **程式碼維護**：正常匯入並啟用 PHP 片段，確認 CSS／JS 不依賴 uploads 中的程式檔、只作用於指定頁面且沒有重複執行。Agent 產品在 Code Snippets 後台試改代表性樣式或互動，確認頁面更新後恢復交付內容。
-- **部署副本**：從最終 ZIP 解壓後測試兩支 Python 腳本各自及接續執行的結果，檢查模板、Snippets、程式碼副本與實際素材路徑一致，且原始包保留。正常匯入與瀏覽器驗收需對應包內的同一份模板及片段。
+- **交付結構與識別**：依 [../check-schema-version/SKILL.md](../check-schema-version/SKILL.md) 檢查包內版本、檔案及對應關係。正常匯入後重新取得頁面設定與片段，確認頁面／片段識別及 schema 標記仍在，不單憑本機 JSON 判斷。
+- **部署副本**：從最終 ZIP 解壓後測試兩支 Python 腳本各自及接續執行的結果，檢查模板、Snippets、程式碼副本、manifest 與實際素材路徑一致，版本檔及穩定識別保留，且原始包保留。正常匯入與瀏覽器驗收需對應包內的同一份模板及片段。
 
 Agent 產品對照原站的觀察紀錄檢查是否有遺漏。修正後重驗受影響的版型或互動，同一問題持續調整仍無改善時查明原因，必要時說明限制或缺少的條件，不把未通過改稱已完成，也不無限重複相同修正。
 
@@ -203,6 +205,8 @@ Agent 產品將交付檔案整理到 `<RUN_DIR>/output/`，只提供一個完整
 ZIP 包含以下檔案，解壓後分別使用各自的匯入入口，不能把整個交付 ZIP 直接當作 Bricks 模板匯入：
 
 ```text
+output_schema_version         # 交付結構版本與目錄說明
+page-manifest.json            # 穩定的頁面、片段與素材資料夾對應
 template.json                 # Bricks 模板與頁面設定
 code-snippets.json            # Code Snippets PHP 片段匯入檔
 assets/<asset-folder>/        # 上傳至 uploads/ 的非程式碼素材
@@ -214,16 +218,21 @@ comparison.html               # 原站與成品的驗收對照
 screenshots/                  # 比較頁使用的代表截圖，必要時附動態證據
 ```
 
+Agent 產品以 `<PLUGIN_ROOT>/output_schema_version` 為當次交付結構的版本依據，核對完成後原樣複製到 `output/`。該版本管理交付結構與識別欄位，不代表 Bricks 版本或驗收通過。續修舊包時先檢查原版本，不只替換版本檔就視為升級。
+
 Agent 產品提供能在解壓目錄以 `uv run` 執行的兩支 Python 腳本，將實際指令寫入 `report.md`。腳本不依賴 AutoBricks 原始碼或 `tmp/`，可接續執行並產生部署副本，保留原始交付檔案，不直接修改遠端 WP：
 
 - `replace-domain.py` 接受目標站網址，將包內目前部署站的網址換成目標站網址，包含協定、網域、連接埠與站台子路徑，同步更新模板、Snippets 匯入檔與程式碼副本。腳本保留不屬於本包部署的外部連結。
-- `rename-assets-folder.py` 接受新的素材資料夾名稱，重新命名部署副本的 `assets/<asset-folder>/`，並同步更新上述檔案中的素材路徑。名稱不得造成目錄越界或覆蓋既有素材。
+- `rename-assets-folder.py` 接受新的素材資料夾名稱，重新命名部署副本的 `assets/<asset-folder>/`，並同步更新上述檔案中的素材路徑及 manifest 的 `asset_folder`。名稱不得造成目錄越界或覆蓋既有素材。
+
+兩支腳本均將版本檔及 manifest 帶入部署副本，保留 `page_key` 與 `snippet_key`。部署副本的用途與內容需在報告說明，不以省略驗收證據的部署副本取代完整交付包。
 
 Agent 產品製作可離線開啟的 `comparison.html`，以相對路徑引用包內原站與成品的截圖，標示頁面網址、測試時間、視窗尺寸、區段與互動狀態。比較頁涵蓋桌機、手機及重要斷點，整理實際執行的互動與動畫驗收，必要時附連續畫面或錄影，並區分通過、未通過及未測項目。產生 HTML 本身不等於已完成驗證，內容必須對應實測紀錄與交付版本。
 
 Agent 產品將以下資訊寫入 `report.md`，在回覆中提供完整 ZIP、報告、比較頁及 WP 預覽網址：
 
 - 參考網址、模板 JSON、可開啟的 WP 預覽網址，以及素材搬移所需檔案。
+- 交付 schema 版本、`page_key` 與片段識別的用途。使用者修改內容或程式碼時保留識別 class、tag 及註解，供後續對應。
 - 解壓、執行腳本、上傳素材、匯入並啟用 Snippets、匯入 Bricks 及套用頁面設定的步驟，指出各檔案的用途與片段作用條件。已啟用的同一套片段不重複匯入啟用。
 - `comparison.html` 與代表截圖的位置，及各驗收項目的證據。
 - 格式、正常匯入、外觀、RWD、互動、動畫及可編輯性的驗證結果，明列剩餘差異與未測項目。

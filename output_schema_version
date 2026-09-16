@@ -1,0 +1,20 @@
+version:1
+data/YYYYMMDD-HHMMSS-agent_product-task_name/
+├── tmp/                              # 中間檔案，不納入交付 ZIP
+└── output/
+    ├── output_schema_version         # 從 AutoBricks 根目錄原樣複製本檔
+    ├── page-manifest.json            # 頁面、Snippets 與素材資料夾的對應
+    ├── template.json                 # Bricks 模板與頁面設定
+    ├── code-snippets.json            # Code Snippets PHP 片段匯入檔
+    ├── assets/<asset-folder>/        # 圖片、影片、字型、文件等非程式碼素材
+    ├── snippets/                     # PHP 包裝與對應 CSS／JS 可讀副本
+    ├── replace-domain.py             # 更換部署網址，保留原始交付檔案
+    ├── rename-assets-folder.py       # 更換素材資料夾名稱，保留原始交付檔案
+    ├── report.md                     # 匯入教學、維護位置與驗收結果
+    ├── comparison.html               # 原站與成品的實際驗收對照
+    ├── screenshots/                  # 比較頁引用的截圖及必要動態證據
+    └── YYYYMMDD-HHMMSS-<page-name>-bricks.zip
+
+ZIP 根目錄包含 output/ 的交付檔案，不含 ZIP 自身、tmp/ 或部署腳本產生的副本。
+無額外程式碼時，保留空 snippets/、合法的空片段匯入檔與空 snippets 清單；素材目錄亦可為空。
+本版本管理交付結構與識別欄位，不代表 Bricks 版本或驗收通過。

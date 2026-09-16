@@ -3,10 +3,51 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 
-const endpoint = process.env.AUTOBRICKS_CDP || 'http://127.0.0.1:9444';
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+export async function resolveCdpEndpoint({cwd = process.cwd(), env = process.env} = {}) {
+  const override = env.AUTOBRICKS_CDP?.trim();
+  if (override) {
+    let url;
+    try { url = new URL(override); } catch { /* Report the setting, not its potentially private value. */ }
+    if (!url || !['http:', 'https:'].includes(url.protocol) || url.search || url.hash) {
+      throw new Error('AUTOBRICKS_CDP must be an HTTP(S) CDP base URL without a query or fragment');
+    }
+    return override.replace(/\/+$/, '');
+  }
+
+  // Resolve from the working project, never from this tool's plugin/cache path.
+  let dir = path.resolve(cwd);
+  while (true) {
+    const config = path.join(dir, '.browser', 'cdp.env');
+    let contents;
+    try { contents = await fs.readFile(config, 'utf8'); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+    if (contents !== undefined) {
+      let port = '9222';
+      for (const line of contents.replace(/^\uFEFF/, '').split(/\r?\n/)) {
+        const match = /^CDP_PORT=(.*)$/.exec(line.trim());
+        if (match) port = match[1].trim();
+      }
+      if (!/^\d+$/.test(port) || Number(port) < 1 || Number(port) > 65535) {
+        throw new Error(`Invalid CDP_PORT in ${config}; use an integer from 1 to 65535`);
+      }
+      return `http://127.0.0.1:${Number(port)}`;
+    }
+
+    // A nested Git project must not borrow its parent project's browser.
+    try { await fs.stat(path.join(dir, '.git')); break; }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return 'http://127.0.0.1:9222';
+}
+
+let endpointPromise;
 async function request(route, options = {}) {
+  const endpoint = await (endpointPromise ??= resolveCdpEndpoint());
   const response = await fetch(`${endpoint}${route}`, {...options, signal: AbortSignal.timeout(10000)});
   if (!response.ok) throw new Error(`CDP HTTP ${response.status}: ${route}`);
   return response.json();

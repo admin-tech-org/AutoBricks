@@ -9,9 +9,10 @@ Agent 產品以原站的內容、版型、RWD、互動與動畫作為重建及�
 ## 規則與技能
 
 - 本檔是各 Agent 產品共用的工作規則。Claude Code 透過 `CLAUDE.md` 引用本檔。
-- `skills/` 與 `.agents/skills/` 各提供同名、同內容的 `web-page-to-bricks` 與 `setup` 技能。維護者同步兩邊的技能與參考文件。
+- `skills/` 與 `.agents/skills/` 各提供同名、同內容的 `web-page-to-bricks`、`check-schema-version` 與 `setup` 技能。維護者同步兩邊的技能與參考文件。
 - Agent 產品執行網頁重建時，載入當次來源的 `web-page-to-bricks`。
 - 使用者明確要求環境檢查或安裝時，Agent 產品才載入 `setup`。
+- Agent 產品檢查或升級交付包結構時，載入 `check-schema-version`。目前只支援 `output_schema`，版本依據為 AutoBricks 根目錄的 `output_schema_version`。
 
 ## 工具與執行產物
 
@@ -21,7 +22,8 @@ Agent 產品以原站的內容、版型、RWD、互動與動畫作為重建及�
 - Agent 產品將當次任務資料存入使用者工作目錄的 `data/YYYYMMDD-HHMMSS-agent_product-task_name/`。日期與時分秒採任務開始時的本機時間，產品名與英文任務名使用小寫，多字以底線連接，例如 `20260916-223015-codex-new_art_clone_web`、`20260916-223015-claude_code-new_art_clone_web`。續修沿用當次目錄，新任務不覆蓋既有目錄。
 - Agent 產品在當次任務目錄建立 `tmp/` 與 `output/`。分析工具、腳本、下載素材、量測、截圖、草稿與其他中間檔案全部放入 `tmp/`，子目錄依任務需要安排。
 - Agent 產品將可匯入的 Bricks 匯入包與交付所需素材放入 `output/`，並將最終交付報告寫入 `output/report.md`。
-- Agent 產品將瀏覽器 profile 存入使用者工作目錄的 `.browser/`。
+- Agent 產品依當前 output schema 交付版本檔及頁面／片段對應，將穩定識別保留於模板與 Snippets，搬站或續修時不因網址、頁號或任務目錄改變而重建識別。
+- Agent 產品將瀏覽器 profile 與啟動腳本存入使用者工作目錄的 `.browser/`，Chrome 啟動腳本與 CDP 工具共用其中的 `cdp.env` 連線設定。
 - Agent 產品預設將本機 WordPress 環境放在使用者工作目錄的 `.autobricks/docker/`，開發 AutoBricks 時亦同。AutoBricks 的 `docker/` 只提供範本與工具。
 - Agent 產品尚未熟悉 AutoBricks 的 Docker 環境時，操作前需先完整閱讀 [docker/README.md](docker/README.md)，了解操作方式與注意事項。
 - 安裝包提供工具與範本。Agent 產品不得將 WordPress 資料及其他執行產物寫入 plugin 快取。

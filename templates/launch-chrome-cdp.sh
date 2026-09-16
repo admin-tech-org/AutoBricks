@@ -64,4 +64,7 @@ echo "[ok] Chrome launched with CDP debug port $PORT"
 echo "     profile: $PROFILE"
 echo
 echo " Next: 保持 Chrome 執行，將瀏覽器工具連到 http://127.0.0.1:$PORT 。"
-echo "       使用 AutoBricks browser.mjs 時，先設定 AUTOBRICKS_CDP=http://127.0.0.1:$PORT 再執行 Node。"
+echo "       從工作專案執行 AutoBricks browser.mjs，工具會自動讀取 .browser/cdp.env。"
+if [ -n "${1:-}" ]; then
+  echo "       本次以參數暫時覆寫埠；工具需設定 AUTOBRICKS_CDP=http://127.0.0.1:$PORT。"
+fi

@@ -101,6 +101,10 @@ Bricks 模板 JSON 描述元素、父子關係、內容與設定。Bricks 讀取
 
 整個交付 ZIP 不能直接當作 Bricks 模板匯入。自製外掛與新增後端服務需另行規劃，表單等功能是否完成串接以 `report.md` 的實測結果為準。
 
+新交付包附有 `output_schema_version` 與 `page-manifest.json`，分別記錄交付結構版本及頁面／片段對應，不需在 WP 手動匯入這兩個檔案。模板 Body classes 與 Snippets 名稱、tag、程式碼註解帶有對應識別。使用者可修改網站內容，但需保留識別標記，避免後續無法辨認片段歸屬。兩支部署腳本會保留識別與版本檔，素材更名時同步更新 manifest。
+
+需要確認包的版本、缺漏或升級路徑時，使用者指定 [skills/check-schema-version/SKILL.md](../skills/check-schema-version/SKILL.md) 或 [.agents/skills/check-schema-version/SKILL.md](../.agents/skills/check-schema-version/SKILL.md)。未附版本檔的舊包先比對，不直接補版本號。
+
 - **開發預覽**：Agent 產品使用 `docker/push-template.php` 將模板內容寫入當次 WP 頁面，快速檢查及修正畫面。腳本未指定 `PAGE_ID` 時建立新頁，續修時只更新回傳的當次頁號。操作見 [docker/README.md](../docker/README.md)。
 - **正常匯入**：使用者或 Agent 產品透過目標 Bricks 的模板匯入介面載入 JSON，再將模板插入當次頁面並儲存。匯入模板庫不等於已建立可供訪客查看的頁面，仍需確認模板已套用到預期頁面。
 

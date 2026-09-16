@@ -1,6 +1,106 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {waitFor, waitUntil} from '../src/browser.mjs';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import http from 'node:http';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {fileURLToPath, pathToFileURL} from 'node:url';
+import {resolveCdpEndpoint, waitFor, waitUntil} from '../src/browser.mjs';
+
+async function fixture(t) {
+  const parent = await fs.realpath(os.tmpdir());
+  const root = await fs.mkdtemp(path.join(parent, 'autobricks-cdp-'));
+  t.after(async () => {
+    assert.equal(path.dirname(await fs.realpath(root)), parent);
+    await fs.rm(root, {recursive: true, force: true});
+  });
+  // Bound discovery even when the test itself runs inside a configured project.
+  await fs.mkdir(path.join(root, '.git'));
+  return root;
+}
+
+async function config(dir, text) {
+  await fs.mkdir(path.join(dir, '.browser'), {recursive: true});
+  await fs.writeFile(path.join(dir, '.browser', 'cdp.env'), text);
+}
+
+test('CDP settings follow the working project from a nested task directory', async t => {
+  const root = await fixture(t);
+  const cwd = path.join(root, 'data', 'run', 'tmp');
+  await fs.mkdir(cwd, {recursive: true});
+  await config(root, '\uFEFF# project browser\r\nCDP_PORT=9333\r\nPROFILE_DIR=.chrome_cdp-custom\r\n');
+  assert.equal(await resolveCdpEndpoint({cwd, env: {}}), 'http://127.0.0.1:9333');
+  await config(path.join(root, 'data'), 'CDP_PORT=9555\n');
+  assert.equal(await resolveCdpEndpoint({cwd, env: {}}), 'http://127.0.0.1:9555');
+});
+
+test('explicit CDP URL still overrides the project file', async t => {
+  const cwd = await fixture(t);
+  await config(cwd, 'CDP_PORT=9333\n');
+  assert.equal(await resolveCdpEndpoint({cwd, env: {AUTOBRICKS_CDP: ' https://cdp.example/proxy/ '}}), 'https://cdp.example/proxy');
+  for (const value of ['localhost:9333', 'file:///tmp/cdp', 'http://localhost:9333/?other=1']) {
+    await assert.rejects(resolveCdpEndpoint({cwd, env: {AUTOBRICKS_CDP: value}}), /AUTOBRICKS_CDP must/);
+  }
+});
+
+test('missing port defaults to the launcher port without escaping a Git project', async t => {
+  const root = await fixture(t);
+  await config(root, 'CDP_PORT=9333\n');
+  for (const gitMarker of ['directory', 'worktree-file']) {
+    const cwd = path.join(root, gitMarker);
+    await fs.mkdir(cwd);
+    if (gitMarker === 'directory') await fs.mkdir(path.join(cwd, '.git'));
+    else await fs.writeFile(path.join(cwd, '.git'), 'gitdir: /some/worktree\n');
+    assert.equal(await resolveCdpEndpoint({cwd, env: {}}), 'http://127.0.0.1:9222');
+  }
+  await config(root, '# defaults\nPROFILE_DIR=.chrome_cdp\n');
+  assert.equal(await resolveCdpEndpoint({cwd: root, env: {}}), 'http://127.0.0.1:9222');
+});
+
+test('invalid or unreadable CDP settings fail instead of connecting elsewhere', async t => {
+  const cwd = await fixture(t);
+  for (const port of ['', '0', '65536', '9.3', 'oops', '$(echo 9333)']) {
+    await config(cwd, `CDP_PORT=${port}\n`);
+    await assert.rejects(resolveCdpEndpoint({cwd, env: {}}), /Invalid CDP_PORT/);
+  }
+  await fs.unlink(path.join(cwd, '.browser', 'cdp.env'));
+  await fs.mkdir(path.join(cwd, '.browser', 'cdp.env'));
+  await assert.rejects(resolveCdpEndpoint({cwd, env: {}}));
+});
+
+test('CLI and imported helper use project settings even from a plugin cache', async t => {
+  const root = await fixture(t);
+  const project = path.join(root, 'work');
+  const cwd = path.join(project, 'data', 'run', 'tmp');
+  const cache = path.join(root, 'plugin-cache');
+  await fs.mkdir(cwd, {recursive: true});
+  await config(cache, 'CDP_PORT=1\n');
+  const tool = path.join(cache, 'browser.mjs');
+  await fs.copyFile(fileURLToPath(new URL('../src/browser.mjs', import.meta.url)), tool);
+  const routes = [];
+  const targets = [{id: 'project-browser', type: 'page'}];
+  const server = http.createServer((req, res) => {
+    routes.push(req.url);
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(targets));
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const endpoint = `http://127.0.0.1:${server.address().port}`;
+  await config(project, `CDP_PORT=${server.address().port}\n`);
+  const env = {...process.env};
+  delete env.AUTOBRICKS_CDP;
+  const execute = promisify(execFile);
+  const listed = await execute(process.execPath, [tool, 'list'], {cwd, env});
+  assert.deepEqual(JSON.parse(listed.stdout), targets);
+  assert.deepEqual(routes, ['/json/list']);
+  const imported = await execute(process.execPath, ['--input-type=module', '-e',
+    'const tool = await import(process.argv[1]); console.log(await tool.resolveCdpEndpoint());',
+    pathToFileURL(tool).href], {cwd, env});
+  assert.equal(imported.stdout.trim(), endpoint);
+});
 
 test('wait observes a delayed state and awaits Promise results', async () => {
   let ready = false;

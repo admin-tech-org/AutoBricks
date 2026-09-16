@@ -8,15 +8,23 @@
 
 Agent 產品先以 `<PROJECT_ROOT>/.browser/` 下的獨立 profile 啟動 Chrome remote debugging，再使用工具連線。Chrome 啟動範本位於 `<PLUGIN_ROOT>/templates/launch-chrome-cdp.bat`（Windows）與 `<PLUGIN_ROOT>/templates/launch-chrome-cdp.sh`（macOS／Linux）。`open` 只會在已執行的 Chrome 建立分頁，不會啟動 Chrome 程式。
 
-工具預設連線 `http://127.0.0.1:9444`；啟動範本預設使用 9222 埠。Agent 產品需確認兩端一致，可用 `AUTOBRICKS_CDP` 指定工具的連線位址。
+Chrome 啟動腳本與工具共用 `<PROJECT_ROOT>/.browser/cdp.env`，例如：
 
-以下 PowerShell 範例假設 Chrome 已在 9222 埠提供 CDP，Agent 產品需將路徑佔位符替換為實際絕對路徑：
+```ini
+CDP_PORT=9333
+```
+
+啟動腳本讀取同層的 `cdp.env`；工具從目前工作目錄向上尋找最近的 `.browser/cdp.env`，找到設定或到達 Git 專案根目錄即停止，不依工具的安裝位置尋找。工具以 `http://127.0.0.1:<CDP_PORT>` 連線；沒有設定時，兩端皆使用 9222。無效的埠設定會讓工具報錯。Agent 產品改埠後，需重新啟動對應 Chrome，使設定生效。
+
+以下 PowerShell 範例從工作專案執行，Agent 產品需將路徑佔位符替換為實際絕對路徑：
 
 ```powershell
-$env:AUTOBRICKS_CDP = 'http://127.0.0.1:9222'
+Set-Location "<PROJECT_ROOT>"
 node "<PLUGIN_ROOT>/src/browser.mjs" list
 node "<PLUGIN_ROOT>/src/browser.mjs" open https://example.com "<RUN_DIR>/tmp/screenshots/source"
 ```
+
+臨時連接其他 CDP 位址時，Agent 產品可設定 `AUTOBRICKS_CDP`，其優先於 `cdp.env`；取消該變數後恢復讀取設定檔。啟動腳本的埠參數也是臨時覆寫，不會回寫設定檔；使用該參數時，Agent 產品需讓工具連到相同位址。一般使用只需維護 `cdp.env`。
 
 使用 plugin 安裝副本時，Agent 產品以 `<PLUGIN_ROOT>/src/browser.mjs` 的絕對路徑執行工具，將輸出指向 `<RUN_DIR>/tmp/`，不能將執行產物寫入 plugin 快取。`<PLUGIN_ROOT>` 依當次載入的 skill 位置辨識，不依賴 Agent 產品專用的環境變數。
 

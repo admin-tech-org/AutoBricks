@@ -54,8 +54,12 @@ echo [ok] Chrome launched with CDP debug port %PORT%
 echo      profile: %PROFILE%
 echo.
 echo  Next: keep Chrome running and connect the browser tool to
-echo        http://127.0.0.1:%PORT% . For AutoBricks browser.mjs,
-echo        set AUTOBRICKS_CDP to that URL before running Node.
+echo        http://127.0.0.1:%PORT% . Run AutoBricks browser.mjs from
+echo        the working project; it reads .browser/cdp.env automatically.
+if not "%~1"=="" (
+  echo        The port argument is temporary. For this run, set
+  echo        AUTOBRICKS_CDP=http://127.0.0.1:%PORT% for the browser tool.
+)
 rem  Use ping instead of timeout: timeout fails when stdin is redirected
 rem  (e.g. launched non-interactively via cmd //c).
 ping -n 5 127.0.0.1 >nul
