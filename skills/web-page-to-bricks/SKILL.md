@@ -163,11 +163,11 @@ Agent 產品綜合觀察與量測選擇轉換方式。原站 HTML／CSS 清楚�
 
 ### 依本機 Bricks 版本確認設定
 
-- Agent 產品處理元素設定、JSON 匯入或 SVG 素材前，檢查 `<PROJECT_ROOT>/bricks-import.md`，核對筆記記錄的版本與環境條件，再使用適用的內容。
+- Agent 產品處理元素設定、頁面設定（`pageSettings`）、JSON 匯入或 SVG 素材前，檢查 `<PROJECT_ROOT>/bricks-import.md`，核對筆記記錄的版本與環境條件，再使用適用的內容。
 - 檔案不存在或記錄不適用時，Agent 產品查閱當前已安裝 Bricks 的 schema／原始碼並實測，再建立或更新筆記，記錄版本、相關設定、驗證結果與證據位置。
 - 筆記保存在使用者工作專案根目錄並由 Git 忽略，不放入 skill 的 `references/`，也不隨 plugin 發行或寫入 plugin 快取。
 
-Agent 產品可使用 `<PLUGIN_ROOT>/src/extract_bricks_schema.py`，以 `--theme-dir` 指定實際 theme 目錄，以 `--out` 指定 `<RUN_DIR>/tmp/measurements/bricks-schema.json`，取得當前版本的元素及欄位資料。元素設定以已安裝版本與實際渲染為準，不將其他版本的筆記當成通用 schema。
+Agent 產品可使用 `<PLUGIN_ROOT>/src/extract_bricks_schema.py`，以 `--theme-dir` 指定實際 theme 目錄，以 `--out` 指定 `<RUN_DIR>/tmp/measurements/bricks-schema.json`，取得當前版本的元素與頁面設定候選欄位。設定以已安裝版本與實際生效結果為準，成功保存不代表 Bricks 已採用該欄位，不將其他版本的筆記當成通用 schema。
 
 ### 產生 JSON 與建立測試頁
 
@@ -177,7 +177,7 @@ Agent 產品使用 `uv run` 執行 Python。模板草稿放在 `tmp/`，產生�
 uv run --no-project python "<PLUGIN_ROOT>/src/validate_template.py" "<RUN_DIR>/tmp/template.json"
 ```
 
-格式檢查包含元素欄位、ID 與父子引用。驗證器未載入 live schema 時會略過元素名稱與設定欄位的相關檢查，Agent 產品需區分結構檢查與版本欄位檢查的結果。
+格式檢查包含元素欄位、ID、父子引用與 `pageSettings` 資料格式。驗證器依 live schema 提示未知設定欄位，缺少對應 schema 時明示略過。靜態掃描可能漏掉動態欄位，Agent 產品需依原始碼與實測判讀提示。
 
 驗證器另有基於 Bricks 1.12.x 的固定規則，不會隨 live schema 切換。Agent 產品需結合目標版本的原始碼與實測判讀版本相關訊息。
 
@@ -237,4 +237,4 @@ Agent 產品將以下資訊寫入 `report.md`，在回覆中提供完整 ZIP、�
 - 格式、正常匯入、外觀、RWD、互動、動畫及可編輯性的驗證結果，明列剩餘差異與未測項目。
 - 可直接在 Bricks 編輯的部分、Code Snippets 中對應的 PHP 片段，以及素材替換位置。使用者修改 PHP 片段內的 CSS／JS，保留外層頁面判斷。後台修改後可重新匯出片段保存。
 - 未串接的後端功能與當前畫面行為，不能將前端完成描述為收件或其他服務已可用。
-- 首版與完整驗證的實際耗時，另記錄工具建置、網頁轉換及修正驗證的時間，無法拆分的時間註明原因。
+- 首版與完整驗證的實際耗時。完整耗時計至所有驗證完成，包含最終 ZIP 的部署測試。工具建置、網頁轉換及修正驗證的時間可分開記錄，無法拆分時註明原因。

@@ -6,7 +6,7 @@ Agent 產品依 web-page-to-bricks skill 檢查 template.json，並另行驗證�
   1. 信封：{id, name, parent, children, settings}（component 實例以 cid 識別、放寬 name）
   2. id：格式 ^[a-z0-9]{6}$、唯一；警告不含數字（匯入 id 全域字串替換的踩雷防護）
   3. 圖：parent/children 互相一致、無懸空引用、無環、皆可從根到達
-  4. element name 與 settings 欄位：對照 --live-schema 指定的原始碼掃描結果，
+  4. element name、settings 與 pageSettings 欄位：對照 --live-schema 指定的原始碼掃描結果，
      由呼叫端指定當次任務的 tmp/measurements/bricks-schema.json；未指定就略過相關檢查。
      掃描包含可辨識的父類別欄位，但不執行 PHP；動態組裝、條件與覆寫仍需配合 theme 與實測判讀。
   5. 固定形狀檢查（基於 1.12.x 經驗，不隨 live schema 切換；版本筆記見使用者專案的 bricks-import.md）：
@@ -36,6 +36,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 sys.stderr.reconfigure(encoding="utf-8")
 
 ID_RE = re.compile(r"^[a-z0-9]{6}$")
+MISSING = object()
 GENERIC_FONTS = {
     "serif",
     "sans-serif",
@@ -51,42 +52,65 @@ GENERIC_FONTS = {
 
 
 def load_elements(path):
-    """回傳 (elements, global_classes)。接受三種輸入：
+    """回傳 (elements, global_classes, page_settings)。接受三種輸入：
     裸元素陣列、{"content": [...]}、或完整 template export（含 id/title/.../content）。"""
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
     if isinstance(data, list):
-        return data, []
+        return data, [], MISSING
     if isinstance(data, dict):
         content = data.get("content")
         if isinstance(content, list):
             gc = data.get("globalClasses")
             if not isinstance(gc, list):
                 gc = data.get("global_classes")  # Bricks UI 匯入/匯出的官方鍵名（蛇形；1.12.5 templates.php）
-            return content, gc if isinstance(gc, list) else []
+            return content, gc if isinstance(gc, list) else [], data.get("pageSettings", MISSING)
         raise ValueError('JSON 是物件但沒有 "content" 陣列')
     raise ValueError("JSON 頂層必須是陣列或含 content 的物件")
 
 
 def load_live_schema(path):
-    """載入 src/extract_bricks_schema.py 從使用者 theme 原始碼掃描的元素與欄位清單。"""
+    """載入從使用者 theme 原始碼掃描的元素、頁面設定與欄位清單。"""
     if not path or not os.path.isfile(path):
         return None
     try:
         d = json.load(open(path, encoding="utf-8"))
         els = d.get("elements", {})
         base = set(els.get("__base__", {}).get("controls", []))
+        page = d.get("page_settings")
+        page_controls = page.get("controls") if isinstance(page, dict) else None
         return {
             "version": d.get("bricks_version", "?"),
             "names": {k for k in els if k != "__base__"},
             "controls": {k: set(v.get("controls", [])) | base for k, v in els.items() if k != "__base__"},
+            "page_controls": set(page_controls) if isinstance(page_controls, list) else None,
         }
     except (OSError, json.JSONDecodeError, AttributeError):
         return None
 
 
-def check(elements, schema_names, global_classes=None, live=None):
-    errors, warnings = [], []
+def check_page_settings(settings, live):
+    if settings is MISSING or settings == []:
+        return [], []
+    if not isinstance(settings, dict):
+        return ["[pageSettings] 必須是物件（或 Bricks 的空陣列 []）"], []
+    if not settings:
+        return [], []
+    controls = live.get("page_controls") if live else None
+    if controls is None:
+        return [], ["[pageSettings] 缺少頁面欄位 schema，略過欄位存在性檢查；請重新擷取當前 theme 的 schema 或查閱原始碼"]
+    warnings = []
+    for key in settings:
+        if key.split(":", 1)[0] not in controls:
+            warnings.append(
+                f"[pageSettings] 設定鍵 {key!r} 不在 Bricks {live['version']} 的候選頁面欄位中；"
+                "靜態掃描可能不完整，需核對 theme 原始碼與實際生效結果"
+            )
+    return [], warnings
+
+
+def check(elements, schema_names, global_classes=None, live=None, page_settings=MISSING):
+    errors, warnings = check_page_settings(page_settings, live)
     global_classes = global_classes or []
     if live:  # element name 名冊全部來自 live schema
         schema_names = live["names"]
@@ -300,21 +324,21 @@ def main():
     ap.add_argument(
         "--live-schema",
         default=None,
-        help="當次 extract_bricks_schema.py 的輸出，用於核對元素名稱與設定欄位；未指定則略過",
+        help="當次 extract_bricks_schema.py 的輸出，用於核對元素與頁面設定欄位；未指定則略過",
     )
     ap.add_argument("--strict", action="store_true", help="警告也視為失敗")
     ap.add_argument("--json", action="store_true", dest="as_json", help="機器可讀輸出")
     args = ap.parse_args()
 
     try:
-        elements, global_classes = load_elements(args.template)
+        elements, global_classes, page_settings = load_elements(args.template)
     except (OSError, ValueError, json.JSONDecodeError) as e:
         print(f"[x] 讀取失敗: {e}", file=sys.stderr)
         sys.exit(2)
 
     live = load_live_schema(args.live_schema)
     schema_names = None  # element name 名冊由 live schema 提供（check 內設定）
-    errors, warnings = check(elements, schema_names, global_classes, live)
+    errors, warnings = check(elements, schema_names, global_classes, live, page_settings)
     ok = not errors and not (args.strict and warnings)
 
     if args.as_json:

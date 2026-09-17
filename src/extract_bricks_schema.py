@@ -1,8 +1,8 @@
-"""從使用者已安裝的 Bricks theme 原始碼抽取元素與候選設定欄位，不假設特定版本。
+"""從使用者已安裝的 Bricks theme 原始碼抽取元素、頁面設定與候選欄位，不假設特定版本。
 
 原理：每個 element 是一個 PHP class（includes/elements/*.php），
 掃描 `$this->controls['key']` 的直接賦值，沿 PHP class 繼承關係合併父類別欄位，
-把「element 名 → 候選 settings key 清單」抽成 JSON，
+把「element 名 → 候選 settings key 清單」及 includes/settings/settings-page.php 的頁面欄位抽成 JSON，
 供 web-page-to-bricks skill 查欄位存在性、供 validate_template.py --live-schema 做逐鍵檢查。
 這是靜態掃描，不執行 PHP。動態組裝、條件判斷、方法覆寫或移除欄位仍需查原始碼與實測。
 
@@ -92,6 +92,15 @@ def candidates():
     ]
 
 
+def extract_page_settings(settings_dir):
+    """Use the installed theme's declarations, not a version-specific key allowlist."""
+    if not (Path(settings_dir) / "settings-page.php").is_file():
+        return None, ["找不到 includes/settings/settings-page.php，略過頁面設定欄位掃描"]
+    settings, warnings = extract_elements(settings_dir)
+    page = next((entry for entry in settings.values() if entry["file"] == "settings-page.php"), None)
+    return page, warnings
+
+
 def main():
     ap = argparse.ArgumentParser(description="從 Bricks theme 原始碼抽取 element/settings schema")
     ap.add_argument("--theme-dir", default=None, help="Bricks theme 目錄（含 style.css 與 includes/elements/）")
@@ -114,12 +123,15 @@ def main():
 
     eldir = os.path.join(theme, "includes", "elements")
     elements, warnings = extract_elements(eldir)
+    page_settings, page_warnings = extract_page_settings(Path(theme) / "includes/settings")
+    warnings.extend(page_warnings)
 
     out = {
         "bricks_version": version,
         "extracted_from": os.path.abspath(theme),
         "element_count": len([k for k in elements if k != "__base__"]),
         "elements": elements,
+        "page_settings": page_settings,
         "warnings": warnings,
     }
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
