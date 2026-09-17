@@ -7,6 +7,10 @@ description: 使用可見 Chrome 與 CDP，將既有 AutoBricks 交付包透過 
 
 Agent 產品將使用者指定的交付 ZIP 或交付目錄部署至目標 WordPress。使用者提供目標站網址，並在需要時直接於可見瀏覽器登入。Agent 產品依目標站的實際介面與版本選擇操作方式，保留交付包的內容、RWD、互動與頁面識別標記。
 
+## 先由使用者指定推送網址
+
+Agent 產品開始推送前，先詢問使用者要部署到哪個 WordPress 網址，等使用者明確指定後才開始。當次需求已提供目標網址時直接採用，不重複詢問。Agent 產品不從交付包內的網址、瀏覽器目前開啟的網站或本機測試環境推定部署目標。
+
 ## 工具與資料位置
 
 - `<PLUGIN_ROOT>`：Agent 產品從當次技能的絕對路徑向上尋找同時含 `pyproject.toml` 與 `docker/push-template.php` 的 AutoBricks 根目錄，從此目錄取得共用工具。
