@@ -13,6 +13,7 @@
 | --- | --- | --- |
 | 檢查、安裝或修復環境 | [skills/setup/SKILL.md](../skills/setup/SKILL.md) | [.agents/skills/setup/SKILL.md](../.agents/skills/setup/SKILL.md) |
 | 觀察參考網站、重建及驗收 | [skills/web-page-to-bricks/SKILL.md](../skills/web-page-to-bricks/SKILL.md) | [.agents/skills/web-page-to-bricks/SKILL.md](../.agents/skills/web-page-to-bricks/SKILL.md) |
+| 透過可見瀏覽器將交付包部署至 WordPress | [skills/push-web-page/SKILL.md](../skills/push-web-page/SKILL.md) | [.agents/skills/push-web-page/SKILL.md](../.agents/skills/push-web-page/SKILL.md) |
 | 檢查交付包版本與結構，依要求升級 | [skills/check-schema-version/SKILL.md](../skills/check-schema-version/SKILL.md) | [.agents/skills/check-schema-version/SKILL.md](../.agents/skills/check-schema-version/SKILL.md) |
 
 兩套技能的內容相同。使用者明確要求環境檢查或安裝時，Agent 產品才使用 `setup`。網站觀察、CDP 操作、RWD、動畫及驗收的方法由 `web-page-to-bricks` 說明，共用工作規則見 [AGENTS.md](../AGENTS.md)。
@@ -98,6 +99,8 @@ Bricks 模板 JSON 描述元素、父子關係、內容與設定。Bricks 讀取
 2. 使用者透過 File Manager、SSH／SFTP 等方式，將部署副本的 `assets/<asset-folder>/` 整個子資料夾上傳至 `wp-content/uploads/`。
 3. 使用者在 Code Snippets 匯入並啟用 `code-snippets.json` 的 PHP 片段。相同片段已啟用時不再啟用第二套，`snippets/` 內的 PHP 副本也不需另外上傳。
 4. 使用者在 Bricks 後台模板管理入口匯入部署副本的 `template.json`，將模板插入頁面並套用頁面設定，使片段的作用條件生效，再檢查前台與編輯器。
+
+使用者也可將交付包與目標 WP 網址提供給 `push-web-page`，由 Agent 產品透過可見瀏覽器完成上述部署及驗收。需要登入時，使用者直接在瀏覽器操作並回覆完成。Agent 產品先確認 WP File Manager、Code Snippets 與 Bricks 的安裝及啟用狀態，缺少產品時等待使用者安裝，再繼續操作。部署紀錄另存於當次任務的 `output/report.md`，原始交付包保留不改。
 
 整個交付 ZIP 不能直接當作 Bricks 模板匯入。自製外掛與新增後端服務需另行規劃，表單等功能是否完成串接以 `report.md` 的實測結果為準。
 

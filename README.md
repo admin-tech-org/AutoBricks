@@ -1,6 +1,6 @@
 # AutoBricks
 
-AutoBricks 提供共用的網頁重建規則與工具，供 Agent 產品將使用者指定的參考網頁重建成可匯入、可編輯的 WordPress Bricks JSON。
+AutoBricks 提供共用的網頁重建與部署技能，供 Agent 產品將使用者指定的參考網頁重建成可匯入、可編輯的 WordPress Bricks JSON，並將交付包部署至指定的 WordPress。
 
 「Agent 產品」指 Claude Code、Codex 等可使用工具執行任務的 AI 助理軟體；「使用者」指提出需求、指定參考網頁並接收成品的人。
 
@@ -39,6 +39,7 @@ Claude Code 啟動後，使用者在 **Claude Code 對話框**指定要測試的
 | 使用者要執行的工作 | 對話指令 | Claude Code 讀取的說明 |
 |---|---|---|
 | 重建指定網頁 | `/autobricks:web-page-to-bricks <參考網頁網址>` | [skills/web-page-to-bricks/SKILL.md](skills/web-page-to-bricks/SKILL.md) |
+| 將交付包部署至 WordPress | `/autobricks:push-web-page <交付目錄或 ZIP> <目標 WP 網址>` | [skills/push-web-page/SKILL.md](skills/push-web-page/SKILL.md) |
 | 檢查交付包版本與結構 | `/autobricks:check-schema-version <交付目錄或 ZIP>` | [skills/check-schema-version/SKILL.md](skills/check-schema-version/SKILL.md) |
 | 檢查或安裝本機測試環境 | `/autobricks:setup` | [skills/setup/SKILL.md](skills/setup/SKILL.md) |
 
@@ -76,6 +77,7 @@ Codex 啟動後，使用者在 **Codex 對話框**指定要測試的技能與目
 | 使用者要執行的工作 | 對話指令 | Codex 讀取的說明 |
 |---|---|---|
 | 重建指定網頁 | `$autobricks:web-page-to-bricks <參考網頁網址>` | [.agents/skills/web-page-to-bricks/SKILL.md](.agents/skills/web-page-to-bricks/SKILL.md) |
+| 將交付包部署至 WordPress | `$autobricks:push-web-page <交付目錄或 ZIP> <目標 WP 網址>` | [.agents/skills/push-web-page/SKILL.md](.agents/skills/push-web-page/SKILL.md) |
 | 檢查交付包版本與結構 | `$autobricks:check-schema-version <交付目錄或 ZIP>` | [.agents/skills/check-schema-version/SKILL.md](.agents/skills/check-schema-version/SKILL.md) |
 | 檢查或安裝本機測試環境 | `$autobricks:setup` | [.agents/skills/setup/SKILL.md](.agents/skills/setup/SKILL.md) |
 
@@ -106,6 +108,7 @@ codex plugin add autobricks@autobricks
 兩種 Agent 產品使用同名、同內容的技能：
 
 - **`web-page-to-bricks`**：負責單一網頁的重建與驗收。
+- **`push-web-page`**：透過可見瀏覽器，將既有交付包部署至指定的 WordPress，並檢查匯入後的頁面。
 - **`check-schema-version`**：檢查交付包的版本與結構，在使用者要求升級時依既有 migration 轉換副本。目前只支援 `output_schema`。
 - **`setup`**：在使用者明確要求時檢查或安裝環境。
 
@@ -147,7 +150,7 @@ data/20260916-223015-codex-new_art_clone_web/
     └── 20260916-231240-new-art-bricks.zip
 ```
 
-Agent 產品只交付一個 `YYYYMMDD-HHMMSS-<page-name>-bricks.zip`，包含上述交付檔案，ZIP 時間採打包時的本機時間。使用者先解壓，依 `report.md` 執行 `uv run` 部署腳本、上傳素材，再分別匯入 Code Snippets 與 Bricks。`comparison.html` 可離線查看實際截圖及驗收結果。整包 ZIP 不是直接匯入 Bricks 的模板 ZIP。
+重建任務只交付一個 `YYYYMMDD-HHMMSS-<page-name>-bricks.zip`，包含上述交付檔案，ZIP 時間採打包時的本機時間。使用者先解壓，依 `report.md` 執行 `uv run` 部署腳本、上傳素材，再分別匯入 Code Snippets 與 Bricks，也可交由 `push-web-page` 操作後台完成。`comparison.html` 可離線查看實際截圖及驗收結果。整包 ZIP 不是直接匯入 Bricks 的模板 ZIP。
 
 Code Snippets 免費版與 Pro 版均使用 PHP 片段，CSS／JS 寫在片段內。`code-snippets.json` 用於匯入，`snippets/` 只保留對應的 PHP 可讀副本，不另交付獨立 CSS／JS 副本。
 
@@ -155,7 +158,7 @@ Code Snippets 免費版與 Pro 版均使用 PHP 片段，CSS／JS 寫在片段�
 
 Bricks 頁面的 Body classes 與所屬 Code Snippets 的 tag 使用相同識別碼。這個對應保存在 WP，讓後續工作可從指定頁面找到所屬片段，即使本機 `data/` 為空也不影響辨認。使用者修改內容或搬站時保留識別標記。
 
-版本紀錄見 [skills/check-schema-version/references/output-schema.md](skills/check-schema-version/references/output-schema.md)：`v1` 列出初版結構，後續 migration 只列變更，再附目標版本結構。目前尚未提供正式站 push、fetch 或 merge 技能。
+版本紀錄見 [skills/check-schema-version/references/output-schema.md](skills/check-schema-version/references/output-schema.md)：`v1` 列出初版結構，後續 migration 只列變更，再附目標版本結構。目前尚未提供 fetch 或 merge 技能。
 
 執行產物、登入資料與商業 theme 不納入 Git。
 
@@ -167,6 +170,17 @@ Agent 產品依目標環境已安裝的 Bricks 版本與實際渲染確認元素
 
 - Claude Code：[skills/web-page-to-bricks/SKILL.md](skills/web-page-to-bricks/SKILL.md)
 - Codex：[.agents/skills/web-page-to-bricks/SKILL.md](.agents/skills/web-page-to-bricks/SKILL.md)
+
+## 部署既有交付包
+
+使用者呼叫 `push-web-page`，提供交付 ZIP 或目錄及目標 WP 網址。Agent 產品以可見 Chrome 操作後台，需要登入時暫停，讓使用者直接在瀏覽器輸入帳密，等使用者回覆完成後再繼續。瀏覽器沿用工作專案 `.browser/` 中的獨立 profile 與 `cdp.env`。
+
+Agent 產品確認 WP File Manager（作者 `mndpsingh287`）、Code Snippets（作者 `Code Snippets Pro`，免費版即可）與 Bricks 已安裝並啟用。缺少產品時先通知使用者安裝，再重新檢查。部署依序透過 File Manager 上傳素材、Code Snippets 匯入 PHP 片段，再將 Bricks 模板及頁面設定套用至目標頁面。
+
+原始交付包保留不改。部署紀錄存於當次任務的 `output/report.md`，列明頁面網址、素材位置、片段及驗收結果。未指定既有頁面時建立新頁，未要求發佈時先存為草稿。
+
+- Claude Code：[skills/push-web-page/SKILL.md](skills/push-web-page/SKILL.md)
+- Codex：[.agents/skills/push-web-page/SKILL.md](.agents/skills/push-web-page/SKILL.md)
 
 ## 使用範圍
 

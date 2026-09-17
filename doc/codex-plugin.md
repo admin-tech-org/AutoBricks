@@ -15,7 +15,7 @@ Codex 使用自身的 marketplace 指令下載與安裝，只是可以讀取既�
 
 `.agents/skills/` 本身是 Codex 支援的專案技能目錄，使用者可以直接在專案中測試。AutoBricks 在 plugin 定義中設定 `"skills": "./.agents/skills/"`，讓 Codex 安裝 plugin 後也能從安裝副本的同一路徑找到技能。安裝會複製 plugin 的技能、工具等檔案，不是只快取 skill 文字。
 
-`skills/` 與 `.agents/skills/` 各提供同名、同內容的 `web-page-to-bricks`、`check-schema-version` 與 `setup` 技能。維護者同步兩邊的完整內容與參考文件。Agent 產品從載入的 skill 路徑辨識 plugin 根目錄，技能不依賴 Agent 產品專用的環境變數。
+`skills/` 與 `.agents/skills/` 各提供同名、同內容的 `web-page-to-bricks`、`push-web-page`、`check-schema-version` 與 `setup` 技能。維護者同步兩邊的完整內容與參考文件。Agent 產品從載入的 skill 路徑辨識 plugin 根目錄，技能不依賴 Agent 產品專用的環境變數。
 
 ## 只在指定專案啟用
 

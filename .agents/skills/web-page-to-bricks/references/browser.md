@@ -28,6 +28,12 @@ node "<PLUGIN_ROOT>/src/browser.mjs" open https://example.com "<RUN_DIR>/tmp/scr
 
 使用 plugin 安裝副本時，Agent 產品以 `<PLUGIN_ROOT>/src/browser.mjs` 的絕對路徑執行工具，將輸出指向 `<RUN_DIR>/tmp/`，不能將執行產物寫入 plugin 快取。`<PLUGIN_ROOT>` 依當次載入的 skill 位置辨識，不依賴 Agent 產品專用的環境變數。
 
+## 可見視窗與使用者登入
+
+- Chrome 啟動範本預設開啟可見視窗。需要使用者登入或技能要求可見操作時，Agent 產品確認目前程序未使用 `--headless`，且使用者能看到對應視窗，不只檢查 CDP 是否連得上。
+- 已在 headless 模式執行的 Chrome 不會因 `open` 新增分頁變成可見視窗。Agent 產品先確認該程序屬於本專案的 CDP 連接埠與 profile，且沒有其他任務正在使用，再正常關閉該程序，使用同一份 `cdp.env` 與 profile 以可見模式重啟。不關閉使用者其他 Chrome，不讓兩個程序同時占用相同 profile。
+- 使用者輸入帳密或驗證碼期間，Agent 產品暫停對該瀏覽器的操作，避免搶走焦點或改變頁面。使用者回覆完成後，Agent 產品重新取得分頁並確認登入結果。Profile 可保留登入狀態，但網站仍可能要求重新登入。
+
 ## 指令
 
 | 參數 | 用途 |
@@ -71,3 +77,13 @@ node "<PLUGIN_ROOT>/src/browser.mjs" wait "<TARGET>" "<RUN_DIR>/tmp/scripts/menu
 ```json
 [{"method":"Emulation.setDeviceMetricsOverride","params":{"width":390,"height":844,"deviceScaleFactor":1,"mobile":false}}]
 ```
+
+## 透過後台介面上傳檔案
+
+Agent 產品先開啟當站的上傳或匯入介面，找到實際的 `input[type="file"]`，再使用 CDP 指定本機檔案。瀏覽器不允許以 JavaScript 寫入檔案欄位的 `value` 來選取本機檔案。
+
+- Agent 產品用 `DOM.getDocument` 及 `DOM.querySelector` 取得檔案欄位的 `nodeId`，再呼叫 `DOM.setFileInputFiles`，參數為 `nodeId` 與 `files`（本機絕對路徑陣列）。選擇器與 iframe 位置依當站介面確認，不沿用其他站的節點 ID。
+- 上述操作需要使用前一步回傳的節點 ID。Agent 產品在當次 Node 腳本匯入 `browser.mjs` 的 `connect`，透過同一條連線的 `send(method, params)` 依序操作，完成後呼叫 `close()`。每次執行 `cdp` 指令都會另建連線，不能將前次連線的 `nodeId` 直接帶入下次指令。
+- 選取檔案後，Agent 產品依介面完成送出，確認檔案列表、匯入結果或錯誤訊息。設定檔案欄位成功不代表已上傳完成；逾時先查看實際結果再決定是否重試。
+
+方法與參數見 [DOM.setFileInputFiles](https://chromedevtools.github.io/devtools-protocol/tot/DOM/#method-setFileInputFiles)。

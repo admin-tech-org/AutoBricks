@@ -1,6 +1,6 @@
 {
   "name": "autobricks",
-  "description": "AutoBricks 的 Claude Code plugin 入口，使用 Agent 產品共用策略：將原站文字、圖片與版型轉為可編輯的 Bricks JSON，再於 Docker WordPress 比對外觀、RWD、互動與素材。不指定模型或固定分工。skills：web-page-to-bricks（單一網頁重建）、check-schema-version（交付結構檢查與升級）、setup（環境安裝）。",
+  "description": "AutoBricks 的 Claude Code plugin 入口，使用 Agent 產品共用策略：將原站文字、圖片與版型轉為可編輯的 Bricks JSON，於 Docker WordPress 驗收，並透過可見瀏覽器部署既有交付包。不指定模型或固定分工。skills：web-page-to-bricks（單一網頁重建）、push-web-page（部署交付包）、check-schema-version（交付結構檢查與升級）、setup（環境安裝）。",
   "version": "0.1.0",
   "author": {
     "name": "Allen Chen"

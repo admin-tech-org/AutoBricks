@@ -9,8 +9,9 @@ Agent 產品以原站的內容、版型、RWD、互動與動畫作為重建及�
 ## 規則與技能
 
 - 本檔是各 Agent 產品共用的工作規則。Claude Code 透過 `CLAUDE.md` 引用本檔。
-- `skills/` 與 `.agents/skills/` 各提供同名、同內容的 `web-page-to-bricks`、`check-schema-version` 與 `setup` 技能。維護者同步兩邊的技能與參考文件。
+- `skills/` 與 `.agents/skills/` 各提供同名、同內容的 `web-page-to-bricks`、`push-web-page`、`check-schema-version` 與 `setup` 技能。維護者同步兩邊的技能與參考文件。
 - Agent 產品執行網頁重建時，載入當次來源的 `web-page-to-bricks`。
+- Agent 產品將既有交付包部署至使用者指定的 WordPress 時，載入 `push-web-page`，透過可見瀏覽器操作後台。需要登入時，等待使用者完成登入並回覆後才繼續。
 - 使用者明確要求環境檢查或安裝時，Agent 產品才載入 `setup`。
 - Agent 產品檢查或升級交付包結構時，載入 `check-schema-version`。目前只支援 `output_schema`，版本依據為 AutoBricks 根目錄的 `output_schema_version`。
 
