@@ -18,7 +18,7 @@ Agent 產品將使用者指定的交付 ZIP 或交付目錄部署至目標 WordP
 ## 先確認交付包與部署範圍
 
 - Agent 產品依 [../check-schema-version/SKILL.md](../check-schema-version/SKILL.md) 檢查來源包的版本及實際結構，再讀取包內 `report.md`，了解匯入方式、素材目錄、PHP 片段及已知限制。缺少必要檔案或版本不支援時，先說明問題，不猜測部署方式。
-- Agent 產品在 `tmp/` 內準備部署副本，依包內說明以 `uv run --no-project python` 執行 `replace-domain.py`。需要更改素材資料夾名稱時，再執行 `rename-assets-folder.py`。Agent 產品核對腳本的實際輸出，確認模板、Snippets 與素材路徑一致，目標網址包含正確的協定、連接埠及站台子路徑。
+- Agent 產品在 `tmp/` 內準備部署副本，依使用者提供的資料或登入後的後台確認目標站的 WordPress 位址、網站位址及 uploads 公開路徑。同站素材使用根相對網址，只有網域改變且素材路徑相同時不需改寫；uploads 路徑不同或舊包仍寫死來源站網址時，先同步調整副本的模板、Snippets 匯入檔與 PHP 副本，保留外站連結。需要更改素材資料夾名稱時，以 `uv run --no-project python` 執行包內 `rename-assets-folder.py`，核對實際輸出與素材落點。
 - 未指定既有頁面時，Agent 產品建立新頁。未要求發佈時先儲存為草稿，已有明確發佈授權時直接依授權完成。替換既有頁面需由使用者指定，Agent 產品先保留該頁及所屬片段的可還原副本，不自行更換首頁或全站設定。
 - Agent 產品用 Bricks Body classes 中的 `ab-page-…` 與 Code Snippets 的同名 tag 辨認頁面歸屬，搬站時保留標記。目標站已有同標記頁面、片段或同名素材目錄時，先確認內容與本次任務的關係。相同內容可沿用，未獲授權的差異先交由使用者決定，不自行合併或覆蓋設計師的修改。
 
@@ -47,7 +47,7 @@ Agent 產品在目標站的外掛及佈景主題介面確認下列產品的身�
 
 Agent 產品透過可見瀏覽器的實際介面完成遠端寫入。本機工具用於準備檔案及操作 CDP，不以 SSH、WP-CLI、直接呼叫後台 API 或資料庫寫入替代本技能的介面流程。介面無法完成時，Agent 產品先說明阻礙，由使用者決定是否改用其他方式。
 
-1. **素材先上傳。** Agent 產品透過 WP File Manager 進入目標站的 `wp-content/uploads/`，將部署副本的 `assets/<asset-folder>/` 放成 `wp-content/uploads/<asset-folder>/`，保留內部結構與檔名。需要批次上傳時，可在 `tmp/` 建立只含素材資料夾的暫存 ZIP，透過介面上傳及解壓，確認後移除伺服器上的暫存 ZIP。Agent 產品不將整份交付包、PHP 片段、部署腳本或驗收資料上傳至 uploads，也不改走媒體庫另建年月目錄。Agent 產品核對實際落點、檔案完整性及代表素材能否載入，再繼續匯入。
+1. **素材先上傳。** Agent 產品透過 WP File Manager 進入目標站實際的 uploads 目錄（通常為 `wp-content/uploads/`），將部署副本的 `assets/<asset-folder>/` 整個子資料夾放入，保留內部結構與檔名，並核對其公開網址與包內素材路徑相符。需要批次上傳時，可在 `tmp/` 建立只含素材資料夾的暫存 ZIP，透過介面上傳及解壓，確認後移除伺服器上的暫存 ZIP。Agent 產品不將整份交付包、PHP 片段、部署腳本或驗收資料上傳至 uploads，也不改走媒體庫另建年月目錄。Agent 產品核對實際落點、檔案完整性及代表素材能否載入，再繼續匯入。
 2. **匯入並啟用 PHP 片段。** Agent 產品在 Code Snippets 介面匯入部署副本的 `code-snippets.json`，核對片段數量、同名 tag、僅作用於所屬頁面的條件與載入順序，再啟用本次需要的片段。免費版及 Pro 版均使用 PHP。Agent 產品不重複啟用同一份程式碼，不修改其他頁面或全站片段。若包內片段清單為空，略過匯入。
 3. **匯入模板並套用頁面。** Agent 產品透過 Bricks 正常匯入 `template.json`，將模板及頁面設定套用至本次頁面並儲存。整包交付 ZIP 不是 Bricks 模板匯入檔，模板出現在模板庫也不代表頁面已完成。Agent 產品依實際版本確認 Body classes、頁首頁尾設定及素材引用均已生效，保留頁面與片段相同的識別標記。圖片下載、SVG 等匯入選項以目標版本實測為準，不直接套用其他環境的經驗。
 

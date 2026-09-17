@@ -95,8 +95,8 @@ Bricks 模板 JSON 描述元素、父子關係、內容與設定。Bricks 讀取
 
 每次交付只有一個 `YYYYMMDD-HHMMSS-<page-name>-bricks.zip`，檔名時間採打包時的本機時間。使用者先解壓，再依包內 `report.md` 的實際指令操作：
 
-1. 使用者以 `uv run` 執行 `replace-domain.py` 與 `rename-assets-folder.py`，按需更換部署網址及素材資料夾名稱。腳本可接續操作，產生部署副本並保留原始檔案，不直接修改遠端 WP。
-2. 使用者透過 File Manager、SSH／SFTP 等方式，將部署副本的 `assets/<asset-folder>/` 整個子資料夾上傳至 `wp-content/uploads/`。
+1. 使用者確認包內 `report.md` 的素材公開路徑與目標站一致。同站素材使用根相對網址，單純換網域不需改寫。uploads 路徑不同時請 Agent 產品先調整部署副本。需要更名素材資料夾時，以 `uv run --no-project python rename-assets-folder.py <新名稱>` 產生部署副本，保留原始檔案，不直接修改遠端 WP。
+2. 使用者透過 File Manager、SSH／SFTP 等方式，將部署副本的 `assets/<asset-folder>/` 整個子資料夾上傳至目標站的 uploads 目錄，通常為 `wp-content/uploads/`。
 3. 使用者在 Code Snippets 匯入並啟用 `code-snippets.json` 的 PHP 片段。相同片段已啟用時不再啟用第二套，`snippets/` 內的 PHP 副本也不需另外上傳。
 4. 使用者在 Bricks 後台模板管理入口匯入部署副本的 `template.json`，將模板插入頁面並套用頁面設定，使片段的作用條件生效，再檢查前台與編輯器。
 

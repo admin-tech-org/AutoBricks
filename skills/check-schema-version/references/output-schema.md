@@ -11,7 +11,6 @@ data/YYYYMMDD-HHMMSS-agent_product-task_name/
     ├── code-snippets.json            # PHP 片段匯入檔，無片段時清單為空
     ├── assets/<asset-folder>/        # 圖片、影片、字型等非程式碼素材
     ├── snippets/                     # PHP 片段可讀副本，可為空
-    ├── replace-domain.py             # 更換部署網址
     ├── rename-assets-folder.py       # 更換素材資料夾名稱
     ├── report.md                     # 匯入教學、維護位置與驗收結果
     ├── comparison.html               # 原站與成品的驗收對照

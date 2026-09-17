@@ -13,7 +13,8 @@ Agent 產品先在瀏覽器檢視原站的內容、版型、RWD、互動與動�
 Agent 產品交付可供使用者在 Bricks 修改文字、圖片與排版的成品。
 
 - Agent 產品將額外的 CSS、JS 與必要程式庫交由 Code Snippets 管理，並提供免費版可用的 PHP 片段，方便使用者與接手的設計師在 WP 後台維護。
-- 圖片、影片、字型與文件等素材依內容清楚命名，首次部署時透過 File Manager、SSH／SFTP 等方式上傳至 `wp-content/uploads/`。
+- 圖片、影片、字型與文件等素材依內容清楚命名，首次部署時透過 File Manager、SSH／SFTP 等方式上傳至目標站的 uploads 目錄，通常為 `wp-content/uploads/`。
+- Agent 產品在重建前先確認目標站的 WordPress 位址、網站位址與 uploads 公開路徑。同站素材使用以 `/` 開頭的根相對網址，單純換網域且素材路徑不變時不需替換網址。
 - 自製 WordPress 外掛及新增後端服務需另行規劃，不屬於預設的網頁重建範圍。
 
 ## 使用 Claude Code
@@ -142,7 +143,6 @@ data/20260916-223015-codex-new_art_clone_web/
     ├── code-snippets.json
     ├── assets/new-art/           # 上傳至 uploads/ 的非程式碼素材
     ├── snippets/                 # PHP 片段可讀副本
-    ├── replace-domain.py
     ├── rename-assets-folder.py
     ├── report.md                 # 匯入教學、維護位置、耗時與驗收結果
     ├── comparison.html           # 原站與成品的實際驗收對照
