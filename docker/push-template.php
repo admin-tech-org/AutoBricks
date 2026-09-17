@@ -18,6 +18,10 @@ $tpl  = json_decode((string) file_get_contents($path), true);
 if (!$tpl || empty($tpl['content']) || !is_array($tpl['content'])) {
   fwrite(STDERR, "BAD TEMPLATE JSON: $path\n"); exit(1);
 }
+$has_page_settings = array_key_exists('pageSettings', $tpl);
+if ($has_page_settings && !is_array($tpl['pageSettings'])) {
+  fwrite(STDERR, "BAD pageSettings: expected an object or array in $path\n"); exit(1);
+}
 
 // 標題來源優先序：TITLE env → 模板自帶 title（正確 UTF-8，避開 docker exec -e 的 Windows argv
 // 編碼雷）→ 日期預設。（env 傳中文在 Git Bash→docker 會被 mangle，故模板 title 才是可靠來源。）
@@ -56,10 +60,14 @@ if (!empty($gcs) && is_array($gcs)) {
   echo 'global classes merged: ' . count($gcs) . "\n";
 }
 
-if (!empty($tpl['customCss'])) {
-  $settings = get_post_meta($page_id, '_bricks_page_settings', true);
+// pageSettings 整份取代頁面設定；空物件或陣列清除設定，省略時保留既有設定。
+// 相容舊模板：非空的頂層 customCss 優先於 pageSettings.customCss。
+if ($has_page_settings || !empty($tpl['customCss'])) {
+  $settings = $has_page_settings
+    ? $tpl['pageSettings']
+    : get_post_meta($page_id, '_bricks_page_settings', true);
   if (!is_array($settings)) $settings = [];
-  $settings['customCss'] = $tpl['customCss'];
+  if (!empty($tpl['customCss'])) $settings['customCss'] = $tpl['customCss'];
   update_post_meta($page_id, '_bricks_page_settings', wp_slash($settings));
 }
 

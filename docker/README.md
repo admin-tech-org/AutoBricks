@@ -54,6 +54,13 @@ MSYS_NO_PATHCONV=1 docker exec -e TEMPLATE="/tmp/${run_name}-template.json" \
 
 `run_name` 取自當次任務目錄名稱，避免容器暫存檔與其他任務互相覆蓋。頁面標題沿用 JSON 的 `title`，避免透過 shell 環境變數傳遞中文時的編碼差異。
 
+`push-template.php` 同時處理模板中的頁面設定：
+
+- 提供 `pageSettings` 時，腳本整份取代該頁的 Bricks 頁面設定，包含 `bodyClasses` 頁面識別標記、頁首頁尾與自訂程式碼等設定。
+- 省略 `pageSettings` 時，腳本保留既有頁面設定。
+- 提供空物件 `{}` 或空陣列 `[]` 作為 `pageSettings` 時，腳本清空設定。
+- 舊模板若另有非空的頂層 `customCss`，腳本會將該值寫入頁面設定，優先於 `pageSettings.customCss`。
+
 直接寫入頁面可供開發預覽。交付前，Agent 產品仍需確認模板經 Bricks 匯入器匯入後的內容、樣式與素材，並查閱使用者工作專案根目錄的 `bricks-import.md` 核對版本與環境細節。檔案不存在或版本不符時，Agent 產品依當前已安裝的 Bricks 原始碼與實測建立或更新筆記。
 
 ## 操作注意
