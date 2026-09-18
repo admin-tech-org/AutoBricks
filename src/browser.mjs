@@ -2,6 +2,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {parseCdpSettings} from '../templates/launch-chrome-cdp.mjs';
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -24,15 +25,8 @@ export async function resolveCdpEndpoint({cwd = process.cwd(), env = process.env
     try { contents = await fs.readFile(config, 'utf8'); }
     catch (error) { if (error.code !== 'ENOENT') throw error; }
     if (contents !== undefined) {
-      let port = '9222';
-      for (const line of contents.replace(/^\uFEFF/, '').split(/\r?\n/)) {
-        const match = /^CDP_PORT=(.*)$/.exec(line.trim());
-        if (match) port = match[1].trim();
-      }
-      if (!/^\d+$/.test(port) || Number(port) < 1 || Number(port) > 65535) {
-        throw new Error(`Invalid CDP_PORT in ${config}; use an integer from 1 to 65535`);
-      }
-      return `http://127.0.0.1:${Number(port)}`;
+      const settings = parseCdpSettings(contents, config);
+      return `http://127.0.0.1:${settings.CDP_PORT}`;
     }
 
     // A nested Git project must not borrow its parent project's browser.
@@ -198,13 +192,13 @@ async function main() {
       const reports=[];
       for(const width of (rest[0] ? rest[0].split(',').map(Number) : [1440,768,390])) {
         await client.send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
-        await client.evaluate(`(()=>{document.documentElement.style.scrollBehavior='auto';document.querySelectorAll('details[open]').forEach(e=>e.open=false);const root=document.querySelector('header').parentElement;root.parentElement===document.querySelector('#app')&&document.querySelector('#app > .pointer-events-none')?.style.setProperty('visibility','hidden');document.querySelectorAll('#app > .pointer-events-none').forEach(e=>e.style.visibility='hidden');window.scrollTo(0,0);})()`);
+        await client.evaluate(`(()=>{if(!document.querySelector('header,section,footer'))throw Error('survey needs header, section or footer elements; use eval/shot/cdp for this page.');window.scrollTo({top:0,left:0,behavior:'instant'});})()`);
         await new Promise(r=>setTimeout(r,400));
-        const report=await client.evaluate(`(()=>{const root=document.querySelector('header').parentElement;const rect=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y+scrollY,w:r.width,h:r.height}};return {width:innerWidth,pageHeight:document.documentElement.scrollHeight,overflow:document.documentElement.scrollWidth-innerWidth,text:root.textContent,regions:[...root.querySelectorAll('header,section,footer')].map(e=>({tag:e.tagName,title:e.querySelector('h1,h2')?.textContent||e.textContent.slice(0,45),...rect(e)})),headings:[...root.querySelectorAll('h1,h2,h3,h4')].map(e=>({text:e.textContent,...rect(e),font:getComputedStyle(e).fontSize})),images:[...root.querySelectorAll('img')].map(e=>({alt:e.alt,loaded:e.complete&&e.naturalWidth>0,...rect(e)})),links:[...root.querySelectorAll('a')].map(e=>({text:e.textContent,href:e.getAttribute('href')}))}})()`);
+        const report=await client.evaluate(`(()=>{const root=document.body;const rect=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y+scrollY,w:r.width,h:r.height}};return {width:innerWidth,pageHeight:document.documentElement.scrollHeight,overflow:document.documentElement.scrollWidth-innerWidth,text:root.textContent,regions:[...root.querySelectorAll('header,section,footer')].map(e=>({tag:e.tagName,title:e.querySelector('h1,h2')?.textContent||e.textContent.slice(0,45),...rect(e)})),headings:[...root.querySelectorAll('h1,h2,h3,h4')].map(e=>({text:e.textContent,...rect(e),font:getComputedStyle(e).fontSize})),images:[...root.querySelectorAll('img')].map(e=>({alt:e.alt,loaded:e.complete&&e.naturalWidth>0,...rect(e)})),links:[...root.querySelectorAll('a')].map(e=>({text:e.textContent,href:e.getAttribute('href')}))}})()`);
         reports.push(report);
         for(let i=0;i<report.regions.length;i++) {
           const y=Math.max(0,report.regions[i].y);
-          await client.evaluate(`window.scrollTo(0,${y});true`);
+          await client.evaluate(`window.scrollTo({top:${y},left:0,behavior:'instant'});true`);
           await new Promise(r=>setTimeout(r,150));
           await screenshot(client,path.join(arg,`${width}-${String(i).padStart(2,'0')}.png`));
         }

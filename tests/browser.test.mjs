@@ -8,6 +8,7 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {resolveCdpEndpoint, waitFor, waitUntil} from '../src/browser.mjs';
+import {prepareChromeLaunch} from '../templates/launch-chrome-cdp.mjs';
 
 async function fixture(t) {
   const parent = await fs.realpath(os.tmpdir());
@@ -77,8 +78,12 @@ test('CLI and imported helper use project settings even from a plugin cache', as
   const cache = path.join(root, 'plugin-cache');
   await fs.mkdir(cwd, {recursive: true});
   await config(cache, 'CDP_PORT=1\n');
-  const tool = path.join(cache, 'browser.mjs');
+  await fs.mkdir(path.join(cache, 'src'), {recursive: true});
+  await fs.mkdir(path.join(cache, 'templates'), {recursive: true});
+  const tool = path.join(cache, 'src', 'browser.mjs');
   await fs.copyFile(fileURLToPath(new URL('../src/browser.mjs', import.meta.url)), tool);
+  await fs.copyFile(fileURLToPath(new URL('../templates/launch-chrome-cdp.mjs', import.meta.url)),
+    path.join(cache, 'templates', 'launch-chrome-cdp.mjs'));
   const routes = [];
   const targets = [{id: 'project-browser', type: 'page'}];
   const server = http.createServer((req, res) => {
@@ -100,6 +105,40 @@ test('CLI and imported helper use project settings even from a plugin cache', as
     'const tool = await import(process.argv[1]); console.log(await tool.resolveCdpEndpoint());',
     pathToFileURL(tool).href], {cwd, env});
   assert.equal(imported.stdout.trim(), endpoint);
+});
+
+test('launcher and CDP client agree on BOM, CRLF, whitespace, duplicates and defaults', async t => {
+  const cwd = await fixture(t);
+  const directory = path.join(cwd, '.browser');
+  for (const [settings, expected] of [
+    ['', 9222],
+    ['\uFEFFCDP_PORT=9333\r\n', 9333],
+    ['\uFEFF  cdp_port = 009444  \r\n', 9444],
+    ['CDP_PORT=9333\nCDP_PORT=9555', 9555],
+  ]) {
+    await config(cwd, `${settings}\nCHROME_PATH=${process.execPath}\n`);
+    const launch = await prepareChromeLaunch({directory});
+    assert.equal(launch.port, expected);
+    assert.equal(await resolveCdpEndpoint({cwd, env: {}}), `http://127.0.0.1:${expected}`);
+    assert.deepEqual(launch.args, [`--remote-debugging-port=${expected}`, `--user-data-dir=${launch.profile}`]);
+    assert.equal(path.dirname(launch.profile), directory);
+  }
+});
+
+test('invalid launcher ports fail, and explicit port and profile overrides are preserved', async t => {
+  const cwd = await fixture(t);
+  const directory = path.join(cwd, '.browser');
+  for (const port of ['', '0', '65536', 'oops', '$(echo 9333)']) {
+    await config(cwd, `CDP_PORT=${port}\nCHROME_PATH=${process.execPath}\n`);
+    await assert.rejects(prepareChromeLaunch({directory}), /Invalid CDP_PORT/);
+  }
+  const profile = '.profile with spaces & literal chars';
+  await config(cwd, `CDP_PORT=invalid\r\nPROFILE_DIR=${profile}\r\nCHROME_PATH=${process.execPath}\r\n`);
+  const launch = await prepareChromeLaunch({directory, portOverride: '9334'});
+  assert.equal(launch.port, 9334);
+  assert.equal(launch.profile, path.join(directory, profile));
+  assert.equal(launch.executable, process.execPath);
+  assert.deepEqual((await fs.readdir(directory)).sort(), ['cdp.env']); // No unused output/profile directories.
 });
 
 test('wait observes a delayed state and awaits Promise results', async () => {

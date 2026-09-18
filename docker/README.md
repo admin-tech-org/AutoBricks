@@ -20,7 +20,7 @@ Agent 產品使用本機 WordPress + MariaDB + Bricks 渲染重建頁面，檢�
    既有環境先核對 Compose 設定、容器掛載與資料庫 volume，不重新複製或覆蓋設定。同名環境可能屬於其他專案，不能只因容器名稱相同就直接沿用。
 3. 使用者提供 theme 後，Agent 產品將**已授權的 Bricks theme 解壓**到 `<WP_DIR>/wp/wp-content/themes/bricks/`，再執行 `<WP_DIR>/init-wp.sh` 啟用。使用者工作專案的 `.gitignore` 需排除 `.autobricks/`，商業 theme 不納入版控。
 
-完成後：站台 http://localhost:8080、後台 `admin` / `admin`。冪等、可重跑。
+首次安裝的站台為 http://localhost:8080，後台帳密為 `admin` / `admin`。重跑會保留既有帳號，以及已啟用的 Bricks 或其子主題。
 
 > 使用者依目標 Bricks 版本與後台提示確認授權狀態。Agent 產品需實際確認編輯器可開啟，不能只以 theme 已啟用判定環境就緒。
 
@@ -69,5 +69,5 @@ MSYS_NO_PATHCONV=1 docker exec -e TEMPLATE="/tmp/${run_name}-template.json" \
   否則 `/tmp/...` 會被改寫成 Windows 路徑。
 - 推送腳本透過 `wp_set_current_user(admin)` 設定執行帳號，並以 `wp_slash()` 處理寫入資料；瀏覽器的後台登入狀態不會授權容器中的 PHP 行程。
 - Bricks 會快取產出的 CSS。Agent 產品重複推送同一頁後若未看到樣式更新，可在後台重存該頁，或依使用者授權將 Bricks 的 CSS loading 改為 inline。
-- admin/admin 只適用本機測試環境，**不要對外開放 8080**。
+- admin/admin 只適用本機測試環境。Compose 範本將 8080 綁定至 `127.0.0.1`，**不要對外開放 8080**。
 - Agent 產品調查 Windows 檔案存取效能時，需區分 WordPress 的 bind mount 與資料庫的 named volume，不能將兩者視為相同的儲存方式。

@@ -34,7 +34,11 @@ else
   echo "[ok] WordPress 已安裝"
 fi
 
-if [ -d wp/wp-content/themes/bricks ]; then
+# WP's template option names the parent theme, including when a child theme is active.
+active_parent="$(wpcli option get template)"
+if [ "$active_parent" = "bricks" ]; then
+  echo "[ok] Bricks 或其子主題已啟用，保留目前主題"
+elif [ -d wp/wp-content/themes/bricks ]; then
   wpcli theme activate bricks
   echo "[ok] Bricks theme 已啟用"
   echo "[i] 提醒：要讓頁面能用 Bricks 編輯器，需手動開放（Bricks → 設定 → 一般 → 文章類型，勾「頁面」）"
@@ -43,7 +47,7 @@ else
 fi
 
 echo
-echo "== 環境就緒 =="
+echo "== WordPress 已啟動；Bricks 編輯器仍需實際檢查 =="
 echo "  站台   : http://localhost:8080"
 echo "  後台   : http://localhost:8080/wp-admin   (admin / admin)"
-echo "  重建頁面 : 使用 web-page-to-bricks 技能；手動推送流程見 docker/README.md"
+echo "  重建頁面 : 使用 web-page-to-bricks 技能；手動推送流程見 AutoBricks 安裝目錄的 docker/README.md"

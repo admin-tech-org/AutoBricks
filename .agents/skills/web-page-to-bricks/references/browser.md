@@ -6,7 +6,7 @@
 
 ## 連線與執行
 
-Agent 產品先以 `<PROJECT_ROOT>/.browser/` 下的獨立 profile 啟動 Chrome remote debugging，再使用工具連線。Chrome 啟動範本位於 `<PLUGIN_ROOT>/templates/launch-chrome-cdp.bat`（Windows）與 `<PLUGIN_ROOT>/templates/launch-chrome-cdp.sh`（macOS／Linux）。`open` 只會在已執行的 Chrome 建立分頁，不會啟動 Chrome 程式。
+Agent 產品先以 `<PROJECT_ROOT>/.browser/` 下的獨立 profile 啟動 Chrome remote debugging，再使用工具連線。Agent 產品將 `<PLUGIN_ROOT>/templates/` 的 `launch-chrome-cdp.mjs` 與當前平台的入口（Windows 使用 `.bat`，macOS／Linux 使用 `.sh`）複製到 `.browser/`。兩個入口均呼叫共用的 Node 啟動程式。`open` 只會在已執行的 Chrome 建立分頁，不會啟動 Chrome 程式。
 
 Chrome 啟動腳本與工具共用 `<PROJECT_ROOT>/.browser/cdp.env`，例如：
 
@@ -14,7 +14,9 @@ Chrome 啟動腳本與工具共用 `<PROJECT_ROOT>/.browser/cdp.env`，例如：
 CDP_PORT=9333
 ```
 
-啟動腳本讀取同層的 `cdp.env`；工具從目前工作目錄向上尋找最近的 `.browser/cdp.env`，找到設定或到達 Git 專案根目錄即停止，不依工具的安裝位置尋找。工具以 `http://127.0.0.1:<CDP_PORT>` 連線；沒有設定時，兩端皆使用 9222。無效的埠設定會讓工具報錯。Agent 產品改埠後，需重新啟動對應 Chrome，使設定生效。
+啟動腳本讀取同層的 `cdp.env`；工具從目前工作目錄向上尋找最近的 `.browser/cdp.env`，找到設定或到達 Git 專案根目錄即停止，不依工具的安裝位置尋找。兩端使用同一份解析程式，以 `http://127.0.0.1:<CDP_PORT>` 連線；沒有設定時皆使用 9222，無效的埠設定會報錯。Agent 產品改埠後，需重新啟動對應 Chrome，使設定生效。
+
+使用者可在 `cdp.env` 加入 `CHROME_PATH` 指定 Chrome 執行檔，或以 `PROFILE_DIR` 指定獨立 profile。相對路徑以 `.browser/` 為起點。未指定 profile 時，啟動器依埠號使用 `.chrome_cdp` 或 `.chrome_cdp-<port>`；同一份 profile 不能同時供兩個 Chrome 程序使用。
 
 以下 PowerShell 範例從工作專案執行，Agent 產品需將路徑佔位符替換為實際絕對路徑：
 
@@ -50,7 +52,7 @@ node "<PLUGIN_ROOT>/src/browser.mjs" open https://example.com "<RUN_DIR>/tmp/scr
 
 `TARGET` 使用 `list` 回傳的分頁 ID，或 `open` 保存於 `browser.json` 的 `target`。方括號表示可省略的參數。`open` 與指定寬度的 `shot` 使用 1000px 視窗高度；其他尺寸可透過 `cdp` 指定。
 
-`survey` 依賴原站的 `header`、`section`、`footer` 結構，並含特定頁型的狀態處理。Agent 產品需先確認當站適用；不適用時使用 `eval`、`shot` 或 `cdp` 取得所需資料。
+`survey` 量測頁面中的 `header`、`section`、`footer`，改變視窗寬度與捲動位置，但不隱藏元素或關閉展開內容。頁面沒有這些區段時會明確報錯。Agent 產品需要其他分區或互動狀態時，使用 `eval`、`shot` 或 `cdp` 取得所需資料。
 
 同一分頁的載入、改寬、捲動、操作與截圖需依序進行。Agent 產品取得 PNG 後，仍需以圖片檢視工具開啟並檢查畫面；工具執行成功不等於頁面驗收通過。
 
@@ -83,6 +85,7 @@ node "<PLUGIN_ROOT>/src/browser.mjs" wait "<TARGET>" "<RUN_DIR>/tmp/scripts/menu
 Agent 產品先開啟當站的上傳或匯入介面，找到實際的 `input[type="file"]`，再使用 CDP 指定本機檔案。瀏覽器不允許以 JavaScript 寫入檔案欄位的 `value` 來選取本機檔案。
 
 - Agent 產品用 `DOM.getDocument` 及 `DOM.querySelector` 取得檔案欄位的 `nodeId`，再呼叫 `DOM.setFileInputFiles`，參數為 `nodeId` 與 `files`（本機絕對路徑陣列）。選擇器與 iframe 位置依當站介面確認，不沿用其他站的節點 ID。
+- 介面提供「上傳資料夾」時，Agent 產品使用該介面的資料夾選取欄位（例如 `input[webkitdirectory]`），在 `files` 傳入本機素材資料夾的絕對路徑，讓瀏覽器保留內部檔案的相對路徑；上傳後仍需核對伺服器上的目錄結構與公開網址。
 - 上述操作需要使用前一步回傳的節點 ID。Agent 產品在當次 Node 腳本匯入 `browser.mjs` 的 `connect`，透過同一條連線的 `send(method, params)` 依序操作，完成後呼叫 `close()`。每次執行 `cdp` 指令都會另建連線，不能將前次連線的 `nodeId` 直接帶入下次指令。
 - 選取檔案後，Agent 產品依介面完成送出，確認檔案列表、匯入結果或錯誤訊息。設定檔案欄位成功不代表已上傳完成；逾時先查看實際結果再決定是否重試。
 

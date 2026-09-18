@@ -18,6 +18,7 @@ Agent 產品依 web-page-to-bricks skill 檢查 template.json，並另行驗證�
      外部載入（script src / import()）與 document.write 警告，需確認來源及實際執行結果、
      有 javascriptCode 但 executeCode 未開警告（前台不執行）、
      每顆可執行 code 元素都發警告供逐一審核（渲染對照必實測有跑）
+  7. 空設定的單一子元素容器：提醒依版型、選擇器與互動判斷用途，不限制巢狀深度
 
 用法：
   uv run --no-project python src/validate_template.py <template.json> [--live-schema FILE] [--strict] [--json]
@@ -74,7 +75,8 @@ def load_live_schema(path):
     if not path or not os.path.isfile(path):
         return None
     try:
-        d = json.load(open(path, encoding="utf-8"))
+        with open(path, encoding="utf-8") as source:
+            d = json.load(source)
         els = d.get("elements", {})
         base = set(els.get("__base__", {}).get("controls", []))
         page = d.get("page_settings")
@@ -85,7 +87,7 @@ def load_live_schema(path):
             "controls": {k: set(v.get("controls", [])) | base for k, v in els.items() if k != "__base__"},
             "page_controls": set(page_controls) if isinstance(page_controls, list) else None,
         }
-    except (OSError, json.JSONDecodeError, AttributeError):
+    except (OSError, json.JSONDecodeError, AttributeError, TypeError):
         return None
 
 
@@ -122,8 +124,9 @@ def check(elements, schema_names, global_classes=None, live=None, page_settings=
             errors.append(f"[globalClasses {i}] 缺 id 或 name")
             continue
         cid = c["id"]
-        if not ID_RE.match(str(cid)):
+        if not isinstance(cid, str) or not ID_RE.fullmatch(cid):
             errors.append(f"[globalClasses {i}] id {cid!r} 不符 ^[a-z0-9]{{6}}$")
+            continue
         if cid in class_ids:
             errors.append(f"[globalClasses {i}] id {cid!r} 重複")
         class_ids.add(cid)
@@ -152,35 +155,37 @@ def check(elements, schema_names, global_classes=None, live=None, page_settings=
 
         eid = el.get("id")
         if isinstance(eid, str):
-            if not ID_RE.match(eid):
+            if not ID_RE.fullmatch(eid):
                 err(i, el, f"id {eid!r} 不符 ^[a-z0-9]{{6}}$")
             elif not any(c.isdigit() for c in eid):
                 warn(i, el, f"id {eid!r} 不含數字——匯入 id 重編（全域字串替換）可能撞壞，建議至少含 1 個數字")
             if eid in by_id:
                 err(i, el, f"id {eid!r} 重複")
             by_id[eid] = el
-        elif eid is not None:
+        else:
             err(i, el, f"id 必須是字串，得到 {type(eid).__name__}")
 
         settings = el.get("settings")
         if isinstance(settings, list) and not settings:
             settings = {}  # Bricks 把空 settings 存成 []（PHP 空陣列）——視同空物件放行
-        if settings is not None and not isinstance(settings, dict):
+        if not isinstance(settings, dict):
             err(i, el, "settings 必須是物件（或 Bricks 的空陣列 []）")
         children = el.get("children")
-        if children is not None and not isinstance(children, list):
+        if not isinstance(children, list):
             err(i, el, "children 必須是陣列")
 
         # ---- 4. element name 對 schema --------------------------------
         name = el.get("name")
-        if name and schema_names is not None and name not in schema_names:
-            err(i, el, f"element name {name!r} 不在 Bricks {live['version']} 原始碼（live schema）（不存在的元素或拼錯）")
-        if live and name in live["controls"] and isinstance(settings, dict):
+        if not (is_component and name is None) and (not isinstance(name, str) or not name):
+            err(i, el, "name 必須是非空字串（component 實例可省略）")
+        if isinstance(name, str) and schema_names is not None and name not in schema_names:
+            err(i, el, f"element name {name!r} 不在 schema 的元素清單中（不存在的元素或拼錯）")
+        if live and isinstance(name, str) and name in live["controls"] and isinstance(settings, dict):
             ctrls = live["controls"][name]
             for skey in settings:
                 base_key = skey.split(":", 1)[0]
-                if not base_key.startswith("_") and base_key not in ctrls:
-                    warn(i, el, f"設定鍵 {base_key!r} 不在 {name} 的 controls 裡（theme 原始碼查無此欄位）")
+                if base_key not in ctrls:
+                    warn(i, el, f"設定鍵 {base_key!r} 不在 {name} 的候選欄位中；靜態掃描可能不完整，需核對 theme 原始碼與實際生效結果")
 
         if "selectors" in el:
             warn(i, el, "selectors 是 Bricks 2.0+ 特性，1.12.x 不支援（會被忽略）")
@@ -191,7 +196,7 @@ def check(elements, schema_names, global_classes=None, live=None, page_settings=
                 err(i, el, "_cssGlobalClasses 必須是 class id 陣列")
             else:
                 for cid in refs:
-                    if cid not in class_ids:
+                    if not isinstance(cid, str) or cid not in class_ids:
                         err(i, el, f"_cssGlobalClasses 引用不存在的 class {cid!r}（template 的 globalClasses 沒有它）")
 
         # ---- 5. 已知形狀（1.12.x 實證）----------------------------------------
@@ -252,7 +257,7 @@ def check(elements, schema_names, global_classes=None, live=None, page_settings=
 
     # ---- 3. 圖完整性 ----------------------------------------------------
     def is_root(p):
-        return p in (0, "0", None)
+        return p is None or (type(p) is int and p == 0) or (isinstance(p, str) and p == "0")
 
     for i, el in enumerate(elements):
         if not isinstance(el, dict):
@@ -262,10 +267,16 @@ def check(elements, schema_names, global_classes=None, live=None, page_settings=
             if not isinstance(parent, str) or parent not in by_id:
                 err(i, el, f"parent {parent!r} 不存在")
             else:
-                pchildren = by_id[parent].get("children") or []
-                if el.get("id") not in pchildren:
+                pchildren = by_id[parent].get("children")
+                if isinstance(pchildren, list) and el.get("id") not in pchildren:
                     err(i, el, f"parent {parent!r} 的 children 沒有列出本元素（雙向不一致）")
-        for cid_ in el.get("children") or []:
+        children = el.get("children")
+        if not isinstance(children, list):
+            continue
+        for cid_ in children:
+            if not isinstance(cid_, str):
+                err(i, el, f"children 成員必須是 id 字串，得到 {type(cid_).__name__}")
+                continue
             if cid_ not in by_id:
                 err(i, el, f"children 引用不存在的 id {cid_!r}")
             else:
@@ -290,30 +301,17 @@ def check(elements, schema_names, global_classes=None, live=None, page_settings=
         if unreachable:
             errors.append(f"{len(unreachable)} 個元素無法從根到達（孤島或環）：{', '.join(unreachable[:8])}")
 
-    # ---- 6. 編輯性（結構極簡鐵律的 tripwire：好編輯 > 一切）---------------
+    # ---- 7. 容器用途提示，不以層數或子元素數量決定是否刪除 ----------------
     wrap_types = {"container", "block", "div"}
     for i, el in enumerate(elements):
         if not isinstance(el, dict):
             continue
-        if el.get("name") in wrap_types and len(el.get("children") or []) == 1:
-            settings = el.get("settings") or {}
-            visual = {k.split(":", 1)[0] for k in settings} - {"_display", "tag", "_justifyContent", "_alignItems"}
-            if not visual:
-                warn(i, el, "單一子元素的純 wrapper（無自身樣式）——塌掉它，設計部才好編輯")
-
-    if not errors and by_id:
-        depth_of = {}
-
-        def depth(eid):
-            if eid not in depth_of:
-                p = by_id[eid].get("parent")
-                depth_of[eid] = 1 if p in (0, "0", None) else depth(p) + 1
-            return depth_of[eid]
-
-        maxd = max(depth(e) for e in by_id)
-        if maxd > 5:
-            deepest = [e for e in by_id if depth_of[e] == maxd][:5]
-            warnings.append(f"最大巢狀深度 {maxd} 層（>5）——結構過深難編輯，回頭壓平（最深：{', '.join(deepest)}）")
+        children = el.get("children")
+        name = el.get("name")
+        if (isinstance(name, str) and name in wrap_types
+                and isinstance(children, list) and len(children) == 1
+                and el.get("settings") in ({}, [])):
+            warn(i, el, "空設定的單一子元素容器；請依版型、選擇器與互動判斷是否需要保留")
 
     return errors, warnings
 
@@ -340,11 +338,15 @@ def main():
     schema_names = None  # element name 名冊由 live schema 提供（check 內設定）
     errors, warnings = check(elements, schema_names, global_classes, live, page_settings)
     ok = not errors and not (args.strict and warnings)
+    notes = ["候選欄位檢查來自靜態掃描，不代表所有設定已實際生效；仍需正常匯入與渲染驗收"] if live else [
+        "未載入 live schema，略過元素名稱與設定欄位檢查；以 --live-schema 指定當次 schema 檔案"
+    ]
 
     if args.as_json:
         print(
             json.dumps(
-                {"valid": ok, "elements": len(elements), "errors": errors, "warnings": warnings},
+                {"valid": ok, "elements": len(elements), "errors": errors, "warnings": warnings,
+                 "live_schema_version": live["version"] if live else None, "notes": notes},
                 ensure_ascii=False,
                 indent=2,
             )
@@ -354,8 +356,8 @@ def main():
             f"elements: {len(elements)}  global classes: {len(global_classes)}"
             + (f"  [live schema: Bricks {live['version']}]" if live else "")
         )
-        if live is None:
-            print("[!] 未載入 live schema，略過元素名稱與設定欄位檢查；以 --live-schema 指定當次 schema 檔案")
+        for note in notes:
+            print(f"[info] {note}")
         for msg in errors:
             print(f"[error] {msg}")
         for msg in warnings:

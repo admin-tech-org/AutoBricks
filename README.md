@@ -13,7 +13,7 @@ Agent 產品先在瀏覽器檢視原站的內容、版型、RWD、互動與動�
 Agent 產品交付可供使用者在 Bricks 修改文字、圖片與排版的成品。
 
 - Agent 產品將額外的 CSS、JS 與必要程式庫交由 Code Snippets 管理，並提供免費版可用的 PHP 片段，方便使用者與接手的設計師在 WP 後台維護。
-- 圖片、影片、字型與文件等素材依內容清楚命名，首次部署時透過 File Manager、SSH／SFTP 等方式上傳至目標站的 uploads 目錄，通常為 `wp-content/uploads/`。
+- Agent 產品依內容清楚命名圖片、影片、字型與文件等素材。使用者首次部署時，可透過 File Manager、SSH／SFTP 等方式上傳至目標站的 uploads 目錄，通常為 `wp-content/uploads/`。
 - Agent 產品在重建前先確認目標站的 WordPress 位址、網站位址與 uploads 公開路徑。同站素材使用以 `/` 開頭的根相對網址，單純換網域且素材路徑不變時不需替換網址。
 - 自製 WordPress 外掛及新增後端服務需另行規劃，不屬於預設的網頁重建範圍。
 
@@ -150,7 +150,7 @@ data/20260916-223015-codex-new_art_clone_web/
     └── 20260916-231240-new-art-bricks.zip
 ```
 
-重建任務只交付一個 `YYYYMMDD-HHMMSS-<page-name>-bricks.zip`，包含上述交付檔案，ZIP 時間採打包時的本機時間。使用者先解壓，依 `report.md` 執行 `uv run` 部署腳本、上傳素材，再分別匯入 Code Snippets 與 Bricks，也可交由 `push-web-page` 操作後台完成。`comparison.html` 可離線查看實際截圖及驗收結果。整包 ZIP 不是直接匯入 Bricks 的模板 ZIP。
+重建任務只交付一個 `YYYYMMDD-HHMMSS-<page-name>-bricks.zip`，包含上述交付檔案，ZIP 時間採打包時的本機時間。使用者先解壓，依 `report.md` 上傳素材，再分別匯入 Code Snippets 與 Bricks。需要更名素材資料夾時，使用者才先以 `uv run --no-project python` 執行 `rename-assets-folder.py`。使用者也可交由 `push-web-page` 操作後台完成。`comparison.html` 可離線查看實際截圖及驗收結果。整包 ZIP 不是直接匯入 Bricks 的模板 ZIP。
 
 Code Snippets 免費版與 Pro 版均使用 PHP 片段，CSS／JS 寫在片段內。`code-snippets.json` 用於匯入，`snippets/` 只保留對應的 PHP 可讀副本，不另交付獨立 CSS／JS 副本。
 
@@ -175,7 +175,7 @@ Agent 產品依目標環境已安裝的 Bricks 版本與實際渲染確認元素
 
 使用者呼叫 `push-web-page`，提供交付 ZIP 或目錄及目標 WP 網址。Agent 產品以可見 Chrome 操作後台，需要登入時暫停，讓使用者直接在瀏覽器輸入帳密，等使用者回覆完成後再繼續。瀏覽器沿用工作專案 `.browser/` 中的獨立 profile 與 `cdp.env`。
 
-Agent 產品確認 WP File Manager（作者 `mndpsingh287`）、Code Snippets（作者 `Code Snippets Pro`，免費版即可）與 Bricks 已安裝並啟用。缺少產品時先通知使用者安裝，再重新檢查。部署依序透過 File Manager 上傳素材、Code Snippets 匯入 PHP 片段，再將 Bricks 模板及頁面設定套用至目標頁面。
+Agent 產品確認 WP File Manager（作者 `mndpsingh287`）、Code Snippets（作者 `Code Snippets Pro`，免費版即可）與 Bricks 已安裝並啟用。缺少產品時先通知使用者安裝，再重新檢查。部署時優先透過 File Manager 的「上傳資料夾」功能上傳素材，再由 Code Snippets 匯入 PHP 片段，依 `template.json` 套用模板與原有頁面設定。儲存後重整 Bricks 編輯器核對內容，另開前台預覽分頁驗收外觀與互動。
 
 原始交付包保留不改。部署紀錄存於當次任務的 `output/report.md`，列明頁面網址、素材位置、片段及驗收結果。未指定既有頁面時建立新頁，未要求發佈時先存為草稿。
 

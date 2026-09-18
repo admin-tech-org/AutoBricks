@@ -38,7 +38,7 @@ Agent 產品先檢查版本；現有工具符合需求時跳過安裝：
   macOS 裝 Homebrew（需要互動輸入密碼時，由使用者在終端機執行官方安裝指令）、
   Windows 用 PowerShell 裝 Scoop：`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force; iwr -useb get.scoop.sh | iex`。
 - **Node（≥22）**：供共用的 `src/browser.mjs` 使用。
-  Agent 產品確認 `node --version` 符合需求；所用工具透過 `npx` 啟動時，也確認 `npx --version` 可執行。符合時跳過，不符合時才安裝（以下 nvm 範例使用 Node 24）：
+  Agent 產品確認 `node --version` 符合需求。符合時跳過，不符合時才安裝（以下 nvm 範例使用 Node 24）：
   - Windows：`scoop install nvm` → `nvm install 24` → `nvm use 24`
   - macOS：`brew install nvm; mkdir -p ~/.nvm` → `export NVM_DIR="$HOME/.nvm"; . "$(brew --prefix nvm)/nvm.sh"; nvm install 24 && nvm use 24`
     （環境載入與安裝指令需在同一個 Bash session；Agent 產品提醒使用者將 `NVM_DIR` 設定與 nvm 載入指令加入 `~/.zshrc`。）
@@ -52,6 +52,7 @@ Agent 產品透過 Chrome CDP 觀察原站或 WP 預覽的內容、排版與互�
 1. **Agent 產品將啟動腳本放進使用者專案的 `.browser/`**，讓瀏覽器 profile 與登入資料留在該專案：
    ```bash
    mkdir -p "<PROJECT_ROOT>/.browser"
+   cp "<PLUGIN_ROOT>/templates/launch-chrome-cdp.mjs" "<PROJECT_ROOT>/.browser/"   # 共用啟動程式
    cp "<PLUGIN_ROOT>/templates/launch-chrome-cdp.bat" "<PROJECT_ROOT>/.browser/"   # Windows
    cp "<PLUGIN_ROOT>/templates/launch-chrome-cdp.sh"  "<PROJECT_ROOT>/.browser/"   # macOS / Linux
    ```

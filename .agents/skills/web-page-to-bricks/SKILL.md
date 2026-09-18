@@ -105,7 +105,7 @@ node "<PLUGIN_ROOT>/src/browser.mjs" shot "<SOURCE_TARGET>" "<RUN_DIR>/tmp/scree
 node "<PLUGIN_ROOT>/src/browser.mjs" eval "<SOURCE_TARGET>" "<RUN_DIR>/tmp/scripts/measure.js" "<RUN_DIR>/tmp/measurements/main.json"
 ```
 
-同一分頁的載入、改寬、捲動、操作與截圖需依序進行，避免量測時頁面狀態被其他操作改變。`survey` 含特定 DOM 結構與狀態處理假設，Agent 產品先確認當站適用，不適用時改用 `eval`、`shot` 或 `cdp`。Agent 產品可在 `<RUN_DIR>/tmp/scripts/` 撰寫下載、量測或生成工具，重用已取得且仍適用的資料，只補查缺少或已變動的部分。
+同一分頁的載入、改寬、捲動、操作與截圖需依序進行，避免量測時頁面狀態被其他操作改變。`survey` 依 `header`、`section`、`footer` 量測區段；不適合當站結構時，Agent 產品改用 `eval`、`shot` 或 `cdp`。Agent 產品可在 `<RUN_DIR>/tmp/scripts/` 撰寫下載、量測或生成工具，重用已取得且仍適用的資料，只補查缺少或已變動的部分。
 
 ## 截圖分析與差異修正
 
